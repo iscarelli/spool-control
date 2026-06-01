@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Configurações — Spool Control{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7 col-lg-6">
+    <h4 class="fw-bold mb-4">Configurações do Sistema</h4>
+    <div class="card">
+      <div class="card-body">
+        <form method="post">
+          <div class="mb-4">
+            <label class="form-label fw-semibold">URL Base do Sistema</label>
+            <input type="url" name="app_base_url" class="form-control"
+                   value="{{ settings.app_base_url }}" placeholder="http://192.168.1.50">
+            <div class="form-text">Usada para gerar o QR code nas etiquetas. Deve ser acessível pelo celular na mesma rede.</div>
+          </div>
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Threshold de Estoque Baixo (g)</label>
+            <input type="number" name="low_stock_threshold_g" class="form-control" min="0"
+                   value="{{ settings.low_stock_threshold_g }}">
+            <div class="form-text">Spools com menos que este peso serão sinalizados.</div>
+          </div>
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Threshold de Estoque Baixo (%)</label>
+            <input type="number" name="low_stock_pct" class="form-control" min="0" max="100"
+                   value="{{ settings.low_stock_pct }}">
+            <div class="form-text">Spools com menos que esta porcentagem do nominal também serão sinalizados.</div>
+          </div>
+          <button type="submit" class="btn btn-dark">Salvar Configurações</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

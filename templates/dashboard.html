@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Spool Control{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="mb-0 fw-bold">Dashboard</h4>
+  <a href="{{ url_for('spools_weigh', spool_id=0) }}" class="d-none" id="quickWeigh"></a>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card text-center border-0 bg-dark text-white">
+      <div class="card-body py-3">
+        <div class="fs-2 fw-bold">{{ stats.total_spools }}</div>
+        <div class="small">Spools Ativos</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card text-center border-0 bg-secondary text-white">
+      <div class="card-body py-3">
+        <div class="fs-2 fw-bold">{{ stats.total_filaments }}</div>
+        <div class="small">Filamentos</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card text-center border-0 {% if low_stock|length > 0 %}bg-warning{% else %}bg-success text-white{% endif %}">
+      <div class="card-body py-3">
+        <div class="fs-2 fw-bold">{{ low_stock|length }}</div>
+        <div class="small">Estoque Baixo</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card text-center border-0 bg-light">
+      <div class="card-body py-3">
+        <a href="{{ url_for('spools_new') }}" class="btn btn-dark btn-sm mb-1 d-block">+ Novo Spool</a>
+        <a href="{{ url_for('filaments_new') }}" class="btn btn-outline-dark btn-sm d-block">+ Filamento</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if low_stock %}
+<div class="card mb-4 border-warning">
+  <div class="card-header bg-warning fw-bold"><i class="bi bi-exclamation-triangle-fill me-1"></i>Estoque Baixo</div>
+  <div class="table-responsive">
+    <table class="table table-sm mb-0">
+      <thead class="table-light">
+        <tr><th>Material</th><th>Marca / Família</th><th>Local</th><th>Restante</th><th>%</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for s in low_stock %}
+        <tr>
+          <td>{{ s.material }}</td>
+          <td>{{ s.brand }} / {{ s.family }}</td>
+          <td>{{ s.location or '—' }}</td>
+          <td>{{ "%.0f"|format(s.current_net_g) }}g</td>
+          <td>
+            <div class="progress" style="height:14px;width:80px">
+              <div class="progress-bar bg-warning" style="width:{{ s.pct_remaining }}%">{{ s.pct_remaining }}%</div>
+            </div>
+          </td>
+          <td><a href="{{ url_for('spools_detail', spool_id=s.id) }}" class="btn btn-sm btn-outline-secondary">Ver</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if stats.recent_weighings %}
+<div class="card">
+  <div class="card-header fw-bold"><i class="bi bi-clock-history me-1"></i>Pesagens Recentes</div>
+  <div class="table-responsive">
+    <table class="table table-sm mb-0">
+      <thead class="table-light">
+        <tr><th>Quando</th><th>Material</th><th>Marca / Família</th><th>Peso Net</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for r in stats.recent_weighings %}
+        <tr>
+          <td class="text-muted small">{{ r.ts[:16].replace('T',' ') }}</td>
+          <td>{{ r.material }}</td>
+          <td>{{ r.brand }} / {{ r.family }}</td>
+          <td>{{ "%.0f"|format(r.net_weight_g) }}g</td>
+          <td><a href="{{ url_for('spools_detail', spool_id=r.spool_id) }}" class="btn btn-sm btn-outline-secondary">Ver</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Relatório por Local — Spool Control{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="mb-0 fw-bold">Estoque por Local</h4>
+  <button class="btn btn-sm btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i>Imprimir</button>
+</div>
+<div class="card">
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead class="table-dark">
+        <tr><th>Local</th><th>Spools Ativos</th><th>Total Net (g)</th></tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td class="fw-semibold">{{ r.location }}</td>
+          <td>{{ r.spool_count }}</td>
+          <td>{{ r.total_net_g|int }}g</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3" class="text-center text-muted py-4">Sem dados</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

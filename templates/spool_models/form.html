@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar' if model else 'Novo' }} Modelo — Spool Control{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-5">
+    <div class="d-flex align-items-center mb-3">
+      <a href="{{ url_for('spool_models_list') }}" class="btn btn-sm btn-outline-secondary me-2"><i class="bi bi-arrow-left"></i></a>
+      <h4 class="mb-0 fw-bold">{{ 'Editar Modelo' if model else 'Novo Modelo de Carretel' }}</h4>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <form method="post">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Nome <span class="text-danger">*</span></label>
+            <input type="text" name="name" class="form-control" value="{{ model.name if model else '' }}" required
+                   placeholder="ex: Bambu Lab Standard 1kg">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Peso do Carretel Vazio (g) <span class="text-danger">*</span></label>
+            <input type="number" name="tare_weight_g" class="form-control" step="0.1" min="0"
+                   value="{{ model.tare_weight_g if model else '' }}" required placeholder="ex: 250">
+            <div class="form-text">Pese o carretel físico sem filamento.</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Notas</label>
+            <input type="text" name="notes" class="form-control" value="{{ model.notes if model else '' }}">
+          </div>
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-dark">Salvar</button>
+            <a href="{{ url_for('spool_models_list') }}" class="btn btn-outline-secondary">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

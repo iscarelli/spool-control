@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar' if filament else 'Novo' }} Filamento — Spool Control{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7 col-lg-6">
+    <div class="d-flex align-items-center mb-3">
+      <a href="{{ url_for('filaments_list') }}" class="btn btn-sm btn-outline-secondary me-2"><i class="bi bi-arrow-left"></i></a>
+      <h4 class="mb-0 fw-bold">{{ 'Editar Filamento' if filament else 'Novo Filamento' }}</h4>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <form method="post">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold">Material <span class="text-danger">*</span></label>
+              <select name="material" class="form-select" required>
+                <option value="">Selecione...</option>
+                {% for m in materials %}
+                <option value="{{ m }}" {% if filament and filament.material == m %}selected{% endif %}>{{ m }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Marca <span class="text-danger">*</span></label>
+              <input type="text" name="brand" class="form-control" value="{{ filament.brand if filament else '' }}" required placeholder="ex: Bambu Lab, eSUN, Polymaker">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Família / Cor <span class="text-danger">*</span></label>
+              <input type="text" name="family" class="form-control" value="{{ filament.family if filament else '' }}" required placeholder="ex: Basic PLA Black, Matte White">
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">Cor (hex)</label>
+              <div class="input-group">
+                <span class="input-group-text p-1">
+                  <input type="color" id="colorPicker" value="{{ filament.color_hex if filament and filament.color_hex else '#cccccc' }}" style="width:32px;height:32px;border:none;cursor:pointer">
+                </span>
+                <input type="text" name="color_hex" id="colorHex" class="form-control" value="{{ filament.color_hex if filament else '' }}" placeholder="#rrggbb" maxlength="7">
+              </div>
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">Diâmetro (mm)</label>
+              <select name="diameter_mm" class="form-select">
+                <option value="1.75" {% if not filament or filament.diameter_mm == 1.75 %}selected{% endif %}>1.75 mm</option>
+                <option value="2.85" {% if filament and filament.diameter_mm == 2.85 %}selected{% endif %}>2.85 mm</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Notas</label>
+              <textarea name="notes" class="form-control" rows="2">{{ filament.notes if filament else '' }}</textarea>
+            </div>
+          </div>
+          <div class="mt-4 d-flex gap-2">
+            <button type="submit" class="btn btn-dark">Salvar</button>
+            <a href="{{ url_for('filaments_detail', filament_id=filament.id) if filament else url_for('filaments_list') }}" class="btn btn-outline-secondary">Cancelar</a>
+            {% if filament and session.role == 'admin' %}
+            <form method="post" action="{{ url_for('filaments_delete', filament_id=filament.id) }}" class="ms-auto"
+                  onsubmit="return confirm('Remover este filamento?')">
+              <button type="submit" class="btn btn-outline-danger btn-sm">Remover</button>
+            </form>
+            {% endif %}
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const picker = document.getElementById('colorPicker');
+const hex = document.getElementById('colorHex');
+picker.addEventListener('input', () => hex.value = picker.value);
+hex.addEventListener('input', () => { if(/^#[0-9a-fA-F]{6}$/.test(hex.value)) picker.value = hex.value; });
+</script>
+{% endblock %}

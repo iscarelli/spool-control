@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Estoque Baixo — Spool Control{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="mb-0 fw-bold">Estoque Baixo</h4>
+  <button class="btn btn-sm btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i>Imprimir</button>
+</div>
+<div class="alert alert-secondary small">
+  Critério: peso atual &lt; <strong>{{ threshold_g }}g</strong> OU &lt; <strong>{{ threshold_pct }}%</strong> do nominal.
+  <a href="{{ url_for('admin_settings') }}" class="ms-2">Ajustar threshold</a>
+</div>
+{% if rows %}
+<div class="card">
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead class="table-dark">
+        <tr><th>ID</th><th>Material</th><th>Marca / Família</th><th>Local</th><th>Restante</th><th>%</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for s in rows %}
+        <tr>
+          <td class="fw-bold">SP-{{ '%04d'|format(s.id) }}</td>
+          <td><span class="badge bg-secondary">{{ s.material }}</span></td>
+          <td>{{ s.brand }} / {{ s.family }}</td>
+          <td>{{ s.location or '—' }}</td>
+          <td class="fw-semibold {% if s.current_net_g < threshold_g %}text-danger{% endif %}">{{ s.current_net_g|int }}g</td>
+          <td>
+            <div class="progress" style="height:14px;width:80px">
+              <div class="progress-bar bg-danger" style="width:{{ s.pct_remaining }}%">{{ s.pct_remaining }}%</div>
+            </div>
+          </td>
+          <td>
+            <a href="{{ url_for('spools_detail', spool_id=s.id) }}" class="btn btn-sm btn-outline-secondary">Ver</a>
+            <a href="{{ url_for('spools_weigh', spool_id=s.id) }}" class="btn btn-sm btn-outline-dark">Pesar</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="text-center text-muted py-5">
+  <i class="bi bi-check-circle fs-1 d-block mb-2 text-success"></i>
+  Nenhum spool abaixo do threshold configurado.
+</div>
+{% endif %}
+{% endblock %}

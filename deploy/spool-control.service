@@ -1,0 +1,22 @@
+[Unit]
+Description=Spool Control
+After=network.target
+
+[Service]
+User=spool
+WorkingDirectory=/opt/spool-control
+Environment=HOME=/tmp
+EnvironmentFile=/opt/spool-control/spool.env
+ExecStart=/opt/spool-control/.venv/bin/gunicorn \
+    -w 2 \
+    -b 0.0.0.0:8001 \
+    --timeout 30 \
+    --worker-tmp-dir /dev/shm \
+    app:app
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

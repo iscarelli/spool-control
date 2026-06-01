@@ -1,0 +1,8 @@
+@media print {
+  .navbar, .btn, form, .alert-dismissible .btn-close { display: none !important; }
+  .card { border: 1px solid #ccc !important; }
+}
+
+body { font-size: 0.92rem; }
+
+.table th, .table td { vertical-align: middle; }

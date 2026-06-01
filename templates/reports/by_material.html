@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Relatório por Material — Spool Control{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="mb-0 fw-bold">Estoque por Material</h4>
+  <button class="btn btn-sm btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i>Imprimir</button>
+</div>
+<div class="card">
+  <div class="table-responsive">
+    <table class="table mb-0">
+      <thead class="table-dark">
+        <tr><th>Material</th><th>Spools Ativos</th><th>Total Net (kg)</th><th>Nominal (kg)</th><th>Distribuição</th></tr>
+      </thead>
+      <tbody>
+        {% set grand_total = rows|sum(attribute='total_net_g') %}
+        {% for r in rows %}
+        <tr>
+          <td class="fw-semibold"><span class="badge bg-secondary">{{ r.material }}</span></td>
+          <td>{{ r.spool_count }}</td>
+          <td>{{ "%.2f"|format(r.total_net_g / 1000) }} kg</td>
+          <td class="text-muted">{{ "%.2f"|format(r.total_nominal_g / 1000) }} kg</td>
+          <td style="width:200px">
+            {% if grand_total > 0 %}
+            {% set pct = (r.total_net_g / grand_total * 100)|int %}
+            <div class="progress" style="height:16px">
+              <div class="progress-bar bg-dark" style="width:{{ pct }}%" title="{{ pct }}%">{{ pct }}%</div>
+            </div>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-center text-muted py-4">Sem dados</td></tr>
+        {% endfor %}
+      </tbody>
+      {% if rows %}
+      <tfoot class="table-light fw-bold">
+        <tr>
+          <td>Total</td>
+          <td>{{ rows|sum(attribute='spool_count') }}</td>
+          <td>{{ "%.2f"|format(grand_total / 1000) }} kg</td>
+          <td class="text-muted">{{ "%.2f"|format(rows|sum(attribute='total_nominal_g') / 1000) }} kg</td>
+          <td></td>
+        </tr>
+      </tfoot>
+      {% endif %}
+    </table>
+  </div>
+</div>
+{% endblock %}

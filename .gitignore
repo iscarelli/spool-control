@@ -1,0 +1,8 @@
+data/
+spool.env
+.gh_token
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+.DS_Store

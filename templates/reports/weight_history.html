@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Histórico de Pesagens — Spool Control{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0 fw-bold">Histórico de Pesagens</h4>
+  <button class="btn btn-sm btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i>Imprimir</button>
+</div>
+
+<form method="get" class="card p-3 mb-4">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-4">
+      <label class="form-label small fw-semibold">Filtrar por Filamento</label>
+      <select name="filament_id" class="form-select form-select-sm">
+        <option value="">Todos os filamentos</option>
+        {% for f in filaments %}
+        <option value="{{ f.id }}" {% if sel_filament_id == f.id %}selected{% endif %}>
+          {{ f.material }} — {{ f.brand }} / {{ f.family }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label small fw-semibold">Filtrar por Spool</label>
+      <select name="spool_id" class="form-select form-select-sm">
+        <option value="">Todos os spools</option>
+        {% for s in spools %}
+        <option value="{{ s.id }}" {% if sel_spool_id == s.id %}selected{% endif %}>
+          SP-{{ '%04d'|format(s.id) }} — {{ s.material }} {{ s.brand }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-dark btn-sm w-100">Filtrar</button>
+    </div>
+    <div class="col-md-2">
+      <a href="{{ url_for('report_weight_history') }}" class="btn btn-outline-secondary btn-sm w-100">Limpar</a>
+    </div>
+  </div>
+</form>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-sm mb-0">
+      <thead class="table-dark">
+        <tr>
+          <th>Data/Hora</th><th>Spool</th><th>Material</th><th>Marca / Família</th>
+          <th>Local</th><th>Bruto (g)</th><th>Tara (g)</th><th>Net (g)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in readings %}
+        <tr>
+          <td class="small text-muted">{{ r.ts[:16].replace('T',' ') }}</td>
+          <td><a href="{{ url_for('spools_detail', spool_id=r.spool_id) }}" class="fw-bold text-decoration-none">SP-{{ '%04d'|format(r.spool_id) }}</a></td>
+          <td><span class="badge bg-secondary">{{ r.material }}</span></td>
+          <td>{{ r.brand }} / {{ r.family }}</td>
+          <td class="text-muted small">{{ r.location or '—' }}</td>
+          <td>{{ r.gross_weight_g|int }}</td>
+          <td class="text-muted">{{ r.tare_weight_g|int }}</td>
+          <td class="fw-semibold">{{ r.net_weight_g|int }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="text-center text-muted py-4">Nenhuma pesagem registrada</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

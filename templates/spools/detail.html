@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}SP-{{ '%04d'|format(spool.id) }} — Spool Control{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center mb-3">
+  {% if logged_in %}
+  <a href="{{ url_for('spools_list') }}" class="btn btn-sm btn-outline-secondary me-2"><i class="bi bi-arrow-left"></i></a>
+  {% endif %}
+  <h4 class="mb-0 fw-bold">SP-{{ '%04d'|format(spool.id) }}</h4>
+  {% if not spool.active %}<span class="badge bg-secondary ms-2">Finalizado</span>{% endif %}
+  {% if logged_in %}
+  <div class="ms-auto d-flex gap-2">
+    {% if spool.active %}
+    <a href="{{ url_for('spools_weigh', spool_id=spool.id) }}" class="btn btn-dark btn-sm">
+      <i class="bi bi-balance-scale me-1"></i>Pesar
+    </a>
+    {% endif %}
+    <a href="{{ url_for('spools_edit', spool_id=spool.id) }}" class="btn btn-outline-secondary btn-sm">Editar</a>
+    <a href="{{ url_for('spool_label_pdf', spool_id=spool.id) }}" class="btn btn-outline-dark btn-sm" target="_blank">
+      <i class="bi bi-printer me-1"></i>Etiqueta PDF
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card h-100 border-0 bg-light">
+      <div class="card-body">
+        <div class="text-muted small mb-1">Filamento</div>
+        <div class="fs-5 fw-bold">{{ spool.material }}</div>
+        <div>{{ spool.brand }}</div>
+        <div class="text-muted">
+          {% if spool.color_hex %}
+          <span class="d-inline-block rounded me-1" style="width:12px;height:12px;background:{{ spool.color_hex }};border:1px solid #ccc;vertical-align:middle"></span>
+          {% endif %}
+          {{ spool.family }}
+        </div>
+        {% if logged_in %}
+        <a href="{{ url_for('filaments_detail', filament_id=spool.filament_id) }}" class="btn btn-sm btn-outline-secondary mt-2">Ver filamento</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100 border-0 bg-light">
+      <div class="card-body">
+        <div class="text-muted small mb-1">Peso Atual</div>
+        {% if spool.current_net_g is not none %}
+          <div class="fs-3 fw-bold">{{ spool.current_net_g|int }}g</div>
+          <div class="text-muted small">de {{ spool.nominal_weight_g|int }}g nominais</div>
+          {% if spool.nominal_weight_g > 0 %}
+          {% set pct = [(spool.current_net_g / spool.nominal_weight_g * 100)|int, 100]|min %}
+          <div class="progress mt-2" style="height:10px">
+            <div class="progress-bar {% if pct < 20 %}bg-danger{% elif pct < 50 %}bg-warning{% else %}bg-success{% endif %}" style="width:{{ pct }}%"></div>
+          </div>
+          <div class="text-muted small mt-1">{{ pct }}% restante</div>
+          {% endif %}
+          {% if spool.last_weighed_at %}
+          <div class="text-muted" style="font-size:0.75rem">Pesado em {{ spool.last_weighed_at[:10] }}</div>
+          {% endif %}
+        {% else %}
+          <div class="text-muted">Não pesado ainda</div>
+          {% if logged_in and spool.active %}
+          <a href="{{ url_for('spools_weigh', spool_id=spool.id) }}" class="btn btn-dark btn-sm mt-2">Registrar peso</a>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100 border-0 bg-light">
+      <div class="card-body">
+        <div class="text-muted small mb-1">Detalhes</div>
+        <div><span class="text-muted">Local:</span> {{ spool.location or '—' }}</div>
+        <div><span class="text-muted">Carretel:</span> {{ spool.model_name or '—' }}</div>
+        <div><span class="text-muted">Tara efetiva:</span> {{ spool.effective_tare_g|int }}g</div>
+        {% if spool.purchase_date %}
+        <div><span class="text-muted">Compra:</span> {{ spool.purchase_date }}</div>
+        {% endif %}
+        {% if spool.purchase_price %}
+        <div><span class="text-muted">Preço:</span> R$ {{ "%.2f"|format(spool.purchase_price) }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if spool.notes %}
+<div class="alert alert-light border mb-4">{{ spool.notes }}</div>
+{% endif %}
+
+{% if readings %}
+<h5 class="fw-semibold mb-3">Histórico de Pesagens</h5>
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-sm mb-0">
+      <thead class="table-light">
+        <tr><th>Data/Hora</th><th>Bruto (g)</th><th>Tara (g)</th><th>Net (g)</th><th>Registrado por</th><th>Notas</th></tr>
+      </thead>
+      <tbody>
+        {% for r in readings %}
+        <tr>
+          <td class="text-muted small">{{ r.ts[:16].replace('T',' ') }}</td>
+          <td>{{ r.gross_weight_g|int }}</td>
+          <td>{{ r.tare_weight_g|int }}</td>
+          <td class="fw-semibold">{{ r.net_weight_g|int }}</td>
+          <td class="text-muted small">{{ r.recorded_by or '—' }}</td>
+          <td class="text-muted small">{{ r.notes or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

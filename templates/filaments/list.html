@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Filamentos — Spool Control{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0 fw-bold">Filamentos</h4>
+  <a href="{{ url_for('filaments_new') }}" class="btn btn-dark btn-sm">+ Novo Filamento</a>
+</div>
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-dark">
+        <tr>
+          <th>Material</th><th>Marca</th><th>Família / Cor</th>
+          <th>Ø</th><th>Spools Ativos</th><th>Total</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in filaments %}
+        <tr>
+          <td><span class="badge bg-secondary">{{ f.material }}</span></td>
+          <td>{{ f.brand }}</td>
+          <td>
+            {% if f.color_hex %}
+            <span class="d-inline-block rounded me-1" style="width:14px;height:14px;background:{{ f.color_hex }};border:1px solid #ccc;vertical-align:middle"></span>
+            {% endif %}
+            {{ f.family }}
+          </td>
+          <td>{{ f.diameter_mm }}mm</td>
+          <td>{{ f.active_count }}</td>
+          <td>{{ f.spool_count }}</td>
+          <td>
+            <a href="{{ url_for('filaments_detail', filament_id=f.id) }}" class="btn btn-sm btn-outline-secondary">Ver</a>
+            <a href="{{ url_for('spools_new') }}?filament_id={{ f.id }}" class="btn btn-sm btn-outline-dark">+ Spool</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="text-center text-muted py-4">Nenhum filamento cadastrado</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
