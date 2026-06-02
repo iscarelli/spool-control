@@ -49,6 +49,7 @@ main() {
     cp "$REPO_DIR/database.py"      "$APP_DIR/database.py"
     cp "$REPO_DIR/labels.py"        "$APP_DIR/labels.py"
     cp "$REPO_DIR/requirements.txt" "$APP_DIR/requirements.txt"
+    cp "$REPO_DIR/VERSION"          "$APP_DIR/VERSION"
     cp -r "$REPO_DIR/templates/." "$APP_DIR/templates/"
     cp -r "$REPO_DIR/static/."    "$APP_DIR/static/"
     cp "$REPO_DIR/deploy/update-lxc.sh"         "$APP_DIR/deploy/update-lxc.sh"
