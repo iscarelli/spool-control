@@ -31,11 +31,11 @@
     <a href="{{ url_for('spools_list') }}" class="btn btn-sm btn-outline-secondary">{{ _('Só ativos') }}</a>
     {% endif %}
     <button class="btn btn-sm btn-outline-warning" id="markAllBtn">
-      <i class="bi bi-printer-fill me-1"></i>{{ _('Fila: Todos') }}
+      <i class="bi bi-printer-fill me-1"></i>{{ _('Todos') }}
     </button>
-    <a href="{{ url_for('spools_new') }}" class="btn btn-primary btn-sm rounded-pill px-3 d-inline-flex flex-column align-items-center" style="gap:1px;padding-top:.3rem;padding-bottom:.3rem">
-      <i class="bi bi-plus-circle-fill" style="font-size:.9rem"></i>
-      <span style="font-size:.65rem;font-weight:600;letter-spacing:.03em">{{ _('Spool') }}</span>
+    <a href="{{ url_for('spools_new') }}" class="btn btn-primary btn-sm rounded-pill px-3 d-inline-flex flex-column align-items-center justify-content-center" style="height:2rem;padding-top:0;padding-bottom:0;gap:1px">
+      <i class="bi bi-plus-circle-fill" style="font-size:.75rem;line-height:1"></i>
+      <span style="font-size:.75rem;font-weight:600;letter-spacing:.02em;line-height:1">{{ _('Spool') }}</span>
     </a>
   </div>
 </div>

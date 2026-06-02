@@ -47,6 +47,7 @@ _EN = {
     "Ver finalizados":      "View finished",
     "Só ativos":            "Active only",
     "Fila: Todos":          "Queue: All",
+    "Todos":                "All",
     "+ Novo Spool":         "+ New Spool",
     "Novo Spool":           "New Spool",
     "Nenhum spool encontrado": "No spools found",
