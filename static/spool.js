@@ -1,3 +1,8 @@
+/* ── Bootstrap tooltips (global) ─────────────────────────────────────── */
+document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+  new bootstrap.Tooltip(el);
+});
+
 /* ── Client-side table filter ─────────────────────────────────────────── */
 document.querySelectorAll('[data-filter-for]').forEach(input => {
   const table = document.querySelector(input.dataset.filterFor);

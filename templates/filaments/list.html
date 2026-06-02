@@ -58,7 +58,8 @@
               <button class="btn btn-sm btn-outline-danger" title="Remover filamento"><i class="bi bi-trash"></i></button>
             </form>
             {% else %}
-            <span title="{{ f.spool_count }} spool(s) vinculado(s) — remova-os antes de excluir"
+            <span data-bs-toggle="tooltip" data-bs-placement="top"
+                  title="{{ f.spool_count }} spool(s) vinculado(s) — remova-os antes de excluir"
                   style="cursor:not-allowed;display:inline-block">
               <button class="btn btn-sm btn-outline-danger" disabled style="pointer-events:none">
                 <i class="bi bi-trash"></i>
