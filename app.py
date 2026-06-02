@@ -185,13 +185,20 @@ def filaments_list():
     return render_template("filaments/list.html", filaments=filaments, q=q)
 
 
+def _resolve_brand(form) -> str:
+    brand = form.get("brand", "").strip()
+    if brand == "__new__":
+        brand = form.get("new_brand_name", "").strip()
+    return brand
+
+
 @app.route("/filaments/new", methods=["GET", "POST"])
 @login_required
 def filaments_new():
     if request.method == "POST":
         try:
             fid = db.create_filament(
-                brand=request.form["brand"].strip(),
+                brand=_resolve_brand(request.form),
                 material=request.form["material"].strip(),
                 family=request.form["family"].strip(),
                 color_hex=request.form.get("color_hex", "").strip(),
@@ -202,7 +209,8 @@ def filaments_new():
             return redirect(url_for("filaments_detail", filament_id=fid))
         except Exception as e:
             flash(f"Erro: {e}", "danger")
-    return render_template("filaments/form.html", filament=None, materials=get_ordered_materials())
+    return render_template("filaments/form.html", filament=None,
+                           materials=get_ordered_materials(), brands=db.list_brands_ordered())
 
 
 @app.route("/filaments/<int:filament_id>")
@@ -225,7 +233,7 @@ def filaments_edit(filament_id):
         try:
             db.update_filament(
                 filament_id,
-                brand=request.form["brand"].strip(),
+                brand=_resolve_brand(request.form),
                 material=request.form["material"].strip(),
                 family=request.form["family"].strip(),
                 color_hex=request.form.get("color_hex", "").strip(),
@@ -236,7 +244,8 @@ def filaments_edit(filament_id):
             return redirect(url_for("filaments_detail", filament_id=filament_id))
         except Exception as e:
             flash(f"Erro: {e}", "danger")
-    return render_template("filaments/form.html", filament=filament, materials=get_ordered_materials())
+    return render_template("filaments/form.html", filament=filament,
+                           materials=get_ordered_materials(), brands=db.list_brands_ordered())
 
 
 @app.route("/filaments/<int:filament_id>/delete", methods=["POST"])

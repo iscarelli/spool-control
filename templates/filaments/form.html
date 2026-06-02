@@ -22,7 +22,33 @@
             </div>
             <div class="col-12">
               <label class="form-label fw-semibold">Marca <span class="text-danger">*</span></label>
-              <input type="text" name="brand" class="form-control" value="{{ filament.brand if filament else '' }}" required placeholder="ex: Bambu Lab, eSUN, Polymaker">
+              {% set current_brand = filament.brand if filament else '' %}
+              {% set known_names = brands | map(attribute='name') | list %}
+              <select name="brand" id="brandSelect" class="form-select" required>
+                <option value="">Selecione...</option>
+                {% set in_use = brands | selectattr('filament_count', '>', 0) | list %}
+                {% set others = brands | selectattr('filament_count', '==', 0) | list %}
+                {% if in_use %}
+                <optgroup label="Em uso">
+                  {% for b in in_use %}
+                  <option value="{{ b.name }}" {% if current_brand == b.name %}selected{% endif %}>{{ b.name }}</option>
+                  {% endfor %}
+                </optgroup>
+                {% endif %}
+                {% if others %}
+                <optgroup label="Outras marcas">
+                  {% for b in others %}
+                  <option value="{{ b.name }}" {% if current_brand == b.name %}selected{% endif %}>{{ b.name }}</option>
+                  {% endfor %}
+                </optgroup>
+                {% endif %}
+                {% if current_brand and current_brand not in known_names %}
+                <option value="{{ current_brand }}" selected>{{ current_brand }}</option>
+                {% endif %}
+                <option value="__new__">— Nova marca...</option>
+              </select>
+              <input type="text" name="new_brand_name" id="newBrandInput"
+                     class="form-control mt-2 d-none" placeholder="Nome da nova marca">
             </div>
             <div class="col-12">
               <label class="form-label fw-semibold">Família <span class="text-danger">*</span></label>
@@ -73,5 +99,15 @@ const picker = document.getElementById('colorPicker');
 const hex = document.getElementById('colorHex');
 picker.addEventListener('input', () => hex.value = picker.value);
 hex.addEventListener('input', () => { if(/^#[0-9a-fA-F]{6}$/.test(hex.value)) picker.value = hex.value; });
+
+const brandSelect = document.getElementById('brandSelect');
+const newBrandInput = document.getElementById('newBrandInput');
+function toggleNewBrand() {
+  const isNew = brandSelect.value === '__new__';
+  newBrandInput.classList.toggle('d-none', !isNew);
+  newBrandInput.required = isNew;
+}
+brandSelect.addEventListener('change', toggleNewBrand);
+toggleNewBrand();
 </script>
 {% endblock %}

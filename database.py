@@ -218,6 +218,22 @@ def list_brands():
     return rows
 
 
+def list_brands_ordered():
+    db = get_db()
+    rows = db.execute("""
+        SELECT b.name, b.logo_path,
+               COUNT(DISTINCT f.id) AS filament_count
+        FROM brands b
+        LEFT JOIN filaments f ON f.brand = b.name
+        GROUP BY b.name
+        ORDER BY
+            CASE WHEN COUNT(DISTINCT f.id) > 0 THEN 0 ELSE 1 END,
+            b.name
+    """).fetchall()
+    db.close()
+    return rows
+
+
 def get_brand(name):
     db = get_db()
     row = db.execute("SELECT * FROM brands WHERE name=?", (name,)).fetchone()
