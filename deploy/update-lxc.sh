@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # =============================================================================
-# update-lxc.sh — Atualiza o Spool Control via git pull
+# update-lxc.sh — Atualiza o Spool Control via git clone
 # Execute DENTRO do LXC como root: bash /opt/spool-control/deploy/update-lxc.sh
 #
 # Primeira execução: bash update-lxc.sh --setup <GITHUB_TOKEN>
+# Deploy normal:     bash update-lxc.sh
+# Deploy de versão:  bash update-lxc.sh --ref v1.2.1   (rollback para tag/branch)
 # =============================================================================
 # ESTRUTURA: tudo dentro de main() para que bash compile a função inteira
 # antes de executá-la — evita que o 'cp' deste próprio script corrompa a execução.
@@ -34,20 +36,31 @@ main() {
         return 0
     fi
 
-    # ── Deploy normal ─────────────────────────────────────────────────────────
+    # ── Deploy normal / rollback ──────────────────────────────────────────────
+    local REF=""
+    if [ "${1:-}" = "--ref" ]; then
+        [ -z "${2:-}" ] && error "Uso: $0 --ref <tag|branch|commit>"
+        REF="$2"
+    fi
+
     [ "$(id -u)" -eq 0 ] || error "Execute como root."
     [ -f "$TOKEN_FILE" ] || error "Token nao encontrado. Execute primeiro: $0 --setup <TOKEN>"
     local TOKEN
     TOKEN=$(cat "$TOKEN_FILE")
 
-    info "Clonando repositorio..."
+    info "Clonando repositorio${REF:+ (ref: $REF)}..."
     rm -rf "$REPO_DIR"
     git clone -q "https://${TOKEN}@${REPO}" "$REPO_DIR"
+    if [ -n "$REF" ]; then
+        git -C "$REPO_DIR" checkout -q "$REF"
+        warn "Deploying ref '$REF' — nao e a HEAD do main."
+    fi
 
     info "Atualizando arquivos em $APP_DIR..."
     cp "$REPO_DIR/app.py"           "$APP_DIR/app.py"
     cp "$REPO_DIR/database.py"      "$APP_DIR/database.py"
     cp "$REPO_DIR/labels.py"        "$APP_DIR/labels.py"
+    cp "$REPO_DIR/translations.py"  "$APP_DIR/translations.py"
     cp "$REPO_DIR/requirements.txt" "$APP_DIR/requirements.txt"
     cp "$REPO_DIR/VERSION"          "$APP_DIR/VERSION"
     cp "$REPO_DIR/CHANGELOG.md"     "$APP_DIR/CHANGELOG.md"
