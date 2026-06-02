@@ -37,7 +37,10 @@
     <span class="text-muted fw-normal">— {{ filament.family }}</span>
   </h4>
   <a href="{{ url_for('filaments_edit', filament_id=filament.id) }}" class="btn btn-sm btn-outline-secondary ms-auto">{{ _('Editar') }}</a>
-  <a href="{{ url_for('spools_new') }}?filament_id={{ filament.id }}" class="btn btn-primary btn-sm rounded-pill px-3"><i class="bi bi-plus-circle-fill me-1"></i>{{ _('Novo Spool') }}</a>
+  <a href="{{ url_for('spools_new') }}?filament_id={{ filament.id }}" class="btn btn-primary btn-sm rounded-pill px-3 d-inline-flex flex-column align-items-center" style="gap:1px;padding-top:.3rem;padding-bottom:.3rem">
+    <i class="bi bi-plus-circle-fill" style="font-size:.9rem"></i>
+    <span style="font-size:.65rem;font-weight:600;letter-spacing:.03em">{{ _('Spool') }}</span>
+  </a>
 </div>
 
 <div class="row g-3 mb-4">

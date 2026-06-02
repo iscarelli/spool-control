@@ -37,6 +37,7 @@ _EN = {
     "Filtrar...":                    "Filter...",
     "+ Novo Filamento":              "+ New Filament",
     "Novo Filamento":                "New Filament",
+    "Filamento":                     "Filament",
     "Nenhum filamento cadastrado":   "No filaments registered",
     "Duplicar filamento":            "Duplicate filament",
     "Remover filamento":             "Delete filament",

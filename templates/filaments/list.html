@@ -20,7 +20,10 @@
     <input class="form-control form-control-sm" type="search" id="filterInput"
            data-filter-for="#filamentTable"
            placeholder="{{ _('Filtrar...') }}" value="{{ q or '' }}" style="min-width:160px" autocomplete="off">
-    <a href="{{ url_for('filaments_new') }}" class="btn btn-primary btn-sm rounded-pill px-3"><i class="bi bi-plus-circle-fill me-1"></i>{{ _('Novo Filamento') }}</a>
+    <a href="{{ url_for('filaments_new') }}" class="btn btn-primary btn-sm rounded-pill px-3 d-inline-flex flex-column align-items-center" style="gap:1px;padding-top:.3rem;padding-bottom:.3rem">
+      <i class="bi bi-plus-circle-fill" style="font-size:.9rem"></i>
+      <span style="font-size:.65rem;font-weight:600;letter-spacing:.03em">{{ _('Filamento') }}</span>
+    </a>
   </div>
 </div>
 <div class="card">
