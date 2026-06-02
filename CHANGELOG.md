@@ -10,6 +10,20 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.2.0] — 2026-06-02
+
+### Adicionado
+- Gráfico de rosca (donut SVG) na lista de filamentos: exibe proporção de estoque restante vs. nominal de todos os spools ativos, usando a cor do filamento
+- Donut agregado no título da lista de filamentos, mostrando o percentual total de estoque disponível entre todos os filamentos
+- Gráfico de rosca (donut SVG) na lista de spools: exibe proporção restante de cada rolo individualmente, usando a cor do filamento
+- Script de deploy (`update-lxc.sh`) passa a copiar o `CHANGELOG.md` para o servidor a cada atualização
+
+### Alterado
+- Lista de filamentos: removido swatch de cor antes da Família (substituído pelo donut)
+- Lista de spools: removido swatch de cor e barra de progresso (substituídos pelo donut)
+
+---
+
 ## [1.1.0] — 2026-06-02
 
 ### Adicionado

@@ -1,8 +1,30 @@
 {% extends "base.html" %}
 {% block title %}Filamentos — Spool Control{% endblock %}
 {% block content %}
+
+{# Totais para o donut do título #}
+{% set ns = namespace(nom=0, net=0) %}
+{% for f in filaments %}
+  {% set ns.nom = ns.nom + (f.total_nominal_g or 0) %}
+  {% set ns.net = ns.net + (f.total_net_g or 0) %}
+{% endfor %}
+{% set total_pct = ((ns.net / ns.nom * 100)|round(1)) if ns.nom > 0 else 0 %}
+
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <h4 class="mb-0 fw-bold">Filamentos</h4>
+  <div class="d-flex align-items-center gap-3">
+    <h4 class="mb-0 fw-bold">Filamentos</h4>
+    {% if ns.nom > 0 %}
+    <span data-bs-toggle="tooltip" title="{{ total_pct|int }}% do total disponível">
+      <svg width="52" height="52" viewBox="0 0 36 36">
+        <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#dee2e6" stroke-width="4"/>
+        <circle cx="18" cy="18" r="15.9155" fill="none"
+                stroke="#6c757d" stroke-width="4"
+                stroke-dasharray="{{ total_pct }} {{ 100 - total_pct }}"
+                transform="rotate(-90 18 18)"/>
+      </svg>
+    </span>
+    {% endif %}
+  </div>
   <div class="d-flex gap-2">
     <input class="form-control form-control-sm" type="search" id="filterInput"
            data-filter-for="#filamentTable"
@@ -15,6 +37,7 @@
     <table class="table table-hover mb-0" id="filamentTable" data-sortable>
       <thead class="table-dark">
         <tr>
+          <th style="width:44px"></th>
           <th data-sort="text">Material</th>
           <th data-sort="text">Marca</th>
           <th data-sort="text">Família</th>
@@ -26,7 +49,30 @@
       </thead>
       <tbody>
         {% for f in filaments %}
+        {% if f.total_nominal_g and f.total_nominal_g > 0 %}
+          {% set pct = [(f.total_net_g / f.total_nominal_g * 100)|round(1), 100]|min %}
+        {% else %}
+          {% set pct = 0 %}
+        {% endif %}
+        {% set fill = f.color_hex if f.color_hex else '#6c757d' %}
         <tr>
+          <td class="text-center align-middle" style="width:44px;padding:6px 4px">
+            {% if f.active_count > 0 %}
+            <span data-bs-toggle="tooltip" title="{{ pct|int }}% disponível">
+              <svg width="34" height="34" viewBox="0 0 36 36">
+                <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#dee2e6" stroke-width="4"/>
+                <circle cx="18" cy="18" r="15.9155" fill="none"
+                        stroke="{{ fill }}" stroke-width="4"
+                        stroke-dasharray="{{ pct }} {{ 100 - pct }}"
+                        transform="rotate(-90 18 18)"/>
+              </svg>
+            </span>
+            {% else %}
+            <svg width="34" height="34" viewBox="0 0 36 36">
+              <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#dee2e6" stroke-width="4"/>
+            </svg>
+            {% endif %}
+          </td>
           <td>
             <a href="{{ url_for('spools_list') }}?q={{ f.material }}" class="badge bg-secondary text-decoration-none">{{ f.material }}</a>
           </td>
@@ -38,9 +84,6 @@
             <a href="{{ url_for('spools_list') }}?q={{ f.brand }}" class="text-dark text-decoration-none">{{ f.brand }}</a>
           </td>
           <td>
-            {% if f.color_hex %}
-            <span class="d-inline-block rounded me-1" style="width:14px;height:14px;background:{{ f.color_hex }};border:1px solid #ccc;vertical-align:middle"></span>
-            {% endif %}
             <a href="{{ url_for('spools_list') }}?q={{ f.family }}" class="text-dark text-decoration-none">{{ f.family }}</a>
           </td>
           <td>{{ f.diameter_mm }}mm</td>
@@ -69,7 +112,7 @@
           </td>
         </tr>
         {% else %}
-        <tr data-no-result><td colspan="7" class="text-center text-muted py-4">Nenhum filamento cadastrado</td></tr>
+        <tr data-no-result><td colspan="8" class="text-center text-muted py-4">Nenhum filamento cadastrado</td></tr>
         {% endfor %}
       </tbody>
     </table>

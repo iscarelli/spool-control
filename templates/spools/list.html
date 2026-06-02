@@ -20,38 +20,41 @@
     <table class="table table-hover mb-0" id="spoolTable" data-sortable>
       <thead class="table-dark">
         <tr>
+          <th style="width:44px"></th>
           <th data-sort="num">ID</th>
           <th data-sort="text">Material</th>
           <th data-sort="text">Marca / Família</th>
           <th data-sort="text">Local</th>
           <th data-sort="num">Peso Atual</th>
-          <th data-sort="num">%</th>
           <th></th>
         </tr>
       </thead>
       <tbody>
         {% for s in spools %}
+        {% if s.current_net_g is not none and s.nominal_weight_g > 0 %}
+          {% set pct = [(s.current_net_g / s.nominal_weight_g * 100)|round(1), 100]|min %}
+        {% else %}
+          {% set pct = 100 %}
+        {% endif %}
+        {% set fill = s.color_hex if s.color_hex else '#6c757d' %}
         <tr class="{% if not s.active %}table-secondary{% endif %}">
+          <td class="text-center align-middle" style="width:44px;padding:6px 4px">
+            <span data-bs-toggle="tooltip" title="{{ pct|int }}% disponível">
+              <svg width="34" height="34" viewBox="0 0 36 36">
+                <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#dee2e6" stroke-width="4"/>
+                <circle cx="18" cy="18" r="15.9155" fill="none"
+                        stroke="{{ fill }}" stroke-width="4"
+                        stroke-dasharray="{{ pct }} {{ 100 - pct }}"
+                        transform="rotate(-90 18 18)"/>
+              </svg>
+            </span>
+          </td>
           <td class="fw-bold">SP-{{ '%04d'|format(s.id) }}</td>
           <td><span class="badge bg-secondary">{{ s.material }}</span></td>
-          <td>
-            {% if s.color_hex %}
-            <span class="d-inline-block rounded me-1" style="width:12px;height:12px;background:{{ s.color_hex }};border:1px solid #ccc;vertical-align:middle"></span>
-            {% endif %}
-            {{ s.brand }} / {{ s.family }}
-          </td>
+          <td>{{ s.brand }} / {{ s.family }}</td>
           <td>{{ s.location or '—' }}</td>
           <td>
-            {% if s.current_net_g is not none %}{{ s.current_net_g|int }}{% else %}—{% endif %}
-          </td>
-          <td style="min-width:90px">
-            {% if s.current_net_g is not none and s.nominal_weight_g > 0 %}
-              {% set pct = [(s.current_net_g / s.nominal_weight_g * 100)|int, 100]|min %}
-              <div class="progress" style="height:10px">
-                <div class="progress-bar {% if pct < 20 %}bg-danger{% elif pct < 50 %}bg-warning{% else %}bg-success{% endif %}" style="width:{{ pct }}%"></div>
-              </div>
-              <div class="text-muted" style="font-size:0.7rem">{{ pct }}%</div>
-            {% endif %}
+            {% if s.current_net_g is not none %}{{ s.current_net_g|int }}g{% else %}—{% endif %}
           </td>
           <td class="text-nowrap">
             <a href="{{ url_for('spools_detail', spool_id=s.id) }}" class="btn btn-sm btn-outline-secondary">Ver</a>

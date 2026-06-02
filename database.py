@@ -320,10 +320,17 @@ def list_filaments():
         SELECT f.*,
                COUNT(s.id) AS spool_count,
                SUM(CASE WHEN s.active=1 THEN 1 ELSE 0 END) AS active_count,
-               b.logo_path AS brand_logo
+               b.logo_path AS brand_logo,
+               COALESCE(SUM(CASE WHEN s.active=1 THEN s.nominal_weight_g ELSE 0 END), 0) AS total_nominal_g,
+               COALESCE(SUM(CASE WHEN s.active=1 THEN COALESCE(lw.net_weight_g, s.nominal_weight_g) ELSE 0 END), 0) AS total_net_g
         FROM filaments f
         LEFT JOIN spools s ON s.filament_id = f.id
         LEFT JOIN brands b ON b.name = f.brand
+        LEFT JOIN (
+            SELECT spool_id, net_weight_g
+            FROM weight_readings
+            WHERE id IN (SELECT MAX(id) FROM weight_readings GROUP BY spool_id)
+        ) lw ON lw.spool_id = s.id
         GROUP BY f.id
         ORDER BY f.material, f.brand, f.family
     """).fetchall()
@@ -671,9 +678,16 @@ def search_filaments(q):
     rows = db.execute("""
         SELECT f.*,
                COUNT(s.id) AS spool_count,
-               SUM(CASE WHEN s.active=1 THEN 1 ELSE 0 END) AS active_count
+               SUM(CASE WHEN s.active=1 THEN 1 ELSE 0 END) AS active_count,
+               COALESCE(SUM(CASE WHEN s.active=1 THEN s.nominal_weight_g ELSE 0 END), 0) AS total_nominal_g,
+               COALESCE(SUM(CASE WHEN s.active=1 THEN COALESCE(lw.net_weight_g, s.nominal_weight_g) ELSE 0 END), 0) AS total_net_g
         FROM filaments f
         LEFT JOIN spools s ON s.filament_id = f.id
+        LEFT JOIN (
+            SELECT spool_id, net_weight_g
+            FROM weight_readings
+            WHERE id IN (SELECT MAX(id) FROM weight_readings GROUP BY spool_id)
+        ) lw ON lw.spool_id = s.id
         WHERE f.brand LIKE ? OR f.material LIKE ? OR f.family LIKE ?
         GROUP BY f.id ORDER BY f.material, f.brand LIMIT 100
     """, (p, p, p)).fetchall()
