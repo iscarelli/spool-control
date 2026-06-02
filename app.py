@@ -25,11 +25,17 @@ def _fetch_brand_logo(brand_name: str, domain: str) -> bool:
     BRANDS_DIR.mkdir(exist_ok=True)
     slug = re.sub(r'[^a-z0-9]+', '-', brand_name.lower()).strip('-')
     dest = BRANDS_DIR / f"{slug}.png"
-    url = f"https://logo.clearbit.com/{_clean_domain(domain)}"
+    clean = _clean_domain(domain)
+    url = (
+        f"https://t3.gstatic.com/faviconV2"
+        f"?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+        f"&url=https://{clean}&size=256"
+    )
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
         with urllib.request.urlopen(req, timeout=10) as resp:
-            if 'image' in resp.headers.get('Content-Type', ''):
+            ct = resp.headers.get('Content-Type', '')
+            if resp.status == 200 and ('image' in ct or 'octet' in ct):
                 dest.write_bytes(resp.read())
                 db.update_brand_logo_path(brand_name, f"brands/{slug}.png")
                 return True

@@ -49,11 +49,16 @@ def _slug(name: str) -> str:
 
 def fetch_logo(name: str, domain: str) -> str | None:
     dest = BRANDS_DIR / f"{_slug(name)}.png"
-    url = f"https://logo.clearbit.com/{domain}"
+    url = (
+        f"https://t3.gstatic.com/faviconV2"
+        f"?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+        f"&url=https://{domain}&size=256"
+    )
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
         with urllib.request.urlopen(req, timeout=10) as resp:
-            if 'image' in resp.headers.get('Content-Type', ''):
+            ct = resp.headers.get('Content-Type', '')
+            if resp.status == 200 and ('image' in ct or 'octet' in ct):
                 dest.write_bytes(resp.read())
                 return f"brands/{_slug(name)}.png"
     except Exception:
