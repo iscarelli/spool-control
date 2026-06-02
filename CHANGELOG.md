@@ -10,6 +10,13 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.4.6] — 2026-06-02
+
+### Adicionado
+- Opção "Novo material..." no dropdown de material do formulário de filamento — permite cadastrar tipos não listados (mesmo padrão já existente para marcas)
+
+---
+
 ## [1.4.1] — 2026-06-02
 
 ### Corrigido

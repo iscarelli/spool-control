@@ -208,6 +208,13 @@ def _resolve_brand(form) -> str:
     return brand
 
 
+def _resolve_material(form) -> str:
+    material = form.get("material", "").strip()
+    if material == "__new__":
+        material = form.get("new_material_name", "").strip()
+    return material
+
+
 @app.route("/filaments/new", methods=["GET", "POST"])
 @login_required
 def filaments_new():
@@ -215,7 +222,7 @@ def filaments_new():
         try:
             fid = db.create_filament(
                 brand=_resolve_brand(request.form),
-                material=request.form["material"].strip(),
+                material=_resolve_material(request.form),
                 family=request.form["family"].strip(),
                 color_hex=request.form.get("color_hex", "").strip(),
                 diameter_mm=float(request.form.get("diameter_mm") or 1.75),
@@ -251,7 +258,7 @@ def filaments_edit(filament_id):
             db.update_filament(
                 filament_id,
                 brand=_resolve_brand(request.form),
-                material=request.form["material"].strip(),
+                material=_resolve_material(request.form),
                 family=request.form["family"].strip(),
                 color_hex=request.form.get("color_hex", "").strip(),
                 diameter_mm=float(request.form.get("diameter_mm") or 1.75),

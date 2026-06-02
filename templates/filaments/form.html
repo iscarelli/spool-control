@@ -14,12 +14,15 @@
           <div class="row g-3">
             <div class="col-12">
               <label class="form-label fw-semibold">Material <span class="text-danger">*</span></label>
-              <select name="material" class="form-select" required>
+              <select name="material" id="materialSelect" class="form-select" required>
                 <option value="">Selecione...</option>
                 {% for m in materials %}
                 <option value="{{ m }}" {% if filament and filament.material == m %}selected{% endif %}>{{ m }}</option>
                 {% endfor %}
+                <option value="__new__">— Novo material...</option>
               </select>
+              <input type="text" name="new_material_name" id="newMaterialInput"
+                     class="form-control mt-2 d-none" placeholder="Nome do novo material (ex: PLA-Silk)">
             </div>
             <div class="col-12">
               <label class="form-label fw-semibold">Marca <span class="text-danger">*</span></label>
@@ -100,6 +103,16 @@ const picker = document.getElementById('colorPicker');
 const hex = document.getElementById('colorHex');
 picker.addEventListener('input', () => hex.value = picker.value);
 hex.addEventListener('input', () => { if(/^#[0-9a-fA-F]{6}$/.test(hex.value)) picker.value = hex.value; });
+
+const materialSelect = document.getElementById('materialSelect');
+const newMaterialInput = document.getElementById('newMaterialInput');
+function toggleNewMaterial() {
+  const isNew = materialSelect.value === '__new__';
+  newMaterialInput.classList.toggle('d-none', !isNew);
+  newMaterialInput.required = isNew;
+}
+materialSelect.addEventListener('change', toggleNewMaterial);
+toggleNewMaterial();
 
 const brandSelect = document.getElementById('brandSelect');
 const newBrandInput = document.getElementById('newBrandInput');
