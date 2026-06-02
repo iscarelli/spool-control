@@ -231,6 +231,7 @@ def filaments_edit(filament_id):
     filament = db.get_filament(filament_id)
     if not filament:
         abort(404)
+    next_url = request.args.get("next") or request.form.get("next") or ""
     if request.method == "POST":
         try:
             db.update_filament(
@@ -243,11 +244,12 @@ def filaments_edit(filament_id):
                 notes=request.form.get("notes", "").strip(),
             )
             flash("Filamento atualizado", "success")
-            return redirect(url_for("filaments_detail", filament_id=filament_id))
+            return redirect(next_url or url_for("filaments_detail", filament_id=filament_id))
         except Exception as e:
             flash(f"Erro: {e}", "danger")
     return render_template("filaments/form.html", filament=filament,
-                           materials=get_ordered_materials(), brands=db.list_brands_ordered())
+                           materials=get_ordered_materials(), brands=db.list_brands_ordered(),
+                           next_url=next_url)
 
 
 @app.route("/filaments/<int:filament_id>/delete", methods=["POST"])

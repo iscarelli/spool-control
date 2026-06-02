@@ -10,6 +10,7 @@
     <div class="card">
       <div class="card-body">
         <form method="post">
+          {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
           <div class="row g-3">
             <div class="col-12">
               <label class="form-label fw-semibold">Material <span class="text-danger">*</span></label>
