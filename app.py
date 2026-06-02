@@ -63,6 +63,8 @@ def bootstrap():
 
 bootstrap()
 
+APP_VERSION = (Path(__file__).parent / "VERSION").read_text().strip()
+
 ALL_MATERIALS = [
     "ABS", "ABS+", "ABS-CF",
     "ASA", "ASA-CF",
@@ -111,7 +113,7 @@ def _parse_price(s):
 @app.context_processor
 def inject_globals():
     count = db.queue_count() if "user_id" in session else 0
-    return {"label_queue_count": count}
+    return {"label_queue_count": count, "app_version": APP_VERSION}
 
 
 # ── Auth decorators ────────────────────────────────────────────────────────

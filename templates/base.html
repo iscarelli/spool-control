@@ -84,6 +84,10 @@
   {% block content %}{% endblock %}
 </div>
 
+<div style="position:fixed;bottom:8px;right:12px;font-size:0.7rem;color:#bbb;z-index:1000;pointer-events:none">
+  v{{ app_version }}
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{{ url_for('static', filename='spool.js') }}"></script>
 {% block scripts %}{% endblock %}
