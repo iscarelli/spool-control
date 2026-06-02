@@ -18,6 +18,21 @@
     <a href="{{ url_for('spool_label_pdf', spool_id=spool.id) }}" class="btn btn-outline-dark btn-sm" target="_blank">
       <i class="bi bi-printer me-1"></i>Etiqueta PDF
     </a>
+    {% if in_queue %}
+    <form method="post" action="{{ url_for('label_queue_remove', spool_id=spool.id) }}">
+      <input type="hidden" name="next" value="{{ url_for('spools_detail', spool_id=spool.id) }}">
+      <button class="btn btn-sm btn-warning" title="Remover da fila de impressão">
+        <i class="bi bi-printer-fill me-1"></i>Na fila
+      </button>
+    </form>
+    {% else %}
+    <form method="post" action="{{ url_for('label_queue_add', spool_id=spool.id) }}">
+      <input type="hidden" name="next" value="{{ url_for('spools_detail', spool_id=spool.id) }}">
+      <button class="btn btn-sm btn-outline-warning" title="Adicionar à fila de impressão">
+        <i class="bi bi-printer me-1"></i>+ Fila
+      </button>
+    </form>
+    {% endif %}
   </div>
   {% endif %}
 </div>
@@ -78,7 +93,7 @@
         <div><span class="text-muted">Compra:</span> {{ spool.purchase_date }}</div>
         {% endif %}
         {% if spool.purchase_price %}
-        <div><span class="text-muted">Preço:</span> R$ {{ "%.2f"|format(spool.purchase_price) }}</div>
+        <div><span class="text-muted">Preço:</span> R$ {{ "%.2f"|format(spool.purchase_price)|replace(".", ",") }}</div>
         {% endif %}
       </div>
     </div>
@@ -110,6 +125,37 @@
         {% endfor %}
       </tbody>
     </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if queue_prompt %}
+<script>
+window.addEventListener('DOMContentLoaded', function() {
+  const modal = new bootstrap.Modal(document.getElementById('queueModal'));
+  modal.show();
+});
+</script>
+<div class="modal fade" id="queueModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-printer me-2"></i>Fila de Impressão</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        Deseja adicionar <strong>SP-{{ '%04d'|format(spool.id) }}</strong> à fila de impressão de etiquetas?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Não</button>
+        <form method="post" action="{{ url_for('label_queue_add', spool_id=spool.id) }}">
+          <input type="hidden" name="next" value="{{ url_for('spools_detail', spool_id=spool.id) }}">
+          <button type="submit" class="btn btn-dark">Sim, adicionar</button>
+        </form>
+      </div>
+    </div>
   </div>
 </div>
 {% endif %}

@@ -25,8 +25,8 @@
               <input type="text" name="brand" class="form-control" value="{{ filament.brand if filament else '' }}" required placeholder="ex: Bambu Lab, eSUN, Polymaker">
             </div>
             <div class="col-12">
-              <label class="form-label fw-semibold">Família / Cor <span class="text-danger">*</span></label>
-              <input type="text" name="family" class="form-control" value="{{ filament.family if filament else '' }}" required placeholder="ex: Basic PLA Black, Matte White">
+              <label class="form-label fw-semibold">Família <span class="text-danger">*</span></label>
+              <input type="text" name="family" class="form-control" value="{{ filament.family if filament else '' }}" required placeholder="ex: Basic, Matte, Rapid, HS">
             </div>
             <div class="col-6">
               <label class="form-label fw-semibold">Cor (hex)</label>
@@ -34,7 +34,9 @@
                 <span class="input-group-text p-1">
                   <input type="color" id="colorPicker" value="{{ filament.color_hex if filament and filament.color_hex else '#cccccc' }}" style="width:32px;height:32px;border:none;cursor:pointer">
                 </span>
-                <input type="text" name="color_hex" id="colorHex" class="form-control" value="{{ filament.color_hex if filament else '' }}" placeholder="#rrggbb" maxlength="7">
+                <input type="text" name="color_hex" id="colorHex" class="form-control font-monospace"
+                       value="{{ filament.color_hex if filament and filament.color_hex else '#cccccc' }}"
+                       placeholder="#cccccc" maxlength="7">
               </div>
             </div>
             <div class="col-6">

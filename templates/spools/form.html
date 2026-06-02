@@ -9,7 +9,7 @@
     </div>
     <div class="card">
       <div class="card-body">
-        <form method="post">
+        <form method="post" id="spoolForm">
           {% if not spool %}
           <div class="mb-3">
             <label class="form-label fw-semibold">Filamento <span class="text-danger">*</span></label>
@@ -61,9 +61,13 @@
                      value="{{ spool.purchase_date if spool else '' }}">
             </div>
             <div class="col-md-6">
-              <label class="form-label fw-semibold">Preço (R$)</label>
-              <input type="number" name="purchase_price" class="form-control" step="0.01" min="0"
-                     value="{{ spool.purchase_price if spool and spool.purchase_price else '' }}">
+              <label class="form-label fw-semibold">Preço</label>
+              <div class="input-group">
+                <span class="input-group-text">R$</span>
+                <input type="text" name="purchase_price" id="priceInput" class="form-control"
+                       placeholder="0,00" inputmode="numeric"
+                       value="{% if spool and spool.purchase_price %}{{ '%.2f'|format(spool.purchase_price)|replace('.',',') }}{% endif %}">
+              </div>
             </div>
             <div class="col-12">
               <label class="form-label fw-semibold">Notas</label>
@@ -89,14 +93,34 @@
 {% endblock %}
 {% block scripts %}
 <script>
+// Tara hint
 const sel = document.getElementById('spoolModelSelect');
 const hint = document.getElementById('tareHint');
 function updateTareHint() {
   const opt = sel.options[sel.selectedIndex];
   const tare = opt.dataset.tare;
-  hint.textContent = tare ? `Tara do modelo selecionado: ${parseFloat(tare).toFixed(0)}g` : '';
+  hint.textContent = tare ? `Tara do modelo: ${parseFloat(tare).toFixed(0)}g` : '';
 }
 sel.addEventListener('change', updateTareHint);
 updateTareHint();
+
+// Máscara de preço (formato: 1.234,56)
+const priceInput = document.getElementById('priceInput');
+priceInput.addEventListener('input', function(e) {
+  let raw = this.value.replace(/\D/g, '');
+  if (!raw) { this.value = ''; return; }
+  let num = parseInt(raw, 10);
+  let str = num.toString().padStart(3, '0');
+  let cents = str.slice(-2);
+  let reais = str.slice(0, -2).replace(/^0+/, '') || '0';
+  reais = reais.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  this.value = reais + ',' + cents;
+});
+
+// Antes de submeter, converte para formato float (troca ponto/vírgula)
+document.getElementById('spoolForm').addEventListener('submit', function() {
+  let v = priceInput.value.replace(/\./g, '').replace(',', '.');
+  priceInput.value = v;
+});
 </script>
 {% endblock %}

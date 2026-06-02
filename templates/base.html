@@ -24,6 +24,7 @@
         <li class="nav-item"><a class="nav-link" href="{{ url_for('filaments_list') }}"><i class="bi bi-box2-fill me-1"></i>Filamentos</a></li>
         <li class="nav-item"><a class="nav-link" href="{{ url_for('spools_list') }}"><i class="bi bi-circle-fill me-1"></i>Spools</a></li>
         <li class="nav-item"><a class="nav-link" href="{{ url_for('spool_models_list') }}"><i class="bi bi-archive-fill me-1"></i>Carretéis Vazios</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('quick_weigh') }}"><i class="bi bi-balance-scale me-1"></i>Pesar</a></li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown"><i class="bi bi-bar-chart-fill me-1"></i>Relatórios</a>
           <ul class="dropdown-menu">
@@ -31,6 +32,15 @@
             <li><a class="dropdown-item" href="{{ url_for('report_by_location') }}">Por Local</a></li>
             <li><a class="dropdown-item" href="{{ url_for('report_low_stock') }}">Estoque Baixo</a></li>
             <li><a class="dropdown-item" href="{{ url_for('report_weight_history') }}">Histórico de Peso</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a class="dropdown-item d-flex align-items-center gap-2" href="{{ url_for('label_queue') }}">
+                <i class="bi bi-printer"></i>Fila de Etiquetas
+                {% if label_queue_count > 0 %}
+                <span class="badge bg-danger rounded-pill">{{ label_queue_count }}</span>
+                {% endif %}
+              </a>
+            </li>
           </ul>
         </li>
         {% if session.role == 'admin' %}
@@ -43,6 +53,12 @@
         </li>
         {% endif %}
       </ul>
+      <form class="d-flex me-2" action="{{ url_for('search') }}" method="get">
+        <div class="input-group input-group-sm">
+          <input class="form-control" type="search" name="q" placeholder="Buscar..." value="{{ request.args.get('q','') if request.endpoint == 'search' else '' }}" style="min-width:160px">
+          <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
+        </div>
+      </form>
       <span class="navbar-text me-3 text-secondary small">{{ session.username }}</span>
       <form method="post" action="{{ url_for('logout') }}" class="d-inline">
         <button class="btn btn-outline-secondary btn-sm" type="submit">Sair</button>

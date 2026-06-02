@@ -82,6 +82,12 @@ def init_db():
             ip       TEXT NOT NULL DEFAULT ''
         );
 
+        CREATE TABLE IF NOT EXISTS label_queue (
+            id        INTEGER PRIMARY KEY AUTOINCREMENT,
+            spool_id  INTEGER NOT NULL UNIQUE REFERENCES spools(id),
+            added_at  TEXT    NOT NULL
+        );
+
         INSERT OR IGNORE INTO settings (key, value) VALUES
             ('app_base_url',         'http://localhost:5000'),
             ('low_stock_threshold_g','200'),
@@ -503,6 +509,100 @@ def report_low_stock(threshold_g=200, threshold_pct=20):
     """, (threshold_g, threshold_pct)).fetchall()
     db.close()
     return rows
+
+
+# ── Label Queue ────────────────────────────────────────────────────────────
+
+def queue_add(spool_id):
+    db = get_db()
+    db.execute(
+        "INSERT OR IGNORE INTO label_queue (spool_id, added_at) VALUES (?,?)",
+        (spool_id, now_iso()),
+    )
+    db.commit()
+    db.close()
+
+
+def queue_remove(spool_id):
+    db = get_db()
+    db.execute("DELETE FROM label_queue WHERE spool_id=?", (spool_id,))
+    db.commit()
+    db.close()
+
+
+def queue_list():
+    db = get_db()
+    rows = db.execute(f"""
+        {_spool_query_base()}
+        WHERE s.id IN (SELECT spool_id FROM label_queue)
+        ORDER BY (SELECT added_at FROM label_queue WHERE spool_id = s.id)
+    """).fetchall()
+    db.close()
+    return rows
+
+
+def queue_count():
+    db = get_db()
+    n = db.execute("SELECT COUNT(*) FROM label_queue").fetchone()[0]
+    db.close()
+    return n
+
+
+def queue_clear():
+    db = get_db()
+    db.execute("DELETE FROM label_queue")
+    db.commit()
+    db.close()
+
+
+def is_in_queue(spool_id):
+    db = get_db()
+    row = db.execute("SELECT 1 FROM label_queue WHERE spool_id=?", (spool_id,)).fetchone()
+    db.close()
+    return row is not None
+
+
+# ── Search ─────────────────────────────────────────────────────────────────
+
+def search_spools(q):
+    db = get_db()
+    p = f"%{q}%"
+    rows = db.execute(
+        f"""{_spool_query_base()}
+            WHERE s.active=1 AND (
+                f.brand LIKE ? OR f.material LIKE ? OR f.family LIKE ?
+                OR s.location LIKE ? OR printf('SP-%04d', s.id) LIKE ?
+            )
+            ORDER BY f.material, f.brand, s.id LIMIT 100""",
+        (p, p, p, p, p),
+    ).fetchall()
+    db.close()
+    return rows
+
+
+def search_filaments(q):
+    db = get_db()
+    p = f"%{q}%"
+    rows = db.execute("""
+        SELECT f.*,
+               COUNT(s.id) AS spool_count,
+               SUM(CASE WHEN s.active=1 THEN 1 ELSE 0 END) AS active_count
+        FROM filaments f
+        LEFT JOIN spools s ON s.filament_id = f.id
+        WHERE f.brand LIKE ? OR f.material LIKE ? OR f.family LIKE ?
+        GROUP BY f.id ORDER BY f.material, f.brand LIMIT 100
+    """, (p, p, p)).fetchall()
+    db.close()
+    return rows
+
+
+# ── Materials ──────────────────────────────────────────────────────────────
+
+def get_materials_in_use():
+    db = get_db()
+    rows = db.execute("SELECT DISTINCT material FROM filaments ORDER BY material").fetchall()
+    db.close()
+    return [r["material"] for r in rows]
 
 
 def dashboard_stats():

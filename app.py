@@ -1,4 +1,5 @@
 import os
+import re
 from functools import wraps
 from flask import (
     Flask, render_template, request, redirect, url_for,
@@ -28,7 +29,55 @@ def bootstrap():
 
 bootstrap()
 
-MATERIALS = ["PLA", "PETG", "ABS", "ASA", "TPU", "HIPS", "PA", "PC", "PVA", "SILK", "Outro"]
+ALL_MATERIALS = [
+    "ABS", "ABS+", "ABS-CF",
+    "ASA", "ASA-CF",
+    "BVOH",
+    "CPE", "CPE+",
+    "FLEX",
+    "HIPS",
+    "NYLON", "NYLON-CF", "NYLON-GF",
+    "PA", "PA6", "PA6-CF", "PA11", "PA11-CF", "PA12", "PA12-CF",
+    "PEBA", "PEBA-CF",
+    "PC", "PC-ABS", "PC-CF",
+    "PEEK", "PEEK-CF",
+    "PEI",
+    "PETG", "PETG-CF",
+    "PLA", "PLA+", "PLA-CF", "PLA-HT", "PLA-ST",
+    "PMMA",
+    "PP", "PP-CF", "PP-GF",
+    "PPS",
+    "PVA",
+    "SBS",
+    "SILK",
+    "TPE",
+    "TPU", "TPU-CF",
+    "Compósito", "Outro",
+]
+
+
+def get_ordered_materials():
+    in_use = set(db.get_materials_in_use())
+    used = sorted([m for m in ALL_MATERIALS if m in in_use])
+    extra = sorted([m for m in in_use if m not in set(ALL_MATERIALS)])
+    unused = sorted([m for m in ALL_MATERIALS if m not in in_use])
+    return used + extra + unused
+
+
+def _parse_price(s):
+    if not s:
+        return None
+    s = s.strip().replace("R$", "").strip().replace(".", "").replace(",", ".")
+    try:
+        return float(s)
+    except ValueError:
+        return None
+
+
+@app.context_processor
+def inject_globals():
+    count = db.queue_count() if "user_id" in session else 0
+    return {"label_queue_count": count}
 
 
 # ── Auth decorators ────────────────────────────────────────────────────────
@@ -97,8 +146,9 @@ def dashboard():
 @app.route("/filaments")
 @login_required
 def filaments_list():
-    filaments = db.list_filaments()
-    return render_template("filaments/list.html", filaments=filaments)
+    q = request.args.get("q", "").strip()
+    filaments = db.search_filaments(q) if q else db.list_filaments()
+    return render_template("filaments/list.html", filaments=filaments, q=q)
 
 
 @app.route("/filaments/new", methods=["GET", "POST"])
@@ -118,7 +168,7 @@ def filaments_new():
             return redirect(url_for("filaments_detail", filament_id=fid))
         except Exception as e:
             flash(f"Erro: {e}", "danger")
-    return render_template("filaments/form.html", filament=None, materials=MATERIALS)
+    return render_template("filaments/form.html", filament=None, materials=get_ordered_materials())
 
 
 @app.route("/filaments/<int:filament_id>")
@@ -152,7 +202,7 @@ def filaments_edit(filament_id):
             return redirect(url_for("filaments_detail", filament_id=filament_id))
         except Exception as e:
             flash(f"Erro: {e}", "danger")
-    return render_template("filaments/form.html", filament=filament, materials=MATERIALS)
+    return render_template("filaments/form.html", filament=filament, materials=get_ordered_materials())
 
 
 @app.route("/filaments/<int:filament_id>/delete", methods=["POST"])
@@ -231,8 +281,13 @@ def spool_models_delete(model_id):
 @login_required
 def spools_list():
     active_only = request.args.get("all") != "1"
-    spools = db.list_spools(active_only=active_only)
-    return render_template("spools/list.html", spools=spools, active_only=active_only)
+    q = request.args.get("q", "").strip()
+    if q:
+        spools = db.search_spools(q)
+        active_only = True
+    else:
+        spools = db.list_spools(active_only=active_only)
+    return render_template("spools/list.html", spools=spools, active_only=active_only, q=q)
 
 
 @app.route("/spools/new", methods=["GET", "POST"])
@@ -248,11 +303,11 @@ def spools_new():
                 nominal_weight_g=float(request.form.get("nominal_weight_g") or 1000),
                 location=request.form.get("location", "").strip(),
                 purchase_date=request.form.get("purchase_date", "").strip(),
-                purchase_price=request.form.get("purchase_price") or None,
+                purchase_price=_parse_price(request.form.get("purchase_price", "")),
                 notes=request.form.get("notes", "").strip(),
             )
             flash("Spool cadastrado com sucesso", "success")
-            return redirect(url_for("spools_detail", spool_id=spool_id))
+            return redirect(url_for("spools_detail", spool_id=spool_id, queue_prompt="1"))
         except Exception as e:
             flash(f"Erro: {e}", "danger")
     filaments = db.list_filaments()
@@ -268,8 +323,11 @@ def spools_detail(spool_id):
     if not spool:
         abort(404)
     readings = db.list_weight_readings(spool_id=spool_id, limit=10)
+    logged_in = "user_id" in session
+    in_queue = db.is_in_queue(spool_id) if logged_in else False
+    queue_prompt = request.args.get("queue_prompt") == "1" and logged_in
     return render_template("spools/detail.html", spool=spool, readings=readings,
-                           logged_in="user_id" in session)
+                           logged_in=logged_in, in_queue=in_queue, queue_prompt=queue_prompt)
 
 
 @app.route("/spools/<int:spool_id>/edit", methods=["GET", "POST"])
@@ -280,17 +338,21 @@ def spools_edit(spool_id):
         abort(404)
     if request.method == "POST":
         try:
+            old_location = spool["location"]
+            new_location = request.form.get("location", "").strip()
             db.update_spool(
                 spool_id,
                 spool_model_id=request.form.get("spool_model_id") or None,
                 custom_tare_g=request.form.get("custom_tare_g") or None,
                 nominal_weight_g=float(request.form.get("nominal_weight_g") or 1000),
-                location=request.form.get("location", "").strip(),
+                location=new_location,
                 purchase_date=request.form.get("purchase_date", "").strip(),
-                purchase_price=request.form.get("purchase_price") or None,
+                purchase_price=_parse_price(request.form.get("purchase_price", "")),
                 notes=request.form.get("notes", "").strip(),
             )
             flash("Spool atualizado", "success")
+            if old_location != new_location:
+                return redirect(url_for("spools_detail", spool_id=spool_id, queue_prompt="1"))
             return redirect(url_for("spools_detail", spool_id=spool_id))
         except Exception as e:
             flash(f"Erro: {e}", "danger")
@@ -349,6 +411,99 @@ def spool_label_pdf(spool_id):
         mimetype="application/pdf",
         headers={"Content-Disposition": f"inline; filename=spool-{spool_id}.pdf"},
     )
+
+
+# ── Quick Weigh ────────────────────────────────────────────────────────────
+
+@app.route("/weigh", methods=["GET", "POST"])
+@login_required
+def quick_weigh():
+    if request.method == "POST":
+        code = request.form.get("spool_code", "").strip()
+        m = re.search(r'\d+', code)
+        if not m:
+            flash("Código de spool inválido", "danger")
+            return render_template("spools/weigh_quick.html")
+        spool_id = int(m.group())
+        spool = db.get_spool(spool_id)
+        if not spool:
+            flash(f"Spool SP-{spool_id:04d} não encontrado", "danger")
+            return render_template("spools/weigh_quick.html")
+        try:
+            gross = float(request.form.get("gross_weight_g", "").replace(",", "."))
+        except ValueError:
+            flash("Peso bruto inválido", "danger")
+            return render_template("spools/weigh_quick.html")
+        tare = float(spool["effective_tare_g"])
+        if gross < tare:
+            flash(f"Peso bruto ({gross:.0f}g) menor que tara ({tare:.0f}g). Verifique.", "warning")
+        else:
+            db.add_weight_reading(spool_id, gross, tare, recorded_by=session.get("username", ""))
+            net = gross - tare
+            flash(f"SP-{spool_id:04d} — {net:.0f}g de filamento (bruto {gross:.0f}g − tara {tare:.0f}g)", "success")
+        return redirect(url_for("quick_weigh"))
+    return render_template("spools/weigh_quick.html")
+
+
+# ── Search ─────────────────────────────────────────────────────────────────
+
+@app.route("/search")
+@login_required
+def search():
+    q = request.args.get("q", "").strip()
+    spools = db.search_spools(q) if q else []
+    filaments = db.search_filaments(q) if q else []
+    return render_template("search.html", q=q, spools=spools, filaments=filaments)
+
+
+# ── Label Queue ────────────────────────────────────────────────────────────
+
+@app.route("/label-queue")
+@login_required
+def label_queue():
+    items = db.queue_list()
+    return render_template("reports/label_queue.html", items=items)
+
+
+@app.route("/label-queue/add/<int:spool_id>", methods=["POST"])
+@login_required
+def label_queue_add(spool_id):
+    db.queue_add(spool_id)
+    flash("Adicionado à fila de impressão", "success")
+    next_url = request.form.get("next") or url_for("spools_detail", spool_id=spool_id)
+    return redirect(next_url)
+
+
+@app.route("/label-queue/remove/<int:spool_id>", methods=["POST"])
+@login_required
+def label_queue_remove(spool_id):
+    db.queue_remove(spool_id)
+    next_url = request.form.get("next") or request.referrer or url_for("label_queue")
+    return redirect(next_url)
+
+
+@app.route("/label-queue/print")
+@login_required
+def label_queue_print():
+    items = db.queue_list()
+    if not items:
+        flash("Fila vazia", "warning")
+        return redirect(url_for("label_queue"))
+    base_url = db.get_setting("app_base_url", "http://localhost:5000")
+    pdf_bytes = lbl.generate_multi_label_pdf([dict(s) for s in items], base_url)
+    return Response(
+        pdf_bytes,
+        mimetype="application/pdf",
+        headers={"Content-Disposition": "inline; filename=etiquetas.pdf"},
+    )
+
+
+@app.route("/label-queue/clear", methods=["POST"])
+@login_required
+def label_queue_clear():
+    db.queue_clear()
+    flash("Fila limpa", "success")
+    return redirect(url_for("label_queue"))
 
 
 # ── Reports ────────────────────────────────────────────────────────────────

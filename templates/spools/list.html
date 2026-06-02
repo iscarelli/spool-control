@@ -3,11 +3,20 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h4 class="mb-0 fw-bold">Spools {% if not active_only %}<span class="badge bg-secondary fs-6">todos</span>{% endif %}</h4>
-  <div class="d-flex gap-2">
-    {% if active_only %}
-    <a href="{{ url_for('spools_list') }}?all=1" class="btn btn-sm btn-outline-secondary">Ver finalizados</a>
-    {% else %}
-    <a href="{{ url_for('spools_list') }}" class="btn btn-sm btn-outline-secondary">Só ativos</a>
+  <div class="d-flex gap-2 align-items-center">
+    <form class="d-flex" action="{{ url_for('spools_list') }}" method="get">
+      <div class="input-group input-group-sm">
+        <input class="form-control" type="search" name="q" placeholder="Filtrar..." value="{{ q or '' }}" style="min-width:140px">
+        <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
+        {% if q %}<a href="{{ url_for('spools_list') }}" class="btn btn-outline-secondary"><i class="bi bi-x"></i></a>{% endif %}
+      </div>
+    </form>
+    {% if not q %}
+      {% if active_only %}
+      <a href="{{ url_for('spools_list') }}?all=1" class="btn btn-sm btn-outline-secondary">Ver finalizados</a>
+      {% else %}
+      <a href="{{ url_for('spools_list') }}" class="btn btn-sm btn-outline-secondary">Só ativos</a>
+      {% endif %}
     {% endif %}
     <a href="{{ url_for('spools_new') }}" class="btn btn-sm btn-dark">+ Novo Spool</a>
   </div>
@@ -57,7 +66,9 @@
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="7" class="text-center text-muted py-4">Nenhum spool encontrado</td></tr>
+        <tr><td colspan="7" class="text-center text-muted py-4">
+          {% if q %}Nenhum resultado para "{{ q }}"{% else %}Nenhum spool encontrado{% endif %}
+        </td></tr>
         {% endfor %}
       </tbody>
     </table>
