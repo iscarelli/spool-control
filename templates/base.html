@@ -1,10 +1,16 @@
 <!doctype html>
-<html lang="pt-BR" data-bs-theme="dark">
+<html lang="{{ lang }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Spool Control{% endblock %}</title>
   <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='spool-icon.svg') }}">
+  <script>
+    /* Apply saved theme before CSS loads — prevents flash */
+    document.documentElement.setAttribute(
+      'data-bs-theme', localStorage.getItem('sc-theme') || 'dark'
+    );
+  </script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <link rel="stylesheet" href="{{ url_for('static', filename='spool.css') }}">
@@ -27,41 +33,41 @@
         <li class="nav-item">
           <a class="nav-link {% if ep == 'filaments_list' %}sc-active{% endif %}"
              href="{{ url_for('filaments_list') }}">
-            <i class="bi bi-box2-fill me-1"></i>Filamentos
+            <i class="bi bi-box2-fill me-1"></i>{{ _('Filamentos') }}
           </a>
         </li>
         <li class="nav-item">
           <a class="nav-link {% if ep in ('spools_list','spools_detail','spools_new','spools_edit') %}sc-active{% endif %}"
              href="{{ url_for('spools_list') }}">
-            <i class="bi bi-circle-fill me-1"></i>Spools
+            <i class="bi bi-circle-fill me-1"></i>{{ _('Spools') }}
           </a>
         </li>
         <li class="nav-item">
           <a class="nav-link {% if ep == 'spool_models_list' %}sc-active{% endif %}"
              href="{{ url_for('spool_models_list') }}">
-            <i class="bi bi-archive-fill me-1"></i>Carretéis
+            <i class="bi bi-archive-fill me-1"></i>{{ _('Carretéis') }}
           </a>
         </li>
         <li class="nav-item">
           <a class="nav-link {% if ep == 'quick_weigh' %}sc-active{% endif %}"
              href="{{ url_for('quick_weigh') }}">
-            <span class="icon-scale me-1"></span>Pesar
+            <span class="icon-scale me-1"></span>{{ _('Pesar') }}
           </a>
         </li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle {% if ep in ('report_by_material','report_by_location','report_low_stock','report_weight_history','label_queue') %}sc-active{% endif %}"
              href="#" data-bs-toggle="dropdown">
-            <i class="bi bi-bar-chart-fill me-1"></i>Relatórios
+            <i class="bi bi-bar-chart-fill me-1"></i>{{ _('Relatórios') }}
           </a>
           <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="{{ url_for('report_by_material') }}">Por Material</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('report_by_location') }}">Por Local</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('report_low_stock') }}">Estoque Baixo</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('report_weight_history') }}">Histórico de Peso</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('report_by_material') }}">{{ _('Por Material') }}</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('report_by_location') }}">{{ _('Por Local') }}</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('report_low_stock') }}">{{ _('Estoque Baixo') }}</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('report_weight_history') }}">{{ _('Histórico de Peso') }}</a></li>
             <li><hr class="dropdown-divider"></li>
             <li>
               <a class="dropdown-item d-flex align-items-center gap-2" href="{{ url_for('label_queue') }}">
-                <i class="bi bi-printer"></i>Fila de Etiquetas
+                <i class="bi bi-printer"></i>{{ _('Fila de Etiquetas') }}
                 {% if label_queue_count > 0 %}
                 <span class="badge bg-danger rounded-pill ms-auto">{{ label_queue_count }}</span>
                 {% endif %}
@@ -73,28 +79,47 @@
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle {% if ep in ('admin_users','admin_brands','admin_settings') %}sc-active{% endif %}"
              href="#" data-bs-toggle="dropdown">
-            <i class="bi bi-gear-fill me-1"></i>Admin
+            <i class="bi bi-gear-fill me-1"></i>{{ _('Admin') }}
           </a>
           <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="{{ url_for('admin_users') }}">Usuários</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('admin_brands') }}">Marcas / Logos</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('admin_settings') }}">Configurações</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('admin_users') }}">{{ _('Usuários') }}</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('admin_brands') }}">{{ _('Marcas / Logos') }}</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('admin_settings') }}">{{ _('Configurações') }}</a></li>
           </ul>
         </li>
         {% endif %}
       </ul>
-      <form class="d-flex me-3" action="{{ url_for('search') }}" method="get">
+
+      <form class="d-flex me-2" action="{{ url_for('search') }}" method="get">
         <div class="input-group input-group-sm">
           <input class="form-control" type="search" name="q"
-                 placeholder="Buscar..."
+                 placeholder="{{ _('Buscar...') }}"
                  value="{{ request.args.get('q','') if request.endpoint == 'search' else '' }}"
-                 style="min-width:150px">
+                 style="min-width:140px">
           <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
         </div>
       </form>
-      <span class="navbar-text me-3">{{ session.username }}</span>
+
+      {# Theme toggle #}
+      <button class="btn btn-outline-secondary btn-sm me-1" id="themeToggle" title="{{ _('Tema') }}">
+        <i class="bi" id="themeIcon"></i>
+      </button>
+
+      {# Language switcher #}
+      <div class="dropdown me-2">
+        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown"
+                style="font-size:0.75rem;letter-spacing:0.04em;min-width:2.4rem">
+          {{ lang.upper() }}
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end" style="min-width:0">
+          <li><a class="dropdown-item" href="{{ url_for('set_lang', code='pt') }}">PT</a></li>
+          <li><a class="dropdown-item" href="{{ url_for('set_lang', code='en') }}">EN</a></li>
+        </ul>
+      </div>
+
+      <span class="navbar-text me-2">{{ session.username }}</span>
       <form method="post" action="{{ url_for('logout') }}" class="d-inline">
-        <button class="btn btn-outline-secondary btn-sm" type="submit">Sair</button>
+        <button class="btn btn-outline-secondary btn-sm" type="submit">{{ _('Sair') }}</button>
       </form>
     </div>
   </div>
@@ -118,6 +143,23 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{{ url_for('static', filename='spool.js') }}"></script>
+<script>
+/* ── Theme toggle ────────────────────────────────────────────────────────── */
+(function() {
+  const icon = document.getElementById('themeIcon');
+  function applyTheme(t) {
+    document.documentElement.setAttribute('data-bs-theme', t);
+    if (icon) icon.className = t === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+  }
+  applyTheme(localStorage.getItem('sc-theme') || 'dark');
+  const btn = document.getElementById('themeToggle');
+  btn?.addEventListener('click', () => {
+    const next = document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('sc-theme', next);
+    applyTheme(next);
+  });
+})();
+</script>
 {% block scripts %}{% endblock %}
 </body>
 </html>

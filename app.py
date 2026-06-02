@@ -11,6 +11,7 @@ from flask import (
 from werkzeug.security import generate_password_hash, check_password_hash
 import database as db
 import labels as lbl
+import translations as i18n
 
 BRANDS_DIR = Path(__file__).parent / "static" / "brands"
 
@@ -113,7 +114,20 @@ def _parse_price(s):
 @app.context_processor
 def inject_globals():
     count = db.queue_count() if "user_id" in session else 0
-    return {"label_queue_count": count, "app_version": APP_VERSION}
+    lang = session.get("lang", "pt")
+    return {
+        "label_queue_count": count,
+        "app_version": APP_VERSION,
+        "lang": lang,
+        "_": i18n.get_translator(lang),
+    }
+
+
+@app.route("/lang/<code>")
+def set_lang(code):
+    if code in i18n.SUPPORTED:
+        session["lang"] = code
+    return redirect(request.referrer or url_for("dashboard"))
 
 
 # ── Auth decorators ────────────────────────────────────────────────────────

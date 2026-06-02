@@ -2,7 +2,19 @@
 {% block title %}{{ filament.brand }} {{ filament.material }} — Spool Control{% endblock %}
 {% block content %}
 
-{# Aggregate stock for this filament's active spools #}
+{% macro donut(pct, fill, size=34, tip='') %}
+<span {% if tip %}data-bs-toggle="tooltip" title="{{ tip }}"{% endif %}>
+  <svg width="{{ size }}" height="{{ size }}" viewBox="0 0 44 44">
+    <circle cx="22" cy="22" r="15.9155" fill="none" class="donut-track" stroke-width="9"/>
+    <circle cx="22" cy="22" r="15.9155" fill="none"
+            stroke="{{ fill }}" stroke-width="9"
+            stroke-dasharray="{{ pct }} {{ 100 - pct }}"
+            transform="rotate(-90 22 22)"/>
+  </svg>
+</span>
+{% endmacro %}
+
+{# Aggregate stock for active spools of this filament #}
 {% set ns = namespace(nom=0, net=0) %}
 {% for s in spools if s.active %}
   {% set ns.nom = ns.nom + (s.nominal_weight_g or 0) %}
@@ -18,29 +30,21 @@
        height="28" style="object-fit:contain;max-width:64px" alt="{{ filament.brand }}">
   {% endif %}
   {% if ns.nom > 0 %}
-  <span data-bs-toggle="tooltip" title="{{ total_pct|int }}% de estoque disponível">
-    <svg width="44" height="44" viewBox="0 0 40 40">
-      <circle cx="20" cy="20" r="15.9155" fill="none" stroke="#334155" stroke-width="6"/>
-      <circle cx="20" cy="20" r="15.9155" fill="none"
-              stroke="{{ fill }}" stroke-width="6"
-              stroke-dasharray="{{ total_pct }} {{ 100 - total_pct }}"
-              transform="rotate(-90 20 20)"/>
-    </svg>
-  </span>
+    {{ donut(total_pct, fill, size=44, tip=total_pct|int|string + '% ' + _('% de estoque disponível')) }}
   {% endif %}
   <h4 class="mb-0 fw-bold">
     {{ filament.brand }} {{ filament.material }}
     <span class="text-muted fw-normal">— {{ filament.family }}</span>
   </h4>
-  <a href="{{ url_for('filaments_edit', filament_id=filament.id) }}" class="btn btn-sm btn-outline-secondary ms-auto">Editar</a>
-  <a href="{{ url_for('spools_new') }}?filament_id={{ filament.id }}" class="btn btn-sm btn-primary">+ Novo Spool</a>
+  <a href="{{ url_for('filaments_edit', filament_id=filament.id) }}" class="btn btn-sm btn-outline-secondary ms-auto">{{ _('Editar') }}</a>
+  <a href="{{ url_for('spools_new') }}?filament_id={{ filament.id }}" class="btn btn-sm btn-outline-primary">{{ _('+ Novo Spool') }}</a>
 </div>
 
 <div class="row g-3 mb-4">
   <div class="col-md-3">
     <div class="card h-100">
       <div class="card-body">
-        <div class="text-muted small mb-1">Diâmetro</div>
+        <div class="text-muted small mb-1">{{ _('Diâmetro') }}</div>
         <div class="fw-semibold">{{ filament.diameter_mm }} mm</div>
       </div>
     </div>
@@ -49,7 +53,7 @@
   <div class="col-md-9">
     <div class="card h-100">
       <div class="card-body">
-        <div class="text-muted small mb-1">Notas</div>
+        <div class="text-muted small mb-1">{{ _('Notas') }}</div>
         <div>{{ filament.notes }}</div>
       </div>
     </div>
@@ -57,15 +61,20 @@
   {% endif %}
 </div>
 
-<h5 class="fw-semibold mb-3">Spools ({{ spools|length }})</h5>
+<h5 class="fw-semibold mb-3">{{ _('Spools') }} ({{ spools|length }})</h5>
 <div class="card">
   <div class="table-responsive">
     <table class="table table-hover mb-0">
       <thead class="table-dark">
         <tr>
           <th style="width:44px"></th>
-          <th>ID</th><th>Carretel Vazio</th><th>Local</th>
-          <th>Nominal</th><th>Peso Atual</th><th>Status</th><th></th>
+          <th>ID</th>
+          <th>{{ _('Carretel Vazio') }}</th>
+          <th>{{ _('Local') }}</th>
+          <th>{{ _('Nominal') }}</th>
+          <th>{{ _('Peso Atual') }}</th>
+          <th>{{ _('Status') }}</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -75,48 +84,36 @@
         {% else %}
           {% set pct = 100 %}
         {% endif %}
-        {% set sfill = filament.color_hex if filament.color_hex else '#6c757d' %}
         <tr class="spool-row {% if not s.active %}table-secondary{% endif %}"
             style="cursor:pointer"
             data-href="{{ url_for('spools_detail', spool_id=s.id) }}">
-          <td class="text-center align-middle" style="width:44px;padding:6px 4px">
-            <span data-bs-toggle="tooltip" title="{{ pct|int }}% disponível">
-              <svg width="34" height="34" viewBox="0 0 40 40">
-                <circle cx="20" cy="20" r="15.9155" fill="none" stroke="#334155" stroke-width="6"/>
-                <circle cx="20" cy="20" r="15.9155" fill="none"
-                        stroke="{{ sfill }}" stroke-width="6"
-                        stroke-dasharray="{{ pct }} {{ 100 - pct }}"
-                        transform="rotate(-90 20 20)"/>
-              </svg>
-            </span>
+          <td class="text-center align-middle" style="width:44px;padding:4px">
+            {{ donut(pct, fill, tip=pct|int|string + '% ' + _('% disponível')) }}
           </td>
           <td class="fw-bold">SP-{{ '%04d'|format(s.id) }}</td>
           <td>{{ s.model_name or '—' }}</td>
           <td>{{ s.location or '—' }}</td>
           <td>{{ s.nominal_weight_g|int }}g</td>
           <td>
-            {% if s.current_net_g is not none %}
-              {{ s.current_net_g|int }}g
-            {% else %}
-              <span class="text-muted">—</span>
-            {% endif %}
+            {% if s.current_net_g is not none %}{{ s.current_net_g|int }}g
+            {% else %}<span class="text-muted">—</span>{% endif %}
           </td>
           <td>
             {% if s.active %}
-            <span class="badge bg-success">Ativo</span>
+            <span class="badge bg-success">{{ _('Ativo') }}</span>
             {% else %}
-            <span class="badge bg-secondary">Finalizado</span>
+            <span class="badge bg-secondary">{{ _('Finalizado') }}</span>
             {% endif %}
           </td>
           <td onclick="event.stopPropagation()">
-            <a href="{{ url_for('spools_detail', spool_id=s.id) }}" class="btn btn-sm btn-outline-secondary">Ver</a>
+            <a href="{{ url_for('spools_detail', spool_id=s.id) }}" class="btn btn-sm btn-outline-secondary">{{ _('Ver') }}</a>
             {% if s.active %}
-            <a href="{{ url_for('spools_weigh', spool_id=s.id) }}" class="btn btn-sm btn-outline-dark">Pesar</a>
+            <a href="{{ url_for('spools_weigh', spool_id=s.id) }}" class="btn btn-sm btn-outline-secondary">{{ _('Pesar') }}</a>
             {% endif %}
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="8" class="text-center text-muted py-4">Nenhum spool cadastrado</td></tr>
+        <tr><td colspan="8" class="text-center text-muted py-4">{{ _('Nenhum spool cadastrado') }}</td></tr>
         {% endfor %}
       </tbody>
     </table>

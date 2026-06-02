@@ -1,8 +1,9 @@
 /* ── Fonts ──────────────────────────────────────────────────────────────── */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
 
-/* ── Design tokens ──────────────────────────────────────────────────────── */
-:root {
+/* ── Design tokens — dark (default) ────────────────────────────────────── */
+:root,
+[data-bs-theme="dark"] {
   --sc-bg:           #0F172A;
   --sc-surface:      #1E293B;
   --sc-surface-2:    #273549;
@@ -32,6 +33,53 @@
   --bs-table-border-color:     var(--sc-border);
   --bs-table-hover-bg:         rgba(255,255,255,0.03);
 }
+
+/* ── Design tokens — light ──────────────────────────────────────────────── */
+[data-bs-theme="light"] {
+  --sc-bg:           #F1F5F9;
+  --sc-surface:      #FFFFFF;
+  --sc-surface-2:    #F8FAFC;
+  --sc-border:       #CBD5E1;
+  --sc-text:         #0F172A;
+  --sc-text-muted:   #64748B;
+  --sc-accent:       #16A34A;
+  --sc-accent-hover: #15803D;
+  --sc-accent-glow:  rgba(22,163,74,0.12);
+
+  --bs-body-bg:                var(--sc-bg);
+  --bs-body-color:             var(--sc-text);
+  --bs-secondary-color:        var(--sc-text-muted);
+  --bs-border-color:           var(--sc-border);
+  --bs-card-bg:                var(--sc-surface);
+  --bs-card-border-color:      var(--sc-border);
+  --bs-primary:                var(--sc-accent);
+  --bs-primary-rgb:            22, 163, 74;
+  --bs-link-color:             var(--sc-accent);
+  --bs-link-hover-color:       var(--sc-accent-hover);
+  --bs-dropdown-bg:            var(--sc-surface);
+  --bs-dropdown-border-color:  var(--sc-border);
+  --bs-dropdown-link-hover-bg: var(--sc-surface-2);
+  --bs-table-border-color:     var(--sc-border);
+  --bs-table-hover-bg:         rgba(0,0,0,0.02);
+}
+
+[data-bs-theme="light"] .table thead.table-dark th {
+  background: var(--sc-surface-2);
+  color: var(--sc-text-muted);
+  border-bottom-color: var(--sc-border);
+}
+[data-bs-theme="light"] .table tbody tr:not(.table-secondary):hover td {
+  background: rgba(0,0,0,0.02);
+}
+[data-bs-theme="light"] .table td { color: var(--sc-text); }
+[data-bs-theme="light"] .table .table-secondary td { color: var(--sc-text-muted); }
+[data-bs-theme="light"] .badge.bg-secondary {
+  background: var(--sc-surface-2) !important;
+  color: var(--sc-text-muted) !important;
+  border: 1px solid var(--sc-border);
+}
+[data-bs-theme="light"] .alert .btn-close { filter: none; }
+[data-bs-theme="light"] .navbar-toggler-icon { filter: none; }
 
 /* ── Base ───────────────────────────────────────────────────────────────── */
 body {
@@ -296,6 +344,21 @@ h1, h2, h3, h4, h5, h6 { letter-spacing: -0.02em; }
   z-index: 1000;
   pointer-events: none;
   letter-spacing: 0.04em;
+}
+
+/* ── Donuts ─────────────────────────────────────────────────────────────── */
+.donut-track { stroke: var(--sc-border); }
+
+/* ── btn-outline-primary ────────────────────────────────────────────────── */
+.btn-outline-primary {
+  --bs-btn-color: var(--sc-accent);
+  --bs-btn-border-color: var(--sc-accent);
+  --bs-btn-hover-bg: var(--sc-accent-glow);
+  --bs-btn-hover-color: var(--sc-accent);
+  --bs-btn-hover-border-color: var(--sc-accent);
+  --bs-btn-active-bg: var(--sc-accent-glow);
+  --bs-btn-active-color: var(--sc-accent);
+  --bs-btn-active-border-color: var(--sc-accent);
 }
 
 /* ── Icon scale ─────────────────────────────────────────────────────────── */

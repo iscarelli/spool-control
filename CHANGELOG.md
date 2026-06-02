@@ -10,6 +10,22 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.4.0] — 2026-06-02
+
+### Adicionado
+- **Dark/Light mode**: toggle no navbar, preferência salva no localStorage, sem flash no carregamento
+- **i18n PT/BR → EN**: infraestrutura de tradução em `translations.py`, alternador PT|EN no navbar, rotas `/lang/pt` e `/lang/en`, strings de navegação e listas traduzidas
+- CSS design tokens para light mode (`[data-bs-theme="light"]`)
+
+### Alterado
+- Donuts ainda mais espessos: stroke-width 9, viewBox 44×44, cx/cy 22 — diâmetro externo mantido
+- Track dos donuts adaptável ao tema via classe `.donut-track` e `var(--sc-border)`
+- Botões "+ Novo Filamento" e "+ Novo Spool": `btn-outline-primary` (verde contornado) — mais discreto
+- Botão de pesagem inline: `btn-outline-secondary` ao invés de `btn-outline-dark`
+- Donut macro Jinja reutilizável nos 3 templates principais
+
+---
+
 ## [1.3.1] — 2026-06-02
 
 ### Adicionado
