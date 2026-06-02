@@ -437,11 +437,15 @@ def spools_weigh(spool_id):
     if not spool:
         abort(404)
     if request.method == "POST":
+        ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
         try:
             gross = float(request.form["gross_weight_g"])
             tare = float(spool["effective_tare_g"])
             if gross < tare:
-                flash(f"Peso bruto ({gross}g) menor que tara ({tare}g). Verifique.", "warning")
+                msg = f"Peso bruto ({gross}g) menor que tara ({tare}g). Verifique."
+                if ajax:
+                    return {"ok": False, "error": msg}
+                flash(msg, "warning")
             else:
                 db.add_weight_reading(
                     spool_id=spool_id,
@@ -450,9 +454,16 @@ def spools_weigh(spool_id):
                     recorded_by=session.get("username", ""),
                     notes=request.form.get("notes", "").strip(),
                 )
-                flash(f"Peso registrado: {gross - tare:.0f}g de filamento", "success")
+                net = gross - tare
+                if ajax:
+                    nominal = float(spool["nominal_weight_g"] or 1000)
+                    pct = min(100, round(net / nominal * 100, 1)) if nominal else 0
+                    return {"ok": True, "net_g": round(net), "pct": pct}
+                flash(f"Peso registrado: {net:.0f}g de filamento", "success")
                 return redirect(url_for("spools_detail", spool_id=spool_id))
         except ValueError as e:
+            if ajax:
+                return {"ok": False, "error": str(e)}
             flash(f"Valor inválido: {e}", "danger")
     return render_template("spools/weigh.html", spool=spool)
 
@@ -541,6 +552,21 @@ def label_queue_add(spool_id):
     flash("Adicionado à fila de impressão", "success")
     next_url = request.form.get("next") or url_for("spools_detail", spool_id=spool_id)
     return redirect(next_url)
+
+
+@app.route("/label-queue/add-all", methods=["POST"])
+@login_required
+def label_queue_add_all():
+    ids = request.form.getlist("spool_ids")
+    added = 0
+    for sid in ids:
+        try:
+            db.queue_add(int(sid))
+            added += 1
+        except Exception:
+            pass
+    flash(f"{added} spool(s) adicionado(s) à fila de impressão", "success")
+    return redirect(request.form.get("next") or url_for("spools_list"))
 
 
 @app.route("/label-queue/remove/<int:spool_id>", methods=["POST"])

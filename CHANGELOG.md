@@ -10,6 +10,24 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.3.1] — 2026-06-02
+
+### Adicionado
+- Donut de estoque no título da página de detalhe do filamento (`/filaments/<id>`)
+- Donuts por spool na listagem de spools dentro do detalhe do filamento
+- Clique em qualquer lugar da linha abre o detalhe (filamentos e spools)
+- Modal inline de pesagem na listagem de spools: registra peso sem sair da página, atualiza donut e peso na hora
+- Botão "Fila: Todos" na listagem de spools: adiciona todos os spools visíveis à fila de impressão
+- Rota `POST /label-queue/add-all` para enfileirar múltiplos spools de uma vez
+- Suporte AJAX no endpoint de pesagem (`X-Requested-With: XMLHttpRequest` → resposta JSON)
+
+### Alterado
+- Removido donut agregado do título da listagem de filamentos (agora aparece no detalhe de cada filamento)
+- Donuts com stroke mais grosso (stroke-width 6, viewBox 40×40) — diâmetro externo mantido
+- Removida barra de progresso da listagem de spools do detalhe de filamento (substituída por donut)
+
+---
+
 ## [1.3.0] — 2026-06-02
 
 ### Adicionado

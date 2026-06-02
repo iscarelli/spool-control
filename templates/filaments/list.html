@@ -2,29 +2,8 @@
 {% block title %}Filamentos — Spool Control{% endblock %}
 {% block content %}
 
-{# Totais para o donut do título #}
-{% set ns = namespace(nom=0, net=0) %}
-{% for f in filaments %}
-  {% set ns.nom = ns.nom + (f.total_nominal_g or 0) %}
-  {% set ns.net = ns.net + (f.total_net_g or 0) %}
-{% endfor %}
-{% set total_pct = ((ns.net / ns.nom * 100)|round(1)) if ns.nom > 0 else 0 %}
-
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <div class="d-flex align-items-center gap-3">
-    <h4 class="mb-0 fw-bold">Filamentos</h4>
-    {% if ns.nom > 0 %}
-    <span data-bs-toggle="tooltip" title="{{ total_pct|int }}% do total disponível">
-      <svg width="52" height="52" viewBox="0 0 36 36">
-        <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#dee2e6" stroke-width="4"/>
-        <circle cx="18" cy="18" r="15.9155" fill="none"
-                stroke="#6c757d" stroke-width="4"
-                stroke-dasharray="{{ total_pct }} {{ 100 - total_pct }}"
-                transform="rotate(-90 18 18)"/>
-      </svg>
-    </span>
-    {% endif %}
-  </div>
+  <h4 class="mb-0 fw-bold">Filamentos</h4>
   <div class="d-flex gap-2">
     <input class="form-control form-control-sm" type="search" id="filterInput"
            data-filter-for="#filamentTable"
@@ -55,41 +34,48 @@
           {% set pct = 0 %}
         {% endif %}
         {% set fill = f.color_hex if f.color_hex else '#6c757d' %}
-        <tr>
+        <tr class="filament-row" style="cursor:pointer"
+            data-href="{{ url_for('filaments_detail', filament_id=f.id) }}">
           <td class="text-center align-middle" style="width:44px;padding:6px 4px">
             {% if f.active_count > 0 %}
             <span data-bs-toggle="tooltip" title="{{ pct|int }}% disponível">
-              <svg width="34" height="34" viewBox="0 0 36 36">
-                <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#dee2e6" stroke-width="4"/>
-                <circle cx="18" cy="18" r="15.9155" fill="none"
-                        stroke="{{ fill }}" stroke-width="4"
+              <svg width="34" height="34" viewBox="0 0 40 40">
+                <circle cx="20" cy="20" r="15.9155" fill="none" stroke="#334155" stroke-width="6"/>
+                <circle cx="20" cy="20" r="15.9155" fill="none"
+                        stroke="{{ fill }}" stroke-width="6"
                         stroke-dasharray="{{ pct }} {{ 100 - pct }}"
-                        transform="rotate(-90 18 18)"/>
+                        transform="rotate(-90 20 20)"/>
               </svg>
             </span>
             {% else %}
-            <svg width="34" height="34" viewBox="0 0 36 36">
-              <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#dee2e6" stroke-width="4"/>
+            <svg width="34" height="34" viewBox="0 0 40 40">
+              <circle cx="20" cy="20" r="15.9155" fill="none" stroke="#334155" stroke-width="6"/>
             </svg>
             {% endif %}
           </td>
           <td>
-            <a href="{{ url_for('spools_list') }}?q={{ f.material }}" class="badge bg-secondary text-decoration-none">{{ f.material }}</a>
+            <a href="{{ url_for('spools_list') }}?q={{ f.material }}"
+               class="badge bg-secondary text-decoration-none"
+               onclick="event.stopPropagation()">{{ f.material }}</a>
           </td>
           <td>
             {% if f.brand_logo %}
             <img src="{{ url_for('static', filename=f.brand_logo) }}"
                  height="18" style="object-fit:contain;max-width:48px;vertical-align:middle" alt="" class="me-1">
             {% endif %}
-            <a href="{{ url_for('spools_list') }}?q={{ f.brand }}" class="text-dark text-decoration-none">{{ f.brand }}</a>
+            <a href="{{ url_for('spools_list') }}?q={{ f.brand }}"
+               class="text-decoration-none"
+               onclick="event.stopPropagation()">{{ f.brand }}</a>
           </td>
           <td>
-            <a href="{{ url_for('spools_list') }}?q={{ f.family }}" class="text-dark text-decoration-none">{{ f.family }}</a>
+            <a href="{{ url_for('spools_list') }}?q={{ f.family }}"
+               class="text-decoration-none"
+               onclick="event.stopPropagation()">{{ f.family }}</a>
           </td>
           <td>{{ f.diameter_mm }}mm</td>
           <td>{{ f.active_count }}</td>
           <td>{{ f.spool_count }}</td>
-          <td>
+          <td onclick="event.stopPropagation()">
             <a href="{{ url_for('filaments_detail', filament_id=f.id) }}" class="btn btn-sm btn-outline-secondary">Ver</a>
             <a href="{{ url_for('spools_new') }}?filament_id={{ f.id }}" class="btn btn-sm btn-outline-dark">+ Spool</a>
             <form method="post" action="{{ url_for('filaments_duplicate', filament_id=f.id) }}" class="d-inline">
@@ -118,4 +104,14 @@
     </table>
   </div>
 </div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.querySelectorAll('.filament-row').forEach(row => {
+  row.addEventListener('click', e => {
+    if (e.target.closest('a, button, form')) return;
+    location.href = row.dataset.href;
+  });
+});
+</script>
 {% endblock %}

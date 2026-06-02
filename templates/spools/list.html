@@ -12,6 +12,9 @@
     {% else %}
     <a href="{{ url_for('spools_list') }}" class="btn btn-sm btn-outline-secondary">Só ativos</a>
     {% endif %}
+    <button class="btn btn-sm btn-outline-warning" id="markAllBtn" title="Adicionar todos à fila de impressão">
+      <i class="bi bi-printer-fill me-1"></i>Fila: Todos
+    </button>
     <a href="{{ url_for('spools_new') }}" class="btn btn-sm btn-primary">+ Novo Spool</a>
   </div>
 </div>
@@ -37,15 +40,24 @@
           {% set pct = 100 %}
         {% endif %}
         {% set fill = s.color_hex if s.color_hex else '#6c757d' %}
-        <tr class="{% if not s.active %}table-secondary{% endif %}">
+        <tr class="spool-row {% if not s.active %}table-secondary{% endif %}"
+            style="cursor:pointer"
+            data-href="{{ url_for('spools_detail', spool_id=s.id) }}"
+            data-spool-id="{{ s.id }}"
+            data-name="SP-{{ '%04d'|format(s.id) }} {{ s.brand }} {{ s.material }}"
+            data-tare="{{ s.effective_tare_g|round(1) }}"
+            data-nominal="{{ s.nominal_weight_g|int }}"
+            data-fill="{{ fill }}"
+            data-weigh-url="{{ url_for('spools_weigh', spool_id=s.id) }}">
           <td class="text-center align-middle" style="width:44px;padding:6px 4px">
-            <span data-bs-toggle="tooltip" title="{{ pct|int }}% disponível">
-              <svg width="34" height="34" viewBox="0 0 36 36">
-                <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#dee2e6" stroke-width="4"/>
-                <circle cx="18" cy="18" r="15.9155" fill="none"
-                        stroke="{{ fill }}" stroke-width="4"
+            <span data-bs-toggle="tooltip" title="{{ pct|int }}% disponível" class="donut-wrap">
+              <svg width="34" height="34" viewBox="0 0 40 40" class="donut-svg">
+                <circle cx="20" cy="20" r="15.9155" fill="none" stroke="#334155" stroke-width="6"/>
+                <circle cx="20" cy="20" r="15.9155" fill="none"
+                        stroke="{{ fill }}" stroke-width="6"
                         stroke-dasharray="{{ pct }} {{ 100 - pct }}"
-                        transform="rotate(-90 18 18)"/>
+                        transform="rotate(-90 20 20)"
+                        class="donut-arc"/>
               </svg>
             </span>
           </td>
@@ -53,22 +65,25 @@
           <td><span class="badge bg-secondary">{{ s.material }}</span></td>
           <td>{{ s.brand }} / {{ s.family }}</td>
           <td>{{ s.location or '—' }}</td>
-          <td>
+          <td class="weight-cell">
             {% if s.current_net_g is not none %}{{ s.current_net_g|int }}g{% else %}—{% endif %}
           </td>
-          <td class="text-nowrap">
+          <td class="text-nowrap" onclick="event.stopPropagation()">
             <a href="{{ url_for('spools_detail', spool_id=s.id) }}" class="btn btn-sm btn-outline-secondary">Ver</a>
             {% if s.active %}
-            <a href="{{ url_for('spools_weigh', spool_id=s.id) }}" class="btn btn-sm btn-outline-dark"><span class="icon-scale"></span></a>
+            <button class="btn btn-sm btn-outline-dark weigh-btn"
+                    onclick="openWeighModal(this, event)">
+              <span class="icon-scale"></span>
+            </button>
             {% if s.id in queue_ids %}
             <form method="post" action="{{ url_for('label_queue_remove', spool_id=s.id) }}" class="d-inline">
               <input type="hidden" name="next" value="{{ url_for('spools_list') }}">
-              <button class="btn btn-sm btn-warning" title="Remover da fila de impressão"><i class="bi bi-printer-fill"></i></button>
+              <button class="btn btn-sm btn-warning" title="Remover da fila"><i class="bi bi-printer-fill"></i></button>
             </form>
             {% else %}
             <form method="post" action="{{ url_for('label_queue_add', spool_id=s.id) }}" class="d-inline">
               <input type="hidden" name="next" value="{{ url_for('spools_list') }}">
-              <button class="btn btn-sm btn-outline-warning" title="Adicionar à fila de impressão"><i class="bi bi-printer"></i></button>
+              <button class="btn btn-sm btn-outline-warning" title="Adicionar à fila"><i class="bi bi-printer"></i></button>
             </form>
             {% endif %}
             <a href="{{ url_for('spools_edit', spool_id=s.id) }}" class="btn btn-sm btn-outline-secondary" title="Editar"><i class="bi bi-pencil"></i></a>
@@ -82,4 +97,142 @@
     </table>
   </div>
 </div>
+
+{# Form oculto para "Fila: Todos" #}
+<form id="queueAllForm" method="post" action="{{ url_for('label_queue_add_all') }}" style="display:none">
+  <input type="hidden" name="next" value="{{ url_for('spools_list') }}">
+  <div id="queueAllIds"></div>
+</form>
+
+{# Modal de pesagem #}
+<div class="modal fade" id="weighModal" tabindex="-1" aria-labelledby="weighModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header py-2 px-3">
+        <span class="fw-semibold small" id="weighModalTitle"></span>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body px-3 pb-3 pt-2">
+        <div class="text-muted small mb-2">
+          Tara: <span id="weighTare" class="font-monospace"></span>g
+        </div>
+        <div class="mb-2">
+          <input type="number" id="weighGross" class="form-control form-control-lg text-center font-monospace"
+                 step="0.1" min="0" placeholder="Peso bruto (g)">
+        </div>
+        <div id="weighPreview" class="text-center text-muted small mb-3" style="min-height:1.2em"></div>
+        <button class="btn btn-primary w-100" id="weighSubmit">Registrar</button>
+        <div id="weighError" class="mt-2"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* ── Row click ──────────────────────────────────────────────────────────── */
+document.querySelectorAll('.spool-row').forEach(row => {
+  row.addEventListener('click', e => {
+    if (e.target.closest('a, button, form')) return;
+    location.href = row.dataset.href;
+  });
+});
+
+/* ── Fila: Todos ─────────────────────────────────────────────────────────── */
+document.getElementById('markAllBtn').addEventListener('click', () => {
+  const container = document.getElementById('queueAllIds');
+  container.innerHTML = '';
+  document.querySelectorAll('#spoolTable tbody tr[data-spool-id]').forEach(row => {
+    if (row.style.display === 'none') return;
+    const inp = document.createElement('input');
+    inp.type = 'hidden'; inp.name = 'spool_ids'; inp.value = row.dataset.spoolId;
+    container.appendChild(inp);
+  });
+  document.getElementById('queueAllForm').submit();
+});
+
+/* ── Modal de pesagem ────────────────────────────────────────────────────── */
+let _weighRow = null;
+const weighModal = new bootstrap.Modal(document.getElementById('weighModal'));
+
+function openWeighModal(btn, event) {
+  event.stopPropagation();
+  _weighRow = btn.closest('tr');
+  document.getElementById('weighModalTitle').textContent = _weighRow.dataset.name;
+  document.getElementById('weighTare').textContent = _weighRow.dataset.tare;
+  document.getElementById('weighGross').value = '';
+  document.getElementById('weighPreview').textContent = '';
+  document.getElementById('weighError').innerHTML = '';
+  weighModal.show();
+  setTimeout(() => document.getElementById('weighGross').focus(), 350);
+}
+
+document.getElementById('weighGross').addEventListener('input', function() {
+  const gross = parseFloat(this.value);
+  const tare  = parseFloat(_weighRow?.dataset.tare || 0);
+  const nom   = parseFloat(_weighRow?.dataset.nominal || 1000);
+  if (!isNaN(gross) && gross > tare) {
+    const net = gross - tare;
+    const pct = Math.min(100, (net / nom * 100)).toFixed(0);
+    document.getElementById('weighPreview').textContent = `${net.toFixed(0)}g  ·  ${pct}%`;
+  } else {
+    document.getElementById('weighPreview').textContent = '';
+  }
+});
+
+/* Enter key submits */
+document.getElementById('weighGross').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('weighSubmit').click();
+});
+
+document.getElementById('weighSubmit').addEventListener('click', async () => {
+  const gross = document.getElementById('weighGross').value;
+  if (!gross) return;
+  const btn = document.getElementById('weighSubmit');
+  btn.disabled = true;
+  btn.textContent = '…';
+
+  try {
+    const form = new FormData();
+    form.append('gross_weight_g', gross);
+    const resp = await fetch(_weighRow.dataset.weighUrl, {
+      method: 'POST',
+      body: form,
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    });
+    const data = await resp.json();
+
+    if (data.ok) {
+      /* Update weight cell */
+      _weighRow.querySelector('.weight-cell').textContent = data.net_g + 'g';
+
+      /* Update donut arc */
+      const arc = _weighRow.querySelector('.donut-arc');
+      if (arc) {
+        arc.setAttribute('stroke-dasharray', `${data.pct} ${100 - data.pct}`);
+      }
+
+      /* Update tooltip */
+      const wrap = _weighRow.querySelector('.donut-wrap');
+      if (wrap) {
+        wrap.setAttribute('title', `${Math.round(data.pct)}% disponível`);
+        const tip = bootstrap.Tooltip.getInstance(wrap);
+        if (tip) { tip.dispose(); new bootstrap.Tooltip(wrap); }
+      }
+
+      weighModal.hide();
+    } else {
+      document.getElementById('weighError').innerHTML =
+        `<div class="alert alert-danger py-1 px-2 small mt-1">${data.error}</div>`;
+    }
+  } catch(e) {
+    document.getElementById('weighError').innerHTML =
+      `<div class="alert alert-danger py-1 px-2 small mt-1">Erro de rede. Tente novamente.</div>`;
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Registrar';
+});
+</script>
 {% endblock %}
