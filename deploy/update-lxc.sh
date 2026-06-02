@@ -53,6 +53,7 @@ main() {
     cp -r "$REPO_DIR/static"        "$APP_DIR/static"
     cp "$REPO_DIR/deploy/update-lxc.sh"         "$APP_DIR/deploy/update-lxc.sh"
     cp "$REPO_DIR/deploy/spool-control.service"  "$APP_DIR/deploy/spool-control.service"
+    cp "$REPO_DIR/deploy/seed_brands.py"         "$APP_DIR/deploy/seed_brands.py"
     chmod +x "$APP_DIR/deploy/update-lxc.sh"
     rm -rf "$REPO_DIR"
 

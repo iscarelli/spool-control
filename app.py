@@ -1,6 +1,9 @@
 import os
 import re
+import urllib.request
+import urllib.error
 from functools import wraps
+from pathlib import Path
 from flask import (
     Flask, render_template, request, redirect, url_for,
     session, flash, Response, abort, jsonify,
@@ -8,6 +11,31 @@ from flask import (
 from werkzeug.security import generate_password_hash, check_password_hash
 import database as db
 import labels as lbl
+
+BRANDS_DIR = Path(__file__).parent / "static" / "brands"
+
+
+def _clean_domain(domain: str) -> str:
+    domain = re.sub(r'^https?://', '', domain.strip())
+    domain = re.sub(r'^www\.', '', domain)
+    return domain.split('/')[0].strip()
+
+
+def _fetch_brand_logo(brand_name: str, domain: str) -> bool:
+    BRANDS_DIR.mkdir(exist_ok=True)
+    slug = re.sub(r'[^a-z0-9]+', '-', brand_name.lower()).strip('-')
+    dest = BRANDS_DIR / f"{slug}.png"
+    url = f"https://logo.clearbit.com/{_clean_domain(domain)}"
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            if 'image' in resp.headers.get('Content-Type', ''):
+                dest.write_bytes(resp.read())
+                db.update_brand_logo_path(brand_name, f"brands/{slug}.png")
+                return True
+    except Exception:
+        pass
+    return False
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
@@ -591,6 +619,53 @@ def admin_users_delete(user_id):
         db.delete_user(user_id)
         flash("Usuário removido", "success")
     return redirect(url_for("admin_users"))
+
+
+@app.route("/admin/brands")
+@admin_required
+def admin_brands():
+    brands = db.list_brands()
+    return render_template("admin/brands.html", brands=brands)
+
+
+@app.route("/admin/brands/fetch", methods=["POST"])
+@admin_required
+def admin_brand_fetch():
+    brand_name = request.form.get("brand_name", "").strip()
+    domain = request.form.get("domain", "").strip()
+    if not brand_name or not domain:
+        flash("Marca e domínio são obrigatórios", "danger")
+        return redirect(url_for("admin_brands"))
+    db.update_brand_domain(brand_name, domain)
+    if _fetch_brand_logo(brand_name, domain):
+        flash(f"Logo de '{brand_name}' baixado com sucesso", "success")
+    else:
+        flash(f"Não foi possível baixar o logo via Clearbit para '{domain}'", "warning")
+    return redirect(url_for("admin_brands"))
+
+
+@app.route("/admin/brands/upload", methods=["POST"])
+@admin_required
+def admin_brand_upload():
+    brand_name = request.form.get("brand_name", "").strip()
+    if not brand_name or "logo" not in request.files:
+        flash("Selecione um arquivo", "danger")
+        return redirect(url_for("admin_brands"))
+    f = request.files["logo"]
+    if not f.filename:
+        flash("Arquivo inválido", "danger")
+        return redirect(url_for("admin_brands"))
+    ext = Path(f.filename).suffix.lower()
+    if ext not in ('.png', '.jpg', '.jpeg', '.svg', '.webp'):
+        flash("Formato não suportado (PNG, JPG ou SVG)", "danger")
+        return redirect(url_for("admin_brands"))
+    BRANDS_DIR.mkdir(exist_ok=True)
+    slug = re.sub(r'[^a-z0-9]+', '-', brand_name.lower()).strip('-')
+    logo_path = f"brands/{slug}{ext}"
+    f.save(str(BRANDS_DIR / f"{slug}{ext}"))
+    db.update_brand_logo_path(brand_name, logo_path)
+    flash(f"Logo de '{brand_name}' salvo", "success")
+    return redirect(url_for("admin_brands"))
 
 
 @app.route("/admin/settings", methods=["GET", "POST"])

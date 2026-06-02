@@ -88,6 +88,16 @@ def init_db():
             added_at  TEXT    NOT NULL
         );
 
+        CREATE TABLE IF NOT EXISTS brands (
+            name       TEXT PRIMARY KEY,
+            domain     TEXT NOT NULL DEFAULT '',
+            logo_path  TEXT NOT NULL DEFAULT '',
+            updated_at TEXT NOT NULL DEFAULT ''
+        );
+
+        INSERT OR IGNORE INTO brands (name)
+        SELECT DISTINCT brand FROM filaments WHERE brand != '';
+
         INSERT OR IGNORE INTO settings (key, value) VALUES
             ('app_base_url',         'http://localhost:5000'),
             ('low_stock_threshold_g','200'),
@@ -194,6 +204,47 @@ def get_all_settings():
     return {r["key"]: r["value"] for r in rows}
 
 
+# ── Brands ─────────────────────────────────────────────────────────────────
+
+def list_brands():
+    db = get_db()
+    rows = db.execute("""
+        SELECT b.*, COUNT(DISTINCT f.id) AS filament_count
+        FROM brands b
+        LEFT JOIN filaments f ON f.brand = b.name
+        GROUP BY b.name ORDER BY b.name
+    """).fetchall()
+    db.close()
+    return rows
+
+
+def get_brand(name):
+    db = get_db()
+    row = db.execute("SELECT * FROM brands WHERE name=?", (name,)).fetchone()
+    db.close()
+    return row
+
+
+def update_brand_domain(name, domain):
+    db = get_db()
+    db.execute(
+        "INSERT INTO brands (name, domain) VALUES (?,?) ON CONFLICT(name) DO UPDATE SET domain=excluded.domain",
+        (name, domain),
+    )
+    db.commit()
+    db.close()
+
+
+def update_brand_logo_path(name, logo_path):
+    db = get_db()
+    db.execute(
+        "UPDATE brands SET logo_path=?, updated_at=? WHERE name=?",
+        (logo_path, now_iso(), name),
+    )
+    db.commit()
+    db.close()
+
+
 # ── Spool Models ───────────────────────────────────────────────────────────
 
 def list_spool_models():
@@ -250,9 +301,11 @@ def list_filaments():
     rows = db.execute("""
         SELECT f.*,
                COUNT(s.id) AS spool_count,
-               SUM(CASE WHEN s.active=1 THEN 1 ELSE 0 END) AS active_count
+               SUM(CASE WHEN s.active=1 THEN 1 ELSE 0 END) AS active_count,
+               b.logo_path AS brand_logo
         FROM filaments f
         LEFT JOIN spools s ON s.filament_id = f.id
+        LEFT JOIN brands b ON b.name = f.brand
         GROUP BY f.id
         ORDER BY f.material, f.brand, f.family
     """).fetchall()
@@ -274,6 +327,7 @@ def create_filament(brand, material, family, color_hex="", diameter_mm=1.75, not
         (brand, material, family, color_hex, diameter_mm, notes, now_iso()),
     )
     last = db.execute("SELECT last_insert_rowid()").fetchone()[0]
+    db.execute("INSERT OR IGNORE INTO brands (name) VALUES (?)", (brand,))
     db.commit()
     db.close()
     return last
@@ -285,6 +339,7 @@ def update_filament(filament_id, brand, material, family, color_hex="", diameter
         "UPDATE filaments SET brand=?, material=?, family=?, color_hex=?, diameter_mm=?, notes=? WHERE id=?",
         (brand, material, family, color_hex, diameter_mm, notes, filament_id),
     )
+    db.execute("INSERT OR IGNORE INTO brands (name) VALUES (?)", (brand,))
     db.commit()
     db.close()
 

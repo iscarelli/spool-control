@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Marcas — Spool Control{% endblock %}
+{% block content %}
+<h4 class="fw-bold mb-4">Marcas / Logos</h4>
+<p class="text-muted small mb-4">
+  Informe o domínio da marca para buscar o logo automaticamente via
+  <a href="https://clearbit.com" target="_blank">Clearbit</a> e salvar localmente.
+  Ou faça upload manual de um arquivo PNG/JPG/SVG.
+</p>
+
+<div class="row g-3">
+  {% for b in brands %}
+  <div class="col-md-6 col-lg-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          {% if b.logo_path %}
+          <img src="{{ url_for('static', filename=b.logo_path) }}"
+               height="36" style="object-fit:contain;max-width:80px" alt="{{ b.name }}">
+          {% else %}
+          <div class="d-flex align-items-center justify-content-center bg-light rounded"
+               style="width:56px;height:36px;font-size:1.1rem;font-weight:700;color:#999">
+            {{ b.name[0] }}
+          </div>
+          {% endif %}
+          <div>
+            <div class="fw-semibold">{{ b.name }}</div>
+            <div class="text-muted small">{{ b.filament_count }} filamento(s)</div>
+          </div>
+        </div>
+
+        <form method="post" action="{{ url_for('admin_brand_fetch') }}" class="mb-2">
+          <input type="hidden" name="brand_name" value="{{ b.name }}">
+          <div class="input-group input-group-sm">
+            <input type="text" name="domain" class="form-control"
+                   placeholder="ex: bambulab.com" value="{{ b.domain or '' }}">
+            <button class="btn btn-outline-dark" type="submit">
+              <i class="bi bi-cloud-download me-1"></i>Clearbit
+            </button>
+          </div>
+        </form>
+
+        <form method="post" action="{{ url_for('admin_brand_upload') }}"
+              enctype="multipart/form-data">
+          <input type="hidden" name="brand_name" value="{{ b.name }}">
+          <div class="input-group input-group-sm">
+            <input type="file" name="logo" class="form-control" accept=".png,.jpg,.jpeg,.svg,.webp">
+            <button class="btn btn-outline-secondary" type="submit">
+              <i class="bi bi-upload me-1"></i>Upload
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="col-12 text-muted text-center py-5">
+    Nenhuma marca cadastrada. Adicione filamentos primeiro.
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
