@@ -332,7 +332,8 @@ def spools_list():
         active_only = True
     else:
         spools = db.list_spools(active_only=active_only)
-    return render_template("spools/list.html", spools=spools, active_only=active_only, q=q)
+    return render_template("spools/list.html", spools=spools, active_only=active_only,
+                           q=q, queue_ids=db.queue_ids())
 
 
 @app.route("/spools/new", methods=["GET", "POST"])

@@ -619,6 +619,13 @@ def queue_list():
     return rows
 
 
+def queue_ids():
+    db = get_db()
+    rows = db.execute("SELECT spool_id FROM label_queue").fetchall()
+    db.close()
+    return {r["spool_id"] for r in rows}
+
+
 def queue_count():
     db = get_db()
     n = db.execute("SELECT COUNT(*) FROM label_queue").fetchone()[0]

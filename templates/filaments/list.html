@@ -27,19 +27,21 @@
       <tbody>
         {% for f in filaments %}
         <tr>
-          <td><span class="badge bg-secondary">{{ f.material }}</span></td>
+          <td>
+            <a href="{{ url_for('spools_list') }}?q={{ f.material }}" class="badge bg-secondary text-decoration-none">{{ f.material }}</a>
+          </td>
           <td>
             {% if f.brand_logo %}
             <img src="{{ url_for('static', filename=f.brand_logo) }}"
                  height="18" style="object-fit:contain;max-width:48px;vertical-align:middle" alt="" class="me-1">
             {% endif %}
-            {{ f.brand }}
+            <a href="{{ url_for('spools_list') }}?q={{ f.brand }}" class="text-dark text-decoration-none">{{ f.brand }}</a>
           </td>
           <td>
             {% if f.color_hex %}
             <span class="d-inline-block rounded me-1" style="width:14px;height:14px;background:{{ f.color_hex }};border:1px solid #ccc;vertical-align:middle"></span>
             {% endif %}
-            {{ f.family }}
+            <a href="{{ url_for('spools_list') }}?q={{ f.family }}" class="text-dark text-decoration-none">{{ f.family }}</a>
           </td>
           <td>{{ f.diameter_mm }}mm</td>
           <td>{{ f.active_count }}</td>

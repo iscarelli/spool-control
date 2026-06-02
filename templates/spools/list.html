@@ -53,10 +53,22 @@
               <div class="text-muted" style="font-size:0.7rem">{{ pct }}%</div>
             {% endif %}
           </td>
-          <td>
+          <td class="text-nowrap">
             <a href="{{ url_for('spools_detail', spool_id=s.id) }}" class="btn btn-sm btn-outline-secondary">Ver</a>
             {% if s.active %}
-            <a href="{{ url_for('spools_weigh', spool_id=s.id) }}" class="btn btn-sm btn-outline-dark">Pesar</a>
+            <a href="{{ url_for('spools_weigh', spool_id=s.id) }}" class="btn btn-sm btn-outline-dark"><i class="bi bi-rulers"></i></a>
+            {% if s.id in queue_ids %}
+            <form method="post" action="{{ url_for('label_queue_remove', spool_id=s.id) }}" class="d-inline">
+              <input type="hidden" name="next" value="{{ url_for('spools_list') }}">
+              <button class="btn btn-sm btn-warning" title="Remover da fila de impressão"><i class="bi bi-printer-fill"></i></button>
+            </form>
+            {% else %}
+            <form method="post" action="{{ url_for('label_queue_add', spool_id=s.id) }}" class="d-inline">
+              <input type="hidden" name="next" value="{{ url_for('spools_list') }}">
+              <button class="btn btn-sm btn-outline-warning" title="Adicionar à fila de impressão"><i class="bi bi-printer"></i></button>
+            </form>
+            {% endif %}
+            <a href="{{ url_for('spools_edit', spool_id=s.id) }}" class="btn btn-sm btn-outline-secondary" title="Editar"><i class="bi bi-pencil"></i></a>
             {% endif %}
           </td>
         </tr>

@@ -12,14 +12,24 @@
         <form method="post" id="spoolForm">
           <div class="mb-3">
             <label class="form-label fw-semibold">Filamento <span class="text-danger">*</span></label>
-            <select name="filament_id" class="form-select" required>
+            <select name="filament_id" id="filamentSel" class="form-select" required>
               <option value="">Selecione um filamento...</option>
               {% for f in filaments %}
-              <option value="{{ f.id }}" {% if selected_filament_id == f.id %}selected{% endif %}>
+              <option value="{{ f.id }}"
+                      data-color="{{ f.color_hex or '' }}"
+                      data-edit-url="{{ url_for('filaments_edit', filament_id=f.id) }}"
+                      {% if selected_filament_id == f.id %}selected{% endif %}>
                 {{ f.material }} — {{ f.brand }} / {{ f.family }}
               </option>
               {% endfor %}
             </select>
+            <div class="d-flex align-items-center gap-2 mt-2" id="filamentMeta" style="display:none!important">
+              <span id="filColorSwatch" style="width:20px;height:20px;border-radius:4px;border:1px solid #ccc;flex-shrink:0"></span>
+              <span id="filColorHex" class="text-muted small font-monospace"></span>
+              <a id="filEditLink" href="#" target="_blank" class="btn btn-sm btn-outline-secondary ms-auto">
+                <i class="bi bi-pencil me-1"></i>Editar cor / filamento
+              </a>
+            </div>
           </div>
 
           <div class="row g-3">
@@ -91,6 +101,24 @@
 {% endblock %}
 {% block scripts %}
 <script>
+// Filament color preview
+const filamentSel = document.getElementById('filamentSel');
+const filMeta     = document.getElementById('filamentMeta');
+const filSwatch   = document.getElementById('filColorSwatch');
+const filHex      = document.getElementById('filColorHex');
+const filEdit     = document.getElementById('filEditLink');
+function updateFilamentPreview() {
+  const opt = filamentSel.options[filamentSel.selectedIndex];
+  if (!opt.value) { filMeta.style.display = 'none'; return; }
+  filMeta.style.removeProperty('display');
+  const color = opt.dataset.color;
+  filSwatch.style.background = color || '#e0e0e0';
+  filHex.textContent = color || '(sem cor)';
+  filEdit.href = opt.dataset.editUrl || '#';
+}
+filamentSel.addEventListener('change', updateFilamentPreview);
+updateFilamentPreview();
+
 // Tara hint
 const sel = document.getElementById('spoolModelSelect');
 const hint = document.getElementById('tareHint');
