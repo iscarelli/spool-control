@@ -5,7 +5,7 @@
   <div class="col-md-8 col-lg-7">
     <div class="d-flex align-items-center mb-3">
       <a href="{{ url_for('spools_list') }}" class="btn btn-sm btn-outline-secondary me-2"><i class="bi bi-arrow-left"></i></a>
-      <h4 class="mb-0 fw-bold">{{ 'Editar Spool' if spool else 'Novo Spool' }}</h4>
+      <h4 class="mb-0 fw-bold">{% if spool %}Editar SP-{{ '%04d'|format(spool.id) }}{% else %}Novo Spool{% endif %}</h4>
     </div>
     <div class="card">
       <div class="card-body">
