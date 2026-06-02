@@ -9,7 +9,7 @@ from PIL import Image
 def _make_qr_image(url: str) -> Image.Image:
     qr = qrcode.QRCode(
         version=None,
-        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        error_correction=qrcode.constants.ERROR_CORRECT_Q,
         box_size=10,
         border=1,
     )

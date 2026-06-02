@@ -10,6 +10,13 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.2.1] — 2026-06-02
+
+### Alterado
+- QR Code das etiquetas: ECC elevado de M (15%) para Q (25%) — maior robustez de leitura para a futura estação física com GM861-LED
+
+---
+
 ## [1.2.0] — 2026-06-02
 
 ### Adicionado
