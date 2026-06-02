@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
+  <!-- base -->
+  <rect x="5.5" y="14" width="5" height="1" rx=".5"/>
+  <!-- pole -->
+  <rect x="7.6" y="2" width=".8" height="12" rx=".4"/>
+  <!-- beam -->
+  <rect x="1" y="3.2" width="14" height=".9" rx=".45"/>
+  <!-- left strings -->
+  <rect x="2.6" y="4.1" width=".5" height="3.5" rx=".25"/>
+  <rect x="4.9" y="4.1" width=".5" height="3.5" rx=".25"/>
+  <!-- right strings -->
+  <rect x="10.6" y="4.1" width=".5" height="3.5" rx=".25"/>
+  <rect x="12.9" y="4.1" width=".5" height="3.5" rx=".25"/>
+  <!-- left pan -->
+  <path d="M2 7.6 Q4 9.8 6 7.6" stroke="currentColor" stroke-width=".8" fill="none" stroke-linecap="round"/>
+  <!-- right pan -->
+  <path d="M10 7.6 Q12 9.8 14 7.6" stroke="currentColor" stroke-width=".8" fill="none" stroke-linecap="round"/>
+  <!-- center knob -->
+  <circle cx="8" cy="3.2" r="1"/>
+</svg>

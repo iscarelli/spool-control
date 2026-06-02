@@ -6,3 +6,13 @@
 body { font-size: 0.92rem; }
 
 .table th, .table td { vertical-align: middle; }
+
+.icon-scale {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  background: currentColor;
+  -webkit-mask: url('/static/icon-scale.svg') center/contain no-repeat;
+  mask: url('/static/icon-scale.svg') center/contain no-repeat;
+  vertical-align: -0.125em;
+}

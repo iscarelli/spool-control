@@ -56,7 +56,7 @@
           <td class="text-nowrap">
             <a href="{{ url_for('spools_detail', spool_id=s.id) }}" class="btn btn-sm btn-outline-secondary">Ver</a>
             {% if s.active %}
-            <a href="{{ url_for('spools_weigh', spool_id=s.id) }}" class="btn btn-sm btn-outline-dark"><i class="bi bi-rulers"></i></a>
+            <a href="{{ url_for('spools_weigh', spool_id=s.id) }}" class="btn btn-sm btn-outline-dark"><span class="icon-scale"></span></a>
             {% if s.id in queue_ids %}
             <form method="post" action="{{ url_for('label_queue_remove', spool_id=s.id) }}" class="d-inline">
               <input type="hidden" name="next" value="{{ url_for('spools_list') }}">
