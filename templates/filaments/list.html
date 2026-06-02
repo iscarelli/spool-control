@@ -27,10 +27,10 @@
         {% for f in filaments %}
         <tr>
           <td><span class="badge bg-secondary">{{ f.material }}</span></td>
-          <td class="d-flex align-items-center gap-2">
+          <td>
             {% if f.brand_logo %}
             <img src="{{ url_for('static', filename=f.brand_logo) }}"
-                 height="18" style="object-fit:contain;max-width:48px" alt="">
+                 height="18" style="object-fit:contain;max-width:48px;vertical-align:middle" alt="" class="me-1">
             {% endif %}
             {{ f.brand }}
           </td>
