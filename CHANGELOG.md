@@ -10,6 +10,14 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.4.1] — 2026-06-02
+
+### Corrigido
+- Ícone do carretel na navbar some no light mode — substituído `filter:invert(0.9)` inline por classe `.brand-icon` controlada via CSS por tema
+- Donuts ainda mais espessos: stroke-width 15, viewBox 50×50, cx/cy 25 — buraco interno ~36% do diâmetro externo, próximo da referência visual
+
+---
+
 ## [1.4.0] — 2026-06-02
 
 ### Adicionado

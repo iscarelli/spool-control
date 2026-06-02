@@ -349,6 +349,10 @@ h1, h2, h3, h4, h5, h6 { letter-spacing: -0.02em; }
 /* ── Donuts ─────────────────────────────────────────────────────────────── */
 .donut-track { stroke: var(--sc-border); }
 
+/* ── Brand icon (adapts to theme) ───────────────────────────────────────── */
+.brand-icon { filter: invert(1); }
+[data-bs-theme="light"] .brand-icon { filter: none; }
+
 /* ── btn-outline-primary ────────────────────────────────────────────────── */
 .btn-outline-primary {
   --bs-btn-color: var(--sc-accent);

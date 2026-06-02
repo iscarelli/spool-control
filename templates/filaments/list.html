@@ -4,12 +4,12 @@
 
 {% macro donut(pct, fill, size=34, tip='') %}
 <span {% if tip %}data-bs-toggle="tooltip" title="{{ tip }}"{% endif %}>
-  <svg width="{{ size }}" height="{{ size }}" viewBox="0 0 44 44">
-    <circle cx="22" cy="22" r="15.9155" fill="none" class="donut-track" stroke-width="9"/>
-    <circle cx="22" cy="22" r="15.9155" fill="none"
-            stroke="{{ fill }}" stroke-width="9"
+  <svg width="{{ size }}" height="{{ size }}" viewBox="0 0 50 50">
+    <circle cx="25" cy="25" r="15.9155" fill="none" class="donut-track" stroke-width="15"/>
+    <circle cx="25" cy="25" r="15.9155" fill="none"
+            stroke="{{ fill }}" stroke-width="15"
             stroke-dasharray="{{ pct }} {{ 100 - pct }}"
-            transform="rotate(-90 22 22)"/>
+            transform="rotate(-90 25 25)"/>
   </svg>
 </span>
 {% endmacro %}
