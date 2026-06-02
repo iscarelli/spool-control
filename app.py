@@ -252,6 +252,24 @@ def filaments_edit(filament_id):
                            next_url=next_url)
 
 
+@app.route("/filaments/<int:filament_id>/duplicate", methods=["POST"])
+@login_required
+def filaments_duplicate(filament_id):
+    src = db.get_filament(filament_id)
+    if not src:
+        abort(404)
+    new_id = db.create_filament(
+        brand=src["brand"],
+        material=src["material"],
+        family=src["family"],
+        color_hex=src["color_hex"],
+        diameter_mm=src["diameter_mm"],
+        notes=src["notes"],
+    )
+    flash(f"Filamento duplicado — editando cópia", "success")
+    return redirect(url_for("filaments_edit", filament_id=new_id))
+
+
 @app.route("/filaments/<int:filament_id>/delete", methods=["POST"])
 @login_required
 def filaments_delete(filament_id):

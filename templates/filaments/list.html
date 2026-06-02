@@ -49,6 +49,9 @@
           <td>
             <a href="{{ url_for('filaments_detail', filament_id=f.id) }}" class="btn btn-sm btn-outline-secondary">Ver</a>
             <a href="{{ url_for('spools_new') }}?filament_id={{ f.id }}" class="btn btn-sm btn-outline-dark">+ Spool</a>
+            <form method="post" action="{{ url_for('filaments_duplicate', filament_id=f.id) }}" class="d-inline">
+              <button class="btn btn-sm btn-outline-secondary" title="Duplicar filamento"><i class="bi bi-copy"></i></button>
+            </form>
           </td>
         </tr>
         {% else %}
