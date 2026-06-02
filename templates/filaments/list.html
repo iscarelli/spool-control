@@ -52,6 +52,17 @@
             <form method="post" action="{{ url_for('filaments_duplicate', filament_id=f.id) }}" class="d-inline">
               <button class="btn btn-sm btn-outline-secondary" title="Duplicar filamento"><i class="bi bi-copy"></i></button>
             </form>
+            {% if f.spool_count == 0 %}
+            <form method="post" action="{{ url_for('filaments_delete', filament_id=f.id) }}" class="d-inline"
+                  onsubmit="return confirm('Remover o filamento {{ f.brand }} {{ f.material }} — {{ f.family }}?')">
+              <button class="btn btn-sm btn-outline-danger" title="Remover filamento"><i class="bi bi-trash"></i></button>
+            </form>
+            {% else %}
+            <button class="btn btn-sm btn-outline-danger" disabled
+                    title="{{ f.spool_count }} spool(s) vinculado(s) — remova-os antes de excluir">
+              <i class="bi bi-trash"></i>
+            </button>
+            {% endif %}
           </td>
         </tr>
         {% else %}
