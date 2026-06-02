@@ -5,13 +5,6 @@ from reportlab.lib.units import mm
 from reportlab.lib.utils import ImageReader
 from PIL import Image
 
-PAGE_W = 60 * mm
-PAGE_H = 40 * mm
-
-QR_SIZE = 28 * mm
-MARGIN = 3 * mm
-TEXT_X = QR_SIZE + MARGIN * 2
-
 
 def _make_qr_image(url: str) -> Image.Image:
     qr = qrcode.QRCode(
@@ -25,89 +18,75 @@ def _make_qr_image(url: str) -> Image.Image:
     return qr.make_image(fill_color="black", back_color="white").convert("RGB")
 
 
-def generate_label_pdf(spool: dict, filament: dict, base_url: str) -> bytes:
-    buf = io.BytesIO()
-    c = canvas.Canvas(buf, pagesize=(PAGE_W, PAGE_H))
+def _draw_label(c, spool: dict, base_url: str, page_w: float, page_h: float):
+    """Draw one label on the current canvas page. Coordinates in ReportLab points."""
+    margin = 3 * mm
+    # QR fills 70% of height, capped so text area has room
+    qr_size = min(page_h * 0.70, page_w * 0.42)
+    text_x = qr_size + margin * 2
+
+    # Scale fonts relative to the reference 40mm height
+    scale = page_h / (40 * mm)
+    f_brand    = max(5.0, 7.0  * scale)
+    f_material = max(8.0, 15.0 * scale)
+    f_family   = max(5.0, 8.0  * scale)
+    f_id       = max(5.0, 7.0  * scale)
 
     url = f"{base_url.rstrip('/')}/spools/{spool['id']}"
-    qr_img = _make_qr_image(url)
+    c.drawImage(ImageReader(_make_qr_image(url)),
+                margin, page_h - qr_size - margin, qr_size, qr_size)
 
-    qr_reader = ImageReader(qr_img)
-    c.drawImage(qr_reader, MARGIN, PAGE_H - QR_SIZE - MARGIN, QR_SIZE, QR_SIZE)
+    y = page_h - margin
+    brand    = str(spool.get("brand",    ""))[:28]
+    material = str(spool.get("material", ""))[:16]
+    family   = str(spool.get("family",   ""))
+    sid      = str(spool["id"]).zfill(4)
 
-    text_w = PAGE_W - TEXT_X - MARGIN
-    y = PAGE_H - MARGIN
+    c.setFont("Helvetica-Bold", f_brand)
+    y -= f_brand * 1.4
+    c.drawString(text_x, y, brand)
 
-    brand = str(filament["brand"])
-    material = str(filament["material"])
-    family = str(filament["family"])
-    spool_id = str(spool["id"])
+    c.setFont("Helvetica-Bold", f_material)
+    y -= f_material * 1.2
+    c.drawString(text_x, y, material)
 
-    # Brand (small)
-    c.setFont("Helvetica-Bold", 7)
-    y -= 9
-    c.drawString(TEXT_X, y, brand[:28])
-
-    # Material (large, prominent)
-    c.setFont("Helvetica-Bold", 15)
-    y -= 15
-    c.drawString(TEXT_X, y, material[:16])
-
-    # Family/Color (wrapped at ~30 chars)
-    c.setFont("Helvetica", 8)
-    y -= 11
-    if len(family) > 28:
-        c.drawString(TEXT_X, y, family[:28])
-        y -= 10
-        c.drawString(TEXT_X, y, family[28:56])
+    c.setFont("Helvetica", f_family)
+    y -= f_family * 1.4
+    max_chars = max(12, int(28 * scale))
+    if len(family) > max_chars:
+        c.drawString(text_x, y, family[:max_chars])
+        y -= f_family * 1.3
+        c.drawString(text_x, y, family[max_chars: max_chars * 2])
     else:
-        c.drawString(TEXT_X, y, family)
+        c.drawString(text_x, y, family)
 
-    # Separator line
-    y -= 6
+    y -= 5 * scale
     c.setLineWidth(0.3)
-    c.line(TEXT_X, y, PAGE_W - MARGIN, y)
+    c.line(text_x, y, page_w - margin, y)
 
-    # Spool ID
-    y -= 9
-    c.setFont("Helvetica", 7)
-    c.drawString(TEXT_X, y, f"ID: SP-{spool_id.zfill(4)}")
+    c.setFont("Helvetica", f_id)
+    y -= f_id * 1.4
+    c.drawString(text_x, y, f"ID: SP-{sid}")
 
+
+def generate_label_pdf(spool: dict, base_url: str,
+                       width_mm: float = 60, height_mm: float = 40) -> bytes:
+    page_w, page_h = width_mm * mm, height_mm * mm
+    buf = io.BytesIO()
+    c = canvas.Canvas(buf, pagesize=(page_w, page_h))
+    _draw_label(c, spool, base_url, page_w, page_h)
     c.save()
     return buf.getvalue()
 
 
-def generate_multi_label_pdf(spools: list, base_url: str) -> bytes:
+def generate_multi_label_pdf(spools: list, base_url: str,
+                             width_mm: float = 60, height_mm: float = 40) -> bytes:
+    page_w, page_h = width_mm * mm, height_mm * mm
     buf = io.BytesIO()
-    c = canvas.Canvas(buf, pagesize=(PAGE_W, PAGE_H))
+    c = canvas.Canvas(buf, pagesize=(page_w, page_h))
     for i, spool in enumerate(spools):
         if i > 0:
             c.showPage()
-        url = f"{base_url.rstrip('/')}/spools/{spool['id']}"
-        qr_img = _make_qr_image(url)
-        qr_reader = ImageReader(qr_img)
-        c.drawImage(qr_reader, MARGIN, PAGE_H - QR_SIZE - MARGIN, QR_SIZE, QR_SIZE)
-        y = PAGE_H - MARGIN
-        c.setFont("Helvetica-Bold", 7)
-        y -= 9
-        c.drawString(TEXT_X, y, str(spool.get("brand", ""))[:28])
-        c.setFont("Helvetica-Bold", 15)
-        y -= 15
-        c.drawString(TEXT_X, y, str(spool.get("material", ""))[:16])
-        family = str(spool.get("family", ""))
-        c.setFont("Helvetica", 8)
-        y -= 11
-        if len(family) > 28:
-            c.drawString(TEXT_X, y, family[:28])
-            y -= 10
-            c.drawString(TEXT_X, y, family[28:56])
-        else:
-            c.drawString(TEXT_X, y, family)
-        y -= 6
-        c.setLineWidth(0.3)
-        c.line(TEXT_X, y, PAGE_W - MARGIN, y)
-        y -= 9
-        c.setFont("Helvetica", 7)
-        c.drawString(TEXT_X, y, f"ID: SP-{str(spool['id']).zfill(4)}")
+        _draw_label(c, spool, base_url, page_w, page_h)
     c.save()
     return buf.getvalue()

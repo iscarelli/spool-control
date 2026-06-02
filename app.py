@@ -451,7 +451,9 @@ def spool_label_pdf(spool_id):
     if not spool:
         abort(404)
     base_url = db.get_setting("app_base_url", "http://localhost:5000")
-    pdf_bytes = lbl.generate_label_pdf(dict(spool), dict(spool), base_url)
+    w = float(db.get_setting("label_width_mm", "60"))
+    h = float(db.get_setting("label_height_mm", "40"))
+    pdf_bytes = lbl.generate_label_pdf(dict(spool), base_url, w, h)
     return Response(
         pdf_bytes,
         mimetype="application/pdf",
@@ -536,7 +538,9 @@ def label_queue_print():
         flash("Fila vazia", "warning")
         return redirect(url_for("label_queue"))
     base_url = db.get_setting("app_base_url", "http://localhost:5000")
-    pdf_bytes = lbl.generate_multi_label_pdf([dict(s) for s in items], base_url)
+    w = float(db.get_setting("label_width_mm", "60"))
+    h = float(db.get_setting("label_height_mm", "40"))
+    pdf_bytes = lbl.generate_multi_label_pdf([dict(s) for s in items], base_url, w, h)
     return Response(
         pdf_bytes,
         mimetype="application/pdf",
@@ -693,6 +697,8 @@ def admin_settings():
         db.set_setting("app_base_url", request.form.get("app_base_url", "").strip())
         db.set_setting("low_stock_threshold_g", request.form.get("low_stock_threshold_g", "200").strip())
         db.set_setting("low_stock_pct", request.form.get("low_stock_pct", "20").strip())
+        db.set_setting("label_width_mm", request.form.get("label_width_mm", "60").strip())
+        db.set_setting("label_height_mm", request.form.get("label_height_mm", "40").strip())
         flash("Configurações salvas", "success")
         return redirect(url_for("admin_settings"))
     settings = db.get_all_settings()

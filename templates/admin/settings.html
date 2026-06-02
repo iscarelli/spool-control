@@ -7,24 +7,65 @@
     <div class="card">
       <div class="card-body">
         <form method="post">
+
+          <h6 class="text-muted text-uppercase fw-semibold mb-3" style="font-size:.75rem">Geral</h6>
           <div class="mb-4">
             <label class="form-label fw-semibold">URL Base do Sistema</label>
             <input type="url" name="app_base_url" class="form-control"
-                   value="{{ settings.app_base_url }}" placeholder="http://192.168.1.50">
-            <div class="form-text">Usada para gerar o QR code nas etiquetas. Deve ser acessível pelo celular na mesma rede.</div>
+                   value="{{ settings.app_base_url }}" placeholder="https://spool.exemplo.com.br">
+            <div class="form-text">Usada para gerar o QR code nas etiquetas. Deve ser acessível pelo celular.</div>
           </div>
-          <div class="mb-4">
-            <label class="form-label fw-semibold">Threshold de Estoque Baixo (g)</label>
-            <input type="number" name="low_stock_threshold_g" class="form-control" min="0"
-                   value="{{ settings.low_stock_threshold_g }}">
-            <div class="form-text">Spools com menos que este peso serão sinalizados.</div>
+
+          <hr class="my-4">
+          <h6 class="text-muted text-uppercase fw-semibold mb-3" style="font-size:.75rem">Estoque Baixo</h6>
+          <div class="row g-3 mb-4">
+            <div class="col-6">
+              <label class="form-label fw-semibold">Threshold (g)</label>
+              <div class="input-group">
+                <input type="number" name="low_stock_threshold_g" class="form-control" min="0"
+                       value="{{ settings.low_stock_threshold_g }}">
+                <span class="input-group-text">g</span>
+              </div>
+              <div class="form-text">Peso mínimo antes de sinalizar.</div>
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">Threshold (%)</label>
+              <div class="input-group">
+                <input type="number" name="low_stock_pct" class="form-control" min="0" max="100"
+                       value="{{ settings.low_stock_pct }}">
+                <span class="input-group-text">%</span>
+              </div>
+              <div class="form-text">Porcentagem mínima do nominal.</div>
+            </div>
           </div>
-          <div class="mb-4">
-            <label class="form-label fw-semibold">Threshold de Estoque Baixo (%)</label>
-            <input type="number" name="low_stock_pct" class="form-control" min="0" max="100"
-                   value="{{ settings.low_stock_pct }}">
-            <div class="form-text">Spools com menos que esta porcentagem do nominal também serão sinalizados.</div>
+
+          <hr class="my-4">
+          <h6 class="text-muted text-uppercase fw-semibold mb-3" style="font-size:.75rem">Etiquetas</h6>
+          <div class="row g-3 mb-4">
+            <div class="col-6">
+              <label class="form-label fw-semibold">Largura</label>
+              <div class="input-group">
+                <input type="number" name="label_width_mm" class="form-control" min="20" max="200" step="0.5"
+                       value="{{ settings.label_width_mm or '60' }}">
+                <span class="input-group-text">mm</span>
+              </div>
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">Altura</label>
+              <div class="input-group">
+                <input type="number" name="label_height_mm" class="form-control" min="15" max="200" step="0.5"
+                       value="{{ settings.label_height_mm or '40' }}">
+                <span class="input-group-text">mm</span>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="form-text">
+                Tamanho do PDF gerado para impressão térmica. Padrão: <strong>60 × 40 mm</strong>.
+                Fontes e QR code escalam automaticamente.
+              </div>
+            </div>
           </div>
+
           <button type="submit" class="btn btn-dark">Salvar Configurações</button>
         </form>
       </div>

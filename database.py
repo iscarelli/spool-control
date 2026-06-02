@@ -101,7 +101,9 @@ def init_db():
         INSERT OR IGNORE INTO settings (key, value) VALUES
             ('app_base_url',         'http://localhost:5000'),
             ('low_stock_threshold_g','200'),
-            ('low_stock_pct',        '20');
+            ('low_stock_pct',        '20'),
+            ('label_width_mm',       '60'),
+            ('label_height_mm',      '40');
     """)
     db.commit()
     db.close()
