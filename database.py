@@ -445,14 +445,14 @@ def create_spool(filament_id, spool_model_id, custom_tare_g, nominal_weight_g,
     return last
 
 
-def update_spool(spool_id, spool_model_id, custom_tare_g, nominal_weight_g,
+def update_spool(spool_id, filament_id, spool_model_id, custom_tare_g, nominal_weight_g,
                  location, purchase_date, purchase_price, notes):
     db = get_db()
     db.execute(
-        """UPDATE spools SET spool_model_id=?, custom_tare_g=?, nominal_weight_g=?,
+        """UPDATE spools SET filament_id=?, spool_model_id=?, custom_tare_g=?, nominal_weight_g=?,
            location=?, purchase_date=?, purchase_price=?, notes=?
            WHERE id=?""",
-        (spool_model_id or None, custom_tare_g or None, nominal_weight_g,
+        (filament_id, spool_model_id or None, custom_tare_g or None, nominal_weight_g,
          location, purchase_date, purchase_price or None, notes, spool_id),
     )
     db.commit()

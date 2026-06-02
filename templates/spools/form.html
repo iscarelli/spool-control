@@ -10,7 +10,6 @@
     <div class="card">
       <div class="card-body">
         <form method="post" id="spoolForm">
-          {% if not spool %}
           <div class="mb-3">
             <label class="form-label fw-semibold">Filamento <span class="text-danger">*</span></label>
             <select name="filament_id" class="form-select" required>
@@ -22,7 +21,6 @@
               {% endfor %}
             </select>
           </div>
-          {% endif %}
 
           <div class="row g-3">
             <div class="col-md-6">

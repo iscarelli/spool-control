@@ -385,6 +385,7 @@ def spools_edit(spool_id):
             new_location = request.form.get("location", "").strip()
             db.update_spool(
                 spool_id,
+                filament_id=int(request.form["filament_id"]),
                 spool_model_id=request.form.get("spool_model_id") or None,
                 custom_tare_g=request.form.get("custom_tare_g") or None,
                 nominal_weight_g=float(request.form.get("nominal_weight_g") or 1000),
