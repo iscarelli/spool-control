@@ -10,6 +10,25 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.3.0] — 2026-06-02
+
+### Adicionado
+- Design system completo: dark mode nativo Bootstrap 5.3 (`data-bs-theme="dark"`) com paleta slate/green
+- Font Inter (Google Fonts) para toda a interface; Fira Code para badge de versão
+- Design tokens CSS (`--sc-bg`, `--sc-surface`, `--sc-accent`, etc.) como base de theming
+- Navbar com indicador de página ativa (`.sc-active`) por endpoint Flask
+
+### Alterado
+- Navbar: layout refinado, gap entre itens, dropdowns com bordas arredondadas e sombra
+- Tabelas: header com tipografia uppercase 0.7rem + letter-spacing; background `#111827`
+- Botões: paleta revisada — primário verde, secundário slate, danger/warning sutis
+- Alerts: fundo translúcido colorido ao invés de sólido
+- Cards: superfície `#1E293B`, borda `#334155`, border-radius 10px
+- Badge de versão: monoespaçado, posicionado fixo no canto inferior direito
+- Botões "+ Novo Filamento" e "+ Novo Spool": `btn-primary` (verde) ao invés de `btn-dark`
+
+---
+
 ## [1.2.1] — 2026-06-02
 
 ### Alterado
