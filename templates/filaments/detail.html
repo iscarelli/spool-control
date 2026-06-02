@@ -3,6 +3,10 @@
 {% block content %}
 <div class="d-flex align-items-center mb-3">
   <a href="{{ url_for('filaments_list') }}" class="btn btn-sm btn-outline-secondary me-2"><i class="bi bi-arrow-left"></i></a>
+  {% if filament.brand_logo %}
+  <img src="{{ url_for('static', filename=filament.brand_logo) }}"
+       height="28" style="object-fit:contain;max-width:64px" class="me-2" alt="{{ filament.brand }}">
+  {% endif %}
   <h4 class="mb-0 fw-bold">
     {% if filament.color_hex %}
     <span class="d-inline-block rounded me-2" style="width:18px;height:18px;background:{{ filament.color_hex }};border:1px solid #ccc;vertical-align:middle"></span>

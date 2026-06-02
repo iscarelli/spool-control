@@ -315,7 +315,12 @@ def list_filaments():
 
 def get_filament(filament_id):
     db = get_db()
-    row = db.execute("SELECT * FROM filaments WHERE id=?", (filament_id,)).fetchone()
+    row = db.execute("""
+        SELECT f.*, b.logo_path AS brand_logo
+        FROM filaments f
+        LEFT JOIN brands b ON b.name = f.brand
+        WHERE f.id=?
+    """, (filament_id,)).fetchone()
     db.close()
     return row
 
