@@ -118,6 +118,16 @@ def list_users():
     return rows
 
 
+def ensure_admin_user(username, password_hash):
+    db = get_db()
+    db.execute(
+        "INSERT OR IGNORE INTO users (username, password_hash, role, created_at) VALUES (?,?,?,?)",
+        (username, password_hash, "admin", now_iso()),
+    )
+    db.commit()
+    db.close()
+
+
 def create_user(username, password_hash, role="viewer"):
     db = get_db()
     db.execute(

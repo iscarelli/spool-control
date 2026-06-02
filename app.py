@@ -22,9 +22,8 @@ app.config.update(
 
 def bootstrap():
     db.init_db()
-    if not db.get_user_by_username("admin"):
-        default_pass = os.environ.get("ADMIN_DEFAULT_PASS", "admin123")
-        db.create_user("admin", generate_password_hash(default_pass), role="admin")
+    default_pass = os.environ.get("ADMIN_DEFAULT_PASS", "admin123")
+    db.ensure_admin_user("admin", generate_password_hash(default_pass))
 
 
 bootstrap()
