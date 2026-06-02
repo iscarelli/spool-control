@@ -33,7 +33,7 @@
     <button class="btn btn-sm btn-outline-warning" id="markAllBtn">
       <i class="bi bi-printer-fill me-1"></i>{{ _('Fila: Todos') }}
     </button>
-    <a href="{{ url_for('spools_new') }}" class="btn btn-sm btn-outline-primary">{{ _('+ Novo Spool') }}</a>
+    <a href="{{ url_for('spools_new') }}" class="btn btn-primary btn-sm rounded-pill px-3"><i class="bi bi-plus-circle-fill me-1"></i>{{ _('Novo Spool') }}</a>
   </div>
 </div>
 <div class="card">
@@ -68,7 +68,7 @@
             data-fill="{{ fill }}"
             data-weigh-url="{{ url_for('spools_weigh', spool_id=s.id) }}">
           <td class="text-center align-middle" style="width:44px;padding:4px">
-            {{ donut(pct, fill, spool_id=s.id, tip=pct|int|string + '% ' + _('% disponível')) }}
+            {{ donut(pct, fill, spool_id=s.id, tip=pct|int|string + _('% disponível')) }}
           </td>
           <td class="fw-bold">SP-{{ '%04d'|format(s.id) }}</td>
           <td><span class="badge bg-secondary">{{ s.material }}</span></td>

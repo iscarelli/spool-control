@@ -36,6 +36,7 @@ _EN = {
     # Filaments list
     "Filtrar...":                    "Filter...",
     "+ Novo Filamento":              "+ New Filament",
+    "Novo Filamento":                "New Filament",
     "Nenhum filamento cadastrado":   "No filaments registered",
     "Duplicar filamento":            "Duplicate filament",
     "Remover filamento":             "Delete filament",
@@ -46,6 +47,7 @@ _EN = {
     "Só ativos":            "Active only",
     "Fila: Todos":          "Queue: All",
     "+ Novo Spool":         "+ New Spool",
+    "Novo Spool":           "New Spool",
     "Nenhum spool encontrado": "No spools found",
 
     # Filament detail
