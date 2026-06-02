@@ -4,30 +4,29 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h4 class="mb-0 fw-bold">Spools {% if not active_only %}<span class="badge bg-secondary fs-6">todos</span>{% endif %}</h4>
   <div class="d-flex gap-2 align-items-center">
-    <form class="d-flex" action="{{ url_for('spools_list') }}" method="get">
-      <div class="input-group input-group-sm">
-        <input class="form-control" type="search" name="q" placeholder="Filtrar..." value="{{ q or '' }}" style="min-width:140px">
-        <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
-        {% if q %}<a href="{{ url_for('spools_list') }}" class="btn btn-outline-secondary"><i class="bi bi-x"></i></a>{% endif %}
-      </div>
-    </form>
-    {% if not q %}
-      {% if active_only %}
-      <a href="{{ url_for('spools_list') }}?all=1" class="btn btn-sm btn-outline-secondary">Ver finalizados</a>
-      {% else %}
-      <a href="{{ url_for('spools_list') }}" class="btn btn-sm btn-outline-secondary">Só ativos</a>
-      {% endif %}
+    <input class="form-control form-control-sm" type="search" id="filterInput"
+           data-filter-for="#spoolTable"
+           placeholder="Filtrar..." value="{{ q or '' }}" style="min-width:160px" autocomplete="off">
+    {% if active_only %}
+    <a href="{{ url_for('spools_list') }}?all=1" class="btn btn-sm btn-outline-secondary">Ver finalizados</a>
+    {% else %}
+    <a href="{{ url_for('spools_list') }}" class="btn btn-sm btn-outline-secondary">Só ativos</a>
     {% endif %}
     <a href="{{ url_for('spools_new') }}" class="btn btn-sm btn-dark">+ Novo Spool</a>
   </div>
 </div>
 <div class="card">
   <div class="table-responsive">
-    <table class="table table-hover mb-0">
+    <table class="table table-hover mb-0" id="spoolTable" data-sortable>
       <thead class="table-dark">
         <tr>
-          <th>ID</th><th>Material</th><th>Marca / Família</th>
-          <th>Local</th><th>Peso Atual</th><th>%</th><th></th>
+          <th data-sort="num">ID</th>
+          <th data-sort="text">Material</th>
+          <th data-sort="text">Marca / Família</th>
+          <th data-sort="text">Local</th>
+          <th data-sort="num">Peso Atual</th>
+          <th data-sort="num">%</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -43,13 +42,9 @@
           </td>
           <td>{{ s.location or '—' }}</td>
           <td>
-            {% if s.current_net_g is not none %}
-              {{ s.current_net_g|int }}g
-            {% else %}
-              <span class="text-muted">—</span>
-            {% endif %}
+            {% if s.current_net_g is not none %}{{ s.current_net_g|int }}{% else %}—{% endif %}
           </td>
-          <td style="width:100px">
+          <td style="min-width:90px">
             {% if s.current_net_g is not none and s.nominal_weight_g > 0 %}
               {% set pct = [(s.current_net_g / s.nominal_weight_g * 100)|int, 100]|min %}
               <div class="progress" style="height:10px">
@@ -66,9 +61,7 @@
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="7" class="text-center text-muted py-4">
-          {% if q %}Nenhum resultado para "{{ q }}"{% else %}Nenhum spool encontrado{% endif %}
-        </td></tr>
+        <tr data-no-result><td colspan="7" class="text-center text-muted py-4">Nenhum spool encontrado</td></tr>
         {% endfor %}
       </tbody>
     </table>
