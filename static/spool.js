@@ -22,7 +22,7 @@ document.querySelectorAll('table[data-sortable]').forEach(table => {
   table.querySelectorAll('thead th[data-sort]').forEach(th => {
     th.style.cursor = 'pointer';
     th.style.userSelect = 'none';
-    th.insertAdjacentHTML('beforeend', '<span class="sort-icon text-muted ms-1" style="font-size:.75em;opacity:.4">⇅</span>');
+    th.insertAdjacentHTML('beforeend', '<span class="sort-icon ms-1" style="font-size:.75em;opacity:.4;color:inherit">⇅</span>');
 
     th.addEventListener('click', () => {
       asc = currentTh === th ? !asc : true;
