@@ -10,6 +10,19 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.11.0] — 2026-06-03
+
+### Adicionado
+- **Impressão direta na Niimbot via navegador** (Web Bluetooth): novo botão **Imprimir Niimbot** na página de detalhe do spool e na fila de etiquetas, ao lado do PDF. Imprime numa **Niimbot B1 Pro** (300 dpi, protocolo V4) sem app intermediário — protocolo portado do firmware ESP32-Telemetria-Suite.
+- Etiqueta renderizada no servidor como **PNG 1-bit** (`GET /spools/<id>/label.png`); o navegador só faz o threshold e envia via Bluetooth. Layout igual ao PDF (QR + marca/material/família/ID).
+- **Registro extensível** de modelos de impressora e tamanhos de etiqueta (`niimbot_registry.py`, exposto em `GET /api/niimbot/registry`). Hoje: B1 Pro + etiqueta 50×30 mm.
+- Configurações (Admin): seleção de **modelo da impressora** e **tamanho da etiqueta** para a impressão direta.
+
+### Notas
+- Requer **Chrome ou Edge em HTTPS** (ou localhost) — Web Bluetooth não existe em Firefox/Safari. O PDF continua disponível como antes.
+
+---
+
 ## [1.10.4] — 2026-06-03
 
 ### Documentação

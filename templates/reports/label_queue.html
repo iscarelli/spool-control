@@ -8,6 +8,11 @@
     <a href="{{ url_for('label_queue_print') }}" class="btn btn-dark" target="_blank">
       <i class="bi bi-printer me-1"></i>Imprimir Tudo ({{ items|length }})
     </a>
+    <button type="button" class="btn btn-primary"
+            data-niimbot-urls='[{% for s in items %}"{{ url_for('spool_label_png', spool_id=s.id) }}"{% if not loop.last %},{% endif %}{% endfor %}]'
+            title="Imprimir a fila direto na Niimbot (Bluetooth)">
+      <i class="bi bi-bluetooth me-1"></i>Imprimir Niimbot ({{ items|length }})
+    </button>
     <form method="post" action="{{ url_for('label_queue_clear') }}"
           onsubmit="return confirm('Limpar toda a fila de impressão?')">
       <button class="btn btn-outline-danger">Limpar Fila</button>
@@ -62,4 +67,8 @@
   </div>
 </div>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='niimbot.js') }}"></script>
 {% endblock %}

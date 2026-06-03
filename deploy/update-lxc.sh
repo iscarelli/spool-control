@@ -63,10 +63,11 @@ main() {
     fi
 
     info "Atualizando arquivos em $APP_DIR..."
-    cp "$REPO_DIR/app.py"           "$APP_DIR/app.py"
-    cp "$REPO_DIR/database.py"      "$APP_DIR/database.py"
-    cp "$REPO_DIR/labels.py"        "$APP_DIR/labels.py"
-    cp "$REPO_DIR/translations.py"  "$APP_DIR/translations.py"
+    cp "$REPO_DIR/app.py"               "$APP_DIR/app.py"
+    cp "$REPO_DIR/database.py"          "$APP_DIR/database.py"
+    cp "$REPO_DIR/labels.py"            "$APP_DIR/labels.py"
+    cp "$REPO_DIR/niimbot_registry.py"  "$APP_DIR/niimbot_registry.py"
+    cp "$REPO_DIR/translations.py"      "$APP_DIR/translations.py"
     cp "$REPO_DIR/requirements.txt" "$APP_DIR/requirements.txt"
     cp "$REPO_DIR/VERSION"          "$APP_DIR/VERSION"
     cp "$REPO_DIR/CHANGELOG.md"     "$APP_DIR/CHANGELOG.md"

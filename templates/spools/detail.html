@@ -18,6 +18,11 @@
     <a href="{{ url_for('spool_label_pdf', spool_id=spool.id) }}" class="btn btn-outline-dark btn-sm" target="_blank">
       <i class="bi bi-printer me-1"></i>Etiqueta PDF
     </a>
+    <button type="button" class="btn btn-outline-primary btn-sm"
+            data-niimbot-url="{{ url_for('spool_label_png', spool_id=spool.id) }}"
+            title="Imprimir direto na Niimbot (Bluetooth)">
+      <i class="bi bi-bluetooth me-1"></i>Imprimir Niimbot
+    </button>
     {% if in_queue %}
     <form method="post" action="{{ url_for('label_queue_remove', spool_id=spool.id) }}">
       <input type="hidden" name="next" value="{{ url_for('spools_detail', spool_id=spool.id) }}">
@@ -131,6 +136,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='niimbot.js') }}"></script>
 {% if queue_prompt %}
 <script>
 window.addEventListener('DOMContentLoaded', function() {

@@ -66,6 +66,33 @@
             </div>
           </div>
 
+          <hr class="my-4">
+          <h6 class="text-muted text-uppercase fw-semibold mb-3" style="font-size:.75rem">Impressão Direta (Niimbot)</h6>
+          <div class="row g-3 mb-4">
+            <div class="col-6">
+              <label class="form-label fw-semibold">Modelo da impressora</label>
+              <select name="niimbot_model" class="form-select">
+                {% for key, m in niimbot_models.items() %}
+                <option value="{{ key }}" {% if key == niimbot_model %}selected{% endif %}>{{ m.label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">Tamanho da etiqueta</label>
+              <select name="niimbot_label_size" class="form-select">
+                {% for key, s in niimbot_sizes.items() %}
+                <option value="{{ key }}" {% if key == niimbot_label_size %}selected{% endif %}>{{ s.label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12">
+              <div class="form-text">
+                Usado pelo botão <strong>Imprimir Niimbot</strong> (Web Bluetooth, direto do navegador).
+                Requer Chrome/Edge em HTTPS. Não afeta o PDF acima.
+              </div>
+            </div>
+          </div>
+
           <button type="submit" class="btn btn-dark">Salvar Configurações</button>
         </form>
       </div>

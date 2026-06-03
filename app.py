@@ -22,6 +22,7 @@ from flask_wtf.csrf import CSRFError
 import database as db
 import labels as lbl
 import translations as i18n
+import niimbot_registry as reg
 
 BRANDS_DIR = Path(__file__).parent / "static" / "brands"
 
@@ -680,6 +681,32 @@ def spool_label_pdf(spool_id):
     )
 
 
+@app.route("/spools/<int:spool_id>/label.png")
+@login_required
+def spool_label_png(spool_id):
+    """Bitmap 1-bit da etiqueta para impressão térmica direta (Niimbot)."""
+    spool = db.get_spool(spool_id)
+    if not spool:
+        abort(404)
+    base_url = db.get_setting("app_base_url", "http://localhost:5000")
+    size_key = request.args.get("size") or db.get_setting("niimbot_label_size", reg.DEFAULT_SIZE)
+    size = reg.get_size(size_key)
+    png_bytes = lbl.generate_label_png(dict(spool), base_url, size["w_px"], size["h_px"])
+    return Response(png_bytes, mimetype="image/png")
+
+
+@app.route("/api/niimbot/registry")
+@login_required
+def niimbot_registry():
+    """Modelos de impressora + tamanhos de etiqueta + seleção atual (p/ niimbot.js)."""
+    return jsonify({
+        "models": reg.PRINTER_MODELS,
+        "sizes": reg.LABEL_SIZES,
+        "selected_model": db.get_setting("niimbot_model", reg.DEFAULT_MODEL),
+        "selected_size": db.get_setting("niimbot_label_size", reg.DEFAULT_SIZE),
+    })
+
+
 # ── Quick Weigh ────────────────────────────────────────────────────────────
 
 @app.route("/weigh", methods=["GET", "POST"])
@@ -954,10 +981,19 @@ def admin_settings():
         db.set_setting("low_stock_pct", request.form.get("low_stock_pct", "20").strip())
         db.set_setting("label_width_mm", request.form.get("label_width_mm", "60").strip())
         db.set_setting("label_height_mm", request.form.get("label_height_mm", "40").strip())
+        model = request.form.get("niimbot_model", reg.DEFAULT_MODEL).strip()
+        db.set_setting("niimbot_model", model if model in reg.PRINTER_MODELS else reg.DEFAULT_MODEL)
+        size = request.form.get("niimbot_label_size", reg.DEFAULT_SIZE).strip()
+        db.set_setting("niimbot_label_size", size if size in reg.LABEL_SIZES else reg.DEFAULT_SIZE)
         flash("Configurações salvas", "success")
         return redirect(url_for("admin_settings"))
     settings = db.get_all_settings()
-    return render_template("admin/settings.html", settings=settings)
+    return render_template(
+        "admin/settings.html", settings=settings,
+        niimbot_models=reg.PRINTER_MODELS, niimbot_sizes=reg.LABEL_SIZES,
+        niimbot_model=db.get_setting("niimbot_model", reg.DEFAULT_MODEL),
+        niimbot_label_size=db.get_setting("niimbot_label_size", reg.DEFAULT_SIZE),
+    )
 
 
 # ── Atualização do sistema ───────────────────────────────────────────────────
