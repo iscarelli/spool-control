@@ -10,6 +10,13 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.10.4] — 2026-06-03
+
+### Documentação
+- Adicionado screenshot da tela de estatísticas (`stats.png`) à documentação.
+
+---
+
 ## [1.10.3] — 2026-06-03
 
 ### Corrigido
