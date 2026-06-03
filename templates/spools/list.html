@@ -1,20 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Spools') }} — Spool Control{% endblock %}
+{% from "spools/_macros.html" import donut %}
 {% block content %}
-
-{% macro donut(pct, fill, spool_id='', tip='') %}
-<span class="donut-wrap" {% if tip %}data-bs-toggle="tooltip" title="{{ tip }}"{% endif %}
-      {% if spool_id %}data-donut-id="{{ spool_id }}"{% endif %}>
-  <svg width="34" height="34" viewBox="0 0 50 50">
-    <circle cx="25" cy="25" r="15.9155" fill="none" class="donut-track" stroke-width="15"/>
-    <circle cx="25" cy="25" r="15.9155" fill="none"
-            stroke="{{ fill }}" stroke-width="15"
-            stroke-dasharray="{{ pct }} {{ 100 - pct }}"
-            transform="rotate(-90 25 25)"
-            class="donut-arc"/>
-  </svg>
-</span>
-{% endmacro %}
 
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h4 class="mb-0 fw-bold">

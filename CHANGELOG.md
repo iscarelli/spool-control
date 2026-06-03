@@ -10,6 +10,16 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.11.3] — 2026-06-03
+
+### Corrigido
+- **Donut de disponibilidade agora aparece na página de detalhe do spool** (`/spools/<id>`). Antes só existia na listagem; no detalhe aparecia apenas a bolinha de cor da família. O donut (% restante, na cor do filamento) foi adicionado ao cabeçalho, ao lado do `SP-XXXX`, com a mesma lógica e tooltip da listagem.
+
+### Alterado (interno)
+- Macro `donut` extraída para o parcial compartilhado `templates/spools/_macros.html` e importada na listagem e no detalhe (fonte única).
+
+---
+
 ## [1.11.2] — 2026-06-03
 
 ### Corrigido (robustez do deploy)

@@ -1,11 +1,19 @@
 {% extends "base.html" %}
+{% from "spools/_macros.html" import donut %}
 {% block title %}SP-{{ '%04d'|format(spool.id) }} — Spool Control{% endblock %}
 {% block content %}
+{% if spool.current_net_g is not none and spool.nominal_weight_g > 0 %}
+  {% set pct = [(spool.current_net_g / spool.nominal_weight_g * 100)|round(1), 100]|min %}
+{% else %}
+  {% set pct = 100 %}
+{% endif %}
+{% set fill = spool.color_hex if spool.color_hex else '#6c757d' %}
 <div class="d-flex align-items-center mb-3">
   {% if logged_in %}
   <a href="{{ url_for('spools_list') }}" class="btn btn-sm btn-outline-secondary me-2"><i class="bi bi-arrow-left"></i></a>
   {% endif %}
-  <h4 class="mb-0 fw-bold">SP-{{ '%04d'|format(spool.id) }}</h4>
+  {{ donut(pct, fill, tip=pct|int|string + _('% disponível')) }}
+  <h4 class="mb-0 fw-bold ms-2">SP-{{ '%04d'|format(spool.id) }}</h4>
   {% if not spool.active %}<span class="badge bg-secondary ms-2">Finalizado</span>{% endif %}
   {% if logged_in %}
   <div class="ms-auto d-flex gap-2">
