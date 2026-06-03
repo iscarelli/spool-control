@@ -10,6 +10,16 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.6.1] — 2026-06-02
+
+### Corrigido
+- `proxmox-deploy.sh` abortava silenciosamente logo após as verificações do host (voltava ao prompt) quando executado via `curl ... | bash`: o `stdin` era o pipe do script e o primeiro diálogo `whiptail` falhava sob `set -e`. Agora reconecta `stdin` ao `/dev/tty` quando disponível, funcionando tanto com `bash -c "$(curl ...)"` quanto com `curl ... | bash`.
+
+### Alterado
+- `proxmox-deploy.sh` traduzido para inglês (comentários, diálogos `whiptail`, mensagens e resumo final). Lógica inalterada.
+
+---
+
 ## [1.6.0] — 2026-06-02
 
 ### Adicionado
