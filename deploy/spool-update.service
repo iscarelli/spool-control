@@ -1,0 +1,13 @@
+[Unit]
+Description=Spool Control self-update (oneshot)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# Roda como root: resolve a última release publicada no GitHub e atualiza.
+# Disparado pela UI web via `sudo systemctl start --no-block spool-update.service`
+# (regra sudoers em /etc/sudoers.d/spool-update). Nenhum argumento vem da web.
+ExecStart=/usr/bin/env bash /opt/spool-control/deploy/update-lxc.sh --latest-release
+StandardOutput=journal
+StandardError=journal

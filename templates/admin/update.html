@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Atualizações') }} — Spool Control{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7 col-lg-6">
+    <h4 class="fw-bold mb-4">{{ _('Atualizações') }}</h4>
+
+    <div class="card">
+      <div class="card-body">
+
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="text-muted">{{ _('Versão atual') }}</span>
+          <span class="fw-semibold" id="curVersion">v{{ current }}</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <span class="text-muted">{{ _('Última versão') }}</span>
+          <span class="fw-semibold">
+            {% if latest %}v{{ latest }}{% else %}<span class="text-muted">{{ _('não verificada') }}</span>{% endif %}
+          </span>
+        </div>
+
+        <hr class="my-3">
+
+        {% if not latest %}
+        <div class="alert alert-warning mb-0">
+          <i class="bi bi-exclamation-triangle me-1"></i>
+          {{ _('Não foi possível verificar a última versão no GitHub. Tente novamente mais tarde.') }}
+        </div>
+        {% elif update_available %}
+        <div class="alert alert-info d-flex align-items-center mb-3">
+          <i class="bi bi-arrow-up-circle-fill me-2"></i>
+          <div>{{ _('Atualização disponível') }}: <strong>v{{ latest }}</strong>.
+            <a href="{{ releases_url }}" target="_blank" rel="noopener">{{ _('Ver novidades') }}</a>
+          </div>
+        </div>
+        <button class="btn btn-primary w-100" id="btnUpdate">
+          <i class="bi bi-arrow-up-circle me-1"></i>{{ _('Atualizar agora') }}
+        </button>
+        {% else %}
+        <div class="alert alert-success mb-0">
+          <i class="bi bi-check-circle-fill me-1"></i>{{ _('Sistema atualizado') }}.
+        </div>
+        {% endif %}
+
+        <div id="updateProgress" class="mt-3 d-none">
+          <div class="d-flex align-items-center gap-2 text-muted">
+            <div class="spinner-border spinner-border-sm" role="status"></div>
+            <span id="progressMsg">{{ _('Atualizando… o serviço será reiniciado, aguarde.') }}</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <p class="text-muted mt-3 mb-0" style="font-size:.8rem">
+      <i class="bi bi-info-circle me-1"></i>{{ _('A atualização baixa a última release publicada e reinicia o serviço. Pode levar 1–2 minutos.') }}
+    </p>
+  </div>
+</div>
+
+<script>
+(function () {
+  var btn = document.getElementById('btnUpdate');
+  if (!btn) return;
+  var progress = document.getElementById('updateProgress');
+  var progressMsg = document.getElementById('progressMsg');
+  var target = "{{ latest }}";
+
+  function toTuple(v) { return (v.match(/\d+/g) || ['0']).map(Number); }
+  function gte(a, b) {
+    a = toTuple(a); b = toTuple(b);
+    for (var i = 0; i < Math.max(a.length, b.length); i++) {
+      var x = a[i] || 0, y = b[i] || 0;
+      if (x !== y) return x > y;
+    }
+    return true;
+  }
+
+  function poll() {
+    fetch("{{ url_for('admin_update_status') }}", { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.done || (d.current && gte(d.current, target))) {
+          progressMsg.textContent = "{{ _('Concluído! Recarregando…') }}";
+          setTimeout(function () { location.reload(); }, 1500);
+        } else {
+          setTimeout(poll, 4000);
+        }
+      })
+      .catch(function () { setTimeout(poll, 4000); });  // restart em curso → re-tenta
+  }
+
+  btn.addEventListener('click', function () {
+    btn.disabled = true;
+    progress.classList.remove('d-none');
+    fetch("{{ url_for('admin_update_run') }}", { method: 'POST' })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (res) {
+        if (!res.ok || !res.d.ok) {
+          progressMsg.textContent = "{{ _('Falha ao iniciar a atualização') }}: " + (res.d.error || '');
+          progress.querySelector('.spinner-border').classList.add('d-none');
+          btn.disabled = false;
+          return;
+        }
+        setTimeout(poll, 5000);
+      })
+      .catch(function () {
+        // a própria chamada pode cair se o restart vier rápido — começa a verificar
+        setTimeout(poll, 5000);
+      });
+  });
+})();
+</script>
+{% endblock %}

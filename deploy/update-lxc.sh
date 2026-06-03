@@ -37,6 +37,16 @@ main() {
     if [ "${1:-}" = "--ref" ]; then
         [ -z "${2:-}" ] && error "Uso: $0 --ref <tag|branch|commit>"
         REF="$2"
+    elif [ "${1:-}" = "--latest-release" ]; then
+        # Usado pela autoatualização via web (spool-update.service). Resolve a
+        # última tag publicada no GitHub; aborta se a API falhar (sem cair p/ main).
+        info "Resolvendo ultima release no GitHub..."
+        REF=$(curl -fsSL -H "User-Agent: spool-control" \
+            https://api.github.com/repos/iscarelli/spool-control/releases/latest \
+            | grep -oE '"tag_name"[[:space:]]*:[[:space:]]*"[^"]+"' | head -1 \
+            | sed -E 's/.*"([^"]+)"$/\1/')
+        [ -z "$REF" ] && error "Nao foi possivel resolver a ultima release via API do GitHub."
+        info "Ultima release: $REF"
     fi
 
     [ "$(id -u)" -eq 0 ] || error "Execute como root."
@@ -62,8 +72,10 @@ main() {
     cp "$REPO_DIR/CHANGELOG.md"     "$APP_DIR/CHANGELOG.md"
     cp -r "$REPO_DIR/templates/." "$APP_DIR/templates/"
     cp -r "$REPO_DIR/static/."    "$APP_DIR/static/"
-    cp "$REPO_DIR/deploy/update-lxc.sh"         "$APP_DIR/deploy/update-lxc.sh"
+    cp "$REPO_DIR/deploy/update-lxc.sh"          "$APP_DIR/deploy/update-lxc.sh"
     cp "$REPO_DIR/deploy/spool-control.service"  "$APP_DIR/deploy/spool-control.service"
+    cp "$REPO_DIR/deploy/spool-update.service"   "$APP_DIR/deploy/spool-update.service"
+    cp "$REPO_DIR/deploy/sudoers-spool-update"   "$APP_DIR/deploy/sudoers-spool-update"
     cp "$REPO_DIR/deploy/seed_brands.py"         "$APP_DIR/deploy/seed_brands.py"
     chmod +x "$APP_DIR/deploy/update-lxc.sh"
     rm -rf "$REPO_DIR"
@@ -90,6 +102,16 @@ EOF
     fi
 
     chown -R spool:spool "$APP_DIR"
+
+    # ── Aparato de autoatualizacao pela web (oneshot + sudoers) ──────────────
+    info "Configurando autoatualizacao (systemd oneshot + sudoers)..."
+    command -v sudo >/dev/null 2>&1 || { apt-get update -qq && apt-get install -y -q sudo; }
+    ln -sf "${APP_DIR}/deploy/spool-update.service" /etc/systemd/system/spool-update.service
+    install -m 0440 "${APP_DIR}/deploy/sudoers-spool-update" /etc/sudoers.d/spool-update
+    if ! visudo -cf /etc/sudoers.d/spool-update >/dev/null 2>&1; then
+        rm -f /etc/sudoers.d/spool-update
+        warn "sudoers de autoatualizacao invalido — removido (update via web indisponivel)."
+    fi
 
     info "Reiniciando servico..."
     ln -sf "${APP_DIR}/deploy/spool-control.service" /etc/systemd/system/spool-control.service

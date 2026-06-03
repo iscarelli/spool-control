@@ -1,5 +1,8 @@
 import os
 import re
+import json
+import time
+import subprocess
 import urllib.request
 import urllib.error
 from functools import wraps
@@ -120,7 +123,61 @@ def bootstrap():
 
 bootstrap()
 
-APP_VERSION = (Path(__file__).parent / "VERSION").read_text().strip()
+VERSION_FILE = Path(__file__).parent / "VERSION"
+APP_VERSION = VERSION_FILE.read_text().strip()
+
+# ── Autoatualização: checagem da última release no GitHub ────────────────────
+GITHUB_RELEASES_API = "https://api.github.com/repos/iscarelli/spool-control/releases/latest"
+RELEASES_URL = "https://github.com/iscarelli/spool-control/releases"
+# Cache em memória (por worker): evita martelar a API do GitHub (limite de 60/h
+# sem token). Sucesso vale 6h; falha re-tenta em 15min. Fail-open: erro nunca
+# quebra a página, apenas não mostra atualização.
+_release_cache = {"tag": None, "ts": 0.0, "ok": False}
+_RELEASE_TTL_OK = 6 * 3600
+_RELEASE_TTL_FAIL = 15 * 60
+
+
+def _version_tuple(v):
+    parts = re.findall(r"\d+", v or "")
+    return tuple(int(p) for p in parts) if parts else (0,)
+
+
+def current_version():
+    """Lê o VERSION do disco na hora — reflete um update já aplicado mesmo antes
+    de o processo ser reiniciado (a constante APP_VERSION é fixada no import)."""
+    try:
+        return VERSION_FILE.read_text().strip()
+    except Exception:
+        return APP_VERSION
+
+
+def check_latest_release(force=False):
+    """Última tag publicada no GitHub (sem o 'v'), com cache. Devolve None se
+    nunca conseguiu consultar."""
+    now = time.time()
+    ttl = _RELEASE_TTL_OK if _release_cache["ok"] else _RELEASE_TTL_FAIL
+    if not force and _release_cache["ts"] and now - _release_cache["ts"] < ttl:
+        return _release_cache["tag"]
+    try:
+        req = urllib.request.Request(
+            GITHUB_RELEASES_API,
+            headers={"User-Agent": "spool-control", "Accept": "application/vnd.github+json"},
+        )
+        with urllib.request.urlopen(req, timeout=3) as resp:
+            data = json.loads(resp.read().decode())
+        tag = (data.get("tag_name") or "").lstrip("v").strip()
+        if tag:
+            _release_cache.update(tag=tag, ts=now, ok=True)
+        else:
+            _release_cache.update(ts=now, ok=False)
+    except Exception:
+        _release_cache.update(ts=now, ok=False)
+    return _release_cache["tag"]
+
+
+def is_update_available():
+    latest = check_latest_release()
+    return bool(latest) and _version_tuple(latest) > _version_tuple(current_version())
 
 ALL_MATERIALS = [
     "ABS", "ABS+", "ABS-CF",
@@ -176,6 +233,7 @@ def inject_globals():
         "app_version": APP_VERSION,
         "lang": lang,
         "_": i18n.get_translator(lang),
+        "update_available": is_update_available() if session.get("role") == "admin" else False,
     }
 
 
@@ -862,6 +920,48 @@ def admin_settings():
         return redirect(url_for("admin_settings"))
     settings = db.get_all_settings()
     return render_template("admin/settings.html", settings=settings)
+
+
+# ── Atualização do sistema ───────────────────────────────────────────────────
+
+@app.route("/admin/update")
+@admin_required
+def admin_update():
+    latest = check_latest_release(force=True)
+    cur = current_version()
+    return render_template(
+        "admin/update.html",
+        current=cur,
+        latest=latest,
+        update_available=bool(latest) and _version_tuple(latest) > _version_tuple(cur),
+        releases_url=RELEASES_URL,
+    )
+
+
+@app.route("/admin/update/run", methods=["POST"])
+@admin_required
+def admin_update_run():
+    # Dispara o oneshot systemd como root (sudoers libera só este comando fixo,
+    # sem argumentos vindos da web). --no-block retorna na hora; o update roda
+    # em cgroup próprio e sobrevive ao restart do spool-control que ele aciona.
+    try:
+        subprocess.run(
+            ["sudo", "systemctl", "start", "--no-block", "spool-update.service"],
+            check=True, capture_output=True, text=True, timeout=15,
+        )
+    except Exception as e:
+        msg = (getattr(e, "stderr", "") or str(e)).strip()
+        return jsonify(ok=False, error=msg[:300]), 500
+    return jsonify(ok=True)
+
+
+@app.route("/admin/update/status")
+@admin_required
+def admin_update_status():
+    latest = check_latest_release()
+    cur = current_version()
+    done = bool(latest) and _version_tuple(cur) >= _version_tuple(latest)
+    return jsonify(current=cur, latest=latest, done=done)
 
 
 # ── Health ─────────────────────────────────────────────────────────────────

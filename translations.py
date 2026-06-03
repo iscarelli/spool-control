@@ -21,6 +21,25 @@ _EN = {
     "Sair":               "Logout",
     "Tema":               "Theme",
 
+    # Updates
+    "Atualizações":         "Updates",
+    "Nova":                 "New",
+    "Versão atual":         "Current version",
+    "Última versão":        "Latest version",
+    "não verificada":       "not checked",
+    "Não foi possível verificar a última versão no GitHub. Tente novamente mais tarde.":
+        "Could not check the latest version on GitHub. Try again later.",
+    "Atualização disponível": "Update available",
+    "Ver novidades":        "See what's new",
+    "Atualizar agora":      "Update now",
+    "Sistema atualizado":   "System up to date",
+    "Atualizando… o serviço será reiniciado, aguarde.":
+        "Updating… the service will restart, please wait.",
+    "A atualização baixa a última release publicada e reinicia o serviço. Pode levar 1–2 minutos.":
+        "The update downloads the latest published release and restarts the service. It may take 1–2 minutes.",
+    "Concluído! Recarregando…": "Done! Reloading…",
+    "Falha ao iniciar a atualização": "Failed to start the update",
+
     # Lists — headers
     "Material":           "Material",
     "Marca":              "Brand",

@@ -54,7 +54,7 @@ export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
 
 # ── 4. Dependências ───────────────────────────────────────────────────────────
 info "Instalando dependencias..."
-DEBIAN_FRONTEND=noninteractive apt-get install -y -q python3 python3-venv git curl
+DEBIAN_FRONTEND=noninteractive apt-get install -y -q python3 python3-venv git curl sudo
 
 # ── 5. Usuário e diretórios ───────────────────────────────────────────────────
 info "Criando usuario 'spool'..."
@@ -78,6 +78,8 @@ cp -r "$REPO_DIR/templates"     "$APP_DIR/templates"
 cp -r "$REPO_DIR/static"        "$APP_DIR/static"
 cp "$REPO_DIR/deploy/update-lxc.sh"          "$APP_DIR/deploy/update-lxc.sh"
 cp "$REPO_DIR/deploy/spool-control.service"  "$APP_DIR/deploy/spool-control.service"
+cp "$REPO_DIR/deploy/spool-update.service"   "$APP_DIR/deploy/spool-update.service"
+cp "$REPO_DIR/deploy/sudoers-spool-update"   "$APP_DIR/deploy/sudoers-spool-update"
 cp "$REPO_DIR/deploy/seed_brands.py"         "$APP_DIR/deploy/seed_brands.py"
 chmod +x "$APP_DIR/deploy/update-lxc.sh"
 
@@ -108,6 +110,15 @@ chown -R spool:spool "$APP_DIR"
 # ── 10. Serviço systemd ───────────────────────────────────────────────────────
 info "Configurando servico systemd..."
 ln -sf "${APP_DIR}/deploy/spool-control.service" /etc/systemd/system/spool-control.service
+
+# Autoatualizacao pela web: oneshot (root) + regra sudoers minima p/ o user 'spool'.
+ln -sf "${APP_DIR}/deploy/spool-update.service" /etc/systemd/system/spool-update.service
+install -m 0440 "${APP_DIR}/deploy/sudoers-spool-update" /etc/sudoers.d/spool-update
+if ! visudo -cf /etc/sudoers.d/spool-update >/dev/null 2>&1; then
+    rm -f /etc/sudoers.d/spool-update
+    warn "sudoers de autoatualizacao invalido — removido (update via web indisponivel)."
+fi
+
 systemctl daemon-reload
 systemctl enable spool-control
 systemctl restart spool-control

@@ -10,6 +10,19 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.7.0] — 2026-06-02
+
+### Adicionado
+- **Autoatualização pela interface web** (`/admin/update`, só admin): mostra versão atual × última release publicada no GitHub e atualiza com um clique. Um badge no menu Admin sinaliza quando há versão nova. A página acompanha o progresso (polling em `/admin/update/status`) e recarrega ao concluir.
+  - Execução privilegiada isolada: o app (user `spool`, não-root) só dispara `sudo systemctl start --no-block spool-update.service` — **comando fixo, sem argumentos vindos do browser**. O oneshot roda como root e chama `update-lxc.sh --latest-release`, que resolve a última tag **no servidor**. Regra `sudoers` mínima em `/etc/sudoers.d/spool-update`.
+  - Novos arquivos: `deploy/spool-update.service`, `deploy/sudoers-spool-update`.
+- `update-lxc.sh --latest-release`: resolve e instala a última release publicada (aborta se a API do GitHub falhar, sem cair para o `main`).
+
+### Alterado
+- `setup-inside.sh` e `update-lxc.sh` provisionam o oneshot + sudoers (idempotente) e instalam o pacote `sudo`.
+
+---
+
 ## [1.6.3] — 2026-06-02
 
 ### Corrigido

@@ -1,0 +1,5 @@
+# Permite que o app (usuário 'spool') dispare a autoatualização pela web.
+# Restrito a UM comando fixo, sem argumentos vindos do navegador — toda a lógica
+# de update fica no serviço oneshot spool-update.service (executado como root).
+# Instalado em /etc/sudoers.d/spool-update (modo 0440), validado com `visudo -c`.
+spool ALL=(root) NOPASSWD: /usr/bin/systemctl start --no-block spool-update.service
