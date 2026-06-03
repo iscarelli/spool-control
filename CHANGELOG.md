@@ -10,6 +10,13 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.8.1] — 2026-06-02
+
+### Adicionado
+- Botões "+ Spool" e "+ Filamento" no cabeçalho do dashboard inicial, no mesmo estilo das páginas internas (atalho para criar sem navegar até as listas).
+
+---
+
 ## [1.8.0] — 2026-06-02
 
 ### Adicionado
