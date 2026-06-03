@@ -10,6 +10,7 @@ import urllib.request
 import urllib.error
 from functools import wraps
 from pathlib import Path
+from datetime import datetime
 from flask import (
     Flask, render_template, request, redirect, url_for,
     session, flash, Response, abort, jsonify,
@@ -238,6 +239,40 @@ def inject_globals():
         "_": i18n.get_translator(lang),
         "update_available": is_update_available() if session.get("role") == "admin" else False,
     }
+
+
+# ── Formatação de data conforme o idioma ─────────────────────────────────────
+
+def _parse_dt(value):
+    if not value:
+        return None
+    s = str(value).strip().replace("T", " ").split(".")[0].split("+")[0].strip()
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(s, fmt)
+        except ValueError:
+            continue
+    return None
+
+
+@app.template_filter("localdt")
+def localdt(value):
+    """Data + hora no formato do idioma atual (pt: dd/mm/aaaa HH:MM)."""
+    dt = _parse_dt(value)
+    if not dt:
+        return value or ""
+    fmt = "%d/%m/%Y %H:%M" if session.get("lang", "pt") == "pt" else "%m/%d/%Y %H:%M"
+    return dt.strftime(fmt)
+
+
+@app.template_filter("localdate")
+def localdate(value):
+    """Apenas a data, no formato do idioma atual (pt: dd/mm/aaaa)."""
+    dt = _parse_dt(value)
+    if not dt:
+        return value or ""
+    fmt = "%d/%m/%Y" if session.get("lang", "pt") == "pt" else "%m/%d/%Y"
+    return dt.strftime(fmt)
 
 
 @app.route("/lang/<code>")

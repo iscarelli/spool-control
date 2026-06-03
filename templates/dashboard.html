@@ -87,7 +87,7 @@
       <tbody>
         {% for r in stats.recent_weighings %}
         <tr>
-          <td class="text-muted small">{{ r.ts[:16].replace('T',' ') }}</td>
+          <td class="text-muted small">{{ r.ts | localdt }}</td>
           <td>{{ r.material }}</td>
           <td>{{ r.brand }} / {{ r.family }}</td>
           <td>{{ "%.0f"|format(r.net_weight_g) }}g</td>

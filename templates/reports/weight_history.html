@@ -51,7 +51,7 @@
       <tbody>
         {% for r in readings %}
         <tr>
-          <td class="small text-muted">{{ r.ts[:16].replace('T',' ') }}</td>
+          <td class="small text-muted">{{ r.ts | localdt }}</td>
           <td><a href="{{ url_for('spools_detail', spool_id=r.spool_id) }}" class="fw-bold text-decoration-none">SP-{{ '%04d'|format(r.spool_id) }}</a></td>
           <td><span class="badge bg-secondary">{{ r.material }}</span></td>
           <td>{{ r.brand }} / {{ r.family }}</td>

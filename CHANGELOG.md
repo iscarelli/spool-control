@@ -10,6 +10,16 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.9.1] — 2026-06-03
+
+### Adicionado
+- Datas exibidas no formato do idioma selecionado (filtros `localdt`/`localdate`): PT `dd/mm/aaaa`, EN `mm/dd/aaaa`. Aplicado no dashboard, histórico de peso, detalhe do spool e lista de usuários.
+
+### Corrigido
+- Canto branco arredondado no topo das tabelas dentro de cards com cabeçalho (ex.: "Pesagens Recentes"). Causa real: `.card .table-responsive { border-radius:10px }` arredondava os 4 cantos; agora o topo só arredonda quando a tabela é o primeiro filho do card (sem header).
+
+---
+
 ## [1.9.0] — 2026-06-03
 
 ### Adicionado

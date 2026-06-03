@@ -71,7 +71,7 @@
           <div class="text-muted small mt-1">{{ pct }}% restante</div>
           {% endif %}
           {% if spool.last_weighed_at %}
-          <div class="text-muted" style="font-size:0.75rem">Pesado em {{ spool.last_weighed_at[:10] }}</div>
+          <div class="text-muted" style="font-size:0.75rem">Pesado em {{ spool.last_weighed_at | localdate }}</div>
           {% endif %}
         {% else %}
           <div class="text-muted">Não pesado ainda</div>
@@ -90,7 +90,7 @@
         <div><span class="text-muted">Carretel:</span> {{ spool.model_name or '—' }}</div>
         <div><span class="text-muted">Tara efetiva:</span> {{ spool.effective_tare_g|int }}g</div>
         {% if spool.purchase_date %}
-        <div><span class="text-muted">Compra:</span> {{ spool.purchase_date }}</div>
+        <div><span class="text-muted">Compra:</span> {{ spool.purchase_date | localdate }}</div>
         {% endif %}
         {% if spool.purchase_price %}
         <div><span class="text-muted">Preço:</span> R$ {{ "%.2f"|format(spool.purchase_price)|replace(".", ",") }}</div>
@@ -115,7 +115,7 @@
       <tbody>
         {% for r in readings %}
         <tr>
-          <td class="text-muted small">{{ r.ts[:16].replace('T',' ') }}</td>
+          <td class="text-muted small">{{ r.ts | localdt }}</td>
           <td>{{ r.gross_weight_g|int }}</td>
           <td>{{ r.tare_weight_g|int }}</td>
           <td class="fw-semibold">{{ r.net_weight_g|int }}</td>

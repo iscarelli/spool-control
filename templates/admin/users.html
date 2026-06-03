@@ -44,7 +44,7 @@
             <tr>
               <td class="fw-semibold">{{ u.username }} {% if u.id == session.user_id %}<span class="badge bg-secondary">você</span>{% endif %}</td>
               <td><span class="badge {% if u.role == 'admin' %}bg-dark{% else %}bg-light text-dark border{% endif %}">{{ u.role }}</span></td>
-              <td class="text-muted small">{{ u.created_at[:10] }}</td>
+              <td class="text-muted small">{{ u.created_at | localdate }}</td>
               <td>
                 <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#pwModal{{ u.id }}">Senha</button>
                 {% if u.id != session.user_id %}
