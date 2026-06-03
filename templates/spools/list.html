@@ -24,13 +24,13 @@
   <div class="d-flex gap-2 align-items-center">
     <input class="form-control form-control-sm" type="search" id="filterInput"
            data-filter-for="#spoolTable"
-           placeholder="{{ _('Filtrar...') }}" value="{{ q or '' }}" style="min-width:160px" autocomplete="off">
+           placeholder="{{ _('Filtrar...') }}" value="{{ q or '' }}" style="min-width:160px;height:2rem" autocomplete="off">
     {% if active_only %}
-    <a href="{{ url_for('spools_list') }}?all=1" class="btn btn-sm btn-outline-secondary">{{ _('Ver finalizados') }}</a>
+    <a href="{{ url_for('spools_list') }}?all=1" class="btn btn-sm btn-outline-secondary text-nowrap d-inline-flex align-items-center" style="height:2rem">{{ _('Ver finalizados') }}</a>
     {% else %}
-    <a href="{{ url_for('spools_list') }}" class="btn btn-sm btn-outline-secondary">{{ _('Só ativos') }}</a>
+    <a href="{{ url_for('spools_list') }}" class="btn btn-sm btn-outline-secondary text-nowrap d-inline-flex align-items-center" style="height:2rem">{{ _('Só ativos') }}</a>
     {% endif %}
-    <button class="btn btn-sm btn-outline-warning" id="markAllBtn">
+    <button class="btn btn-sm btn-outline-warning text-nowrap d-inline-flex align-items-center" id="markAllBtn" style="height:2rem">
       <i class="bi bi-printer-fill me-1"></i>{{ _('Todos') }}
     </button>
     <a href="{{ url_for('spools_new') }}" class="btn btn-primary btn-sm rounded-pill px-3 d-inline-flex flex-column align-items-center justify-content-center" style="height:2rem;padding-top:0;padding-bottom:0;gap:1px">

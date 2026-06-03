@@ -10,6 +10,14 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.8.3] — 2026-06-02
+
+### Alterado
+- Dashboard: botões "Spool" e "Filamento" agora têm a mesma largura.
+- Lista de spools: "Ver finalizados"/"Só ativos" e o botão da impressora ("Todos") não quebram mais linha (`text-nowrap`); os controles do cabeçalho (Filtrar, Ver finalizados, Todos, + Spool) ficaram todos com a mesma altura (`2rem`).
+
+---
+
 ## [1.8.2] — 2026-06-02
 
 ### Alterado
