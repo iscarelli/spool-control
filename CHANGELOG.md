@@ -10,6 +10,13 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.7.1] — 2026-06-02
+
+### Alterado
+- Bump de versão para validar a autoatualização pela interface web (`/admin/update`) ponta a ponta. Sem mudança funcional.
+
+---
+
 ## [1.7.0] — 2026-06-02
 
 ### Adicionado
