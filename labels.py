@@ -189,8 +189,9 @@ def generate_label_png(spool: dict, base_url: str,
         y += _text_h(draw, line, f_family) + max(1, gap // 2)
 
     y += gap
-    draw.line([(text_x, y), (w_px - margin, y)], fill=0, width=1)
-    y += gap
+    lw = max(3, round(h_px * 0.012))  # térmica engole linha fina — engrossa
+    draw.line([(text_x, y), (w_px - margin, y)], fill=0, width=lw)
+    y += lw + gap
 
     draw.text((text_x, y), f"ID: SP-{sid}", font=f_id, fill=0)
 

@@ -1,40 +1,35 @@
-/* ── Impressão direta Niimbot via Web Bluetooth ──────────────────────────────
- * Porta do protocolo V4 validado no firmware ESP32-Telemetria-Suite
- * (lib/NiimbotBLE/src + main_programmer.cpp). Sem dependências, sem build.
+/* ── niimbot.js — driver Web Bluetooth para impressoras Niimbot ───────────────
+ * VENDORADO de iscarelli/niimbot (privado): src/niimbot.js — NÃO edite aqui.
+ * O servidor de produção clona o repo PÚBLICO anonimamente, então o driver
+ * precisa morar neste repositório. Ao mudar o protocolo, altere o upstream e
+ * re-sincronize esta cópia (ver docs/niimbot.md).
+ *
+ * Genérico e agnóstico de aplicação. Protocolo V4 (D110M_V4 — D11_H / B1 Pro),
+ * portado do firmware ESP32-Telemetria-Suite (lib/NiimbotBLE + main_programmer.cpp).
+ *
+ *   await Niimbot.printImage(pngUrl, { model, size, onProgress });
+ *   await Niimbot.printBatch([url1, url2], { model, size, onProgress });
+ *
+ *   model: { name_prefixes:[], density, label_type, speed }
+ *   size:  { w_px, h_px }
+ *
+ * Requisitos: Chrome/Edge em HTTPS (ou localhost). Cheque Niimbot.isSupported().
  *
  * Fluxo: connect → SetDensity → SetLabelType → PrintStart → SetPageSize →
- *        linhas (0x84/0x85, run-length) → 0xE3 → poll status → PrintEnd.
- *
- * Os parâmetros (dpi, density, label_type, speed, tamanho px, prefixo BLE) vêm
- * de /api/niimbot/registry — nada de protocolo hardcoded aqui além dos opcodes.
- *
- * Auto-wiring: botões com data-niimbot-url="/spools/<id>/label.png" imprimem uma
- * etiqueta; botões com data-niimbot-urls='[...]' imprimem a fila em sequência.
+ *   linhas (0x84 vazia / 0x85 com pixels, run-length) → 0xE3 → poll → PrintEnd.
  */
-(function () {
+(function (root) {
   "use strict";
 
   const SVC_UUID = "e7810a71-73ae-499d-8c15-faa9aef0c3f2";
   const CHAR_UUID = "bef8d6c9-9c21-4c9e-b632-bd58c1009f9f";
-
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-  // Estado de módulo: conexão reaproveitada entre impressões.
+  // Conexão reaproveitada entre impressões (singleton de módulo).
   let device = null;
   let characteristic = null;
-  let pending = null; // { cmd, resolve } aguardando resposta
-  let registry = null;
-
-  async function loadRegistry() {
-    if (registry) return registry;
-    const resp = await fetch("/api/niimbot/registry");
-    if (!resp.ok) throw new Error("Falha ao carregar registro Niimbot");
-    registry = await resp.json();
-    return registry;
-  }
-
-  function activeModel(rg) { return rg.models[rg.selected_model] || Object.values(rg.models)[0]; }
-  function activeSize(rg) { return rg.sizes[rg.selected_size] || Object.values(rg.sizes)[0]; }
+  let pending = null;        // { cmd, resolve } aguardando uma resposta
+  let lastUnsolicited = null; // última resposta não aguardada (ex.: status no poll)
 
   // ── Frame V4: [0x55,0x55,cmd,len,...data,crc,0xAA,0xAA], crc = cmd^len^data ──
   function pack(cmd, data) {
@@ -60,11 +55,9 @@
       const p = pending; pending = null;
       p.resolve({ cmd, data });
     } else {
-      // resposta não aguardada (ex.: status durante poll) — guarda a última
       lastUnsolicited = { cmd, data };
     }
   }
-  let lastUnsolicited = null;
 
   async function writeRaw(bytes) {
     // writeValueWithoutResponse pode estourar o buffer BLE em rajada — retry curto.
@@ -80,8 +73,7 @@
   async function sendWait(cmd, data, wantResp, timeoutMs) {
     const wait = new Promise((resolve) => { pending = { cmd: wantResp, resolve }; });
     await send(cmd, data);
-    const timeout = sleep(timeoutMs).then(() => null);
-    const res = await Promise.race([wait, timeout]);
+    const res = await Promise.race([wait, sleep(timeoutMs).then(() => null)]);
     if (pending && pending.cmd === wantResp) pending = null; // limpa em timeout
     return res; // { cmd, data } ou null
   }
@@ -115,7 +107,7 @@
     await sleep(200);
   }
 
-  // ── Bitmap: PNG → linhas empacotadas MSB-first (1 = preto) ──────────────────
+  // ── Bitmap: imagem → linhas empacotadas MSB-first (1 = preto) ───────────────
   async function imageToPacked(url, w, h) {
     const bmp = await fetch(url).then((r) => r.blob()).then((b) => createImageBitmap(b));
     const canvas = document.createElement("canvas");
@@ -129,7 +121,6 @@
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
         const i = (y * w + x) * 4;
-        // luminância; abaixo do limiar = preto
         const lum = 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
         if (px[i + 3] > 32 && lum < 128) buf[y * stride + (x >> 3)] |= 0x80 >> (x & 7);
       }
@@ -147,8 +138,8 @@
     return n;
   }
 
-  // Envia o bitmap linha-a-linha agrupando linhas idênticas (run-length),
-  // idêntico ao nimSendImage() do firmware (0x84 vazia / 0x85 com pixels).
+  // Bitmap linha-a-linha agrupando linhas idênticas (run-length), idêntico ao
+  // nimSendImage() do firmware: 0x84 (vazia) / 0x85 (com pixels).
   async function sendImage(buf, h, stride) {
     let r = 0;
     while (r < h) {
@@ -180,19 +171,19 @@
   async function printOnePacked(model, size, buf, stride, onProgress) {
     const W = size.w_px, H = size.h_px;
     onProgress && onProgress("configurando…");
-    await sendWait(0x21, [model.density], 0x31, 1000);                 // SetDensity
-    await sendWait(0x23, [model.label_type], 0x33, 1000);             // SetLabelType
+    await sendWait(0x21, [model.density], 0x31, 1000);                       // SetDensity
+    await sendWait(0x23, [model.label_type], 0x33, 1000);                   // SetLabelType
     await sendWait(0x01, [0, 1, 0, 0, 0, 0, 0, model.speed, 0], 0x02, 2000); // PrintStart
 
-    await send(0xa3, [0x01]); await sleep(30);                         // PrintStatus (one-way)
+    await send(0xa3, [0x01]); await sleep(30);                               // PrintStatus (one-way)
     await sendWait(0x13, [
       (H >> 8) & 0xff, H & 0xff, (W >> 8) & 0xff, W & 0xff,
       0, 1, 0, 0, 0, 0, 0, 0, 0,
-    ], 0x14, 2000);                                                    // SetPageSize
+    ], 0x14, 2000);                                                          // SetPageSize
 
     onProgress && onProgress("enviando imagem…");
     await sendImage(buf, H, stride);
-    await sendWait(0xe3, [0x01], 0xe4, 3000);                          // PrintEnd página
+    await sendWait(0xe3, [0x01], 0xe4, 3000);                                // PrintEnd página
 
     // Poll até a página concluir — sem isto o PrintEnd corta a etiqueta no meio.
     onProgress && onProgress("imprimindo…");
@@ -202,12 +193,12 @@
       if (st) { onProgress && onProgress(`imprimindo… ${st.print}%`); if (st.page >= 1) break; }
       await sleep(250);
     }
-    await sendWait(0xf3, [0x01], 0xf4, 2500);                          // PrintEnd
+    await sendWait(0xf3, [0x01], 0xf4, 2500);                                // PrintEnd
   }
 
-  async function printImage(url, onProgress) {
-    const rg = await loadRegistry();
-    const model = activeModel(rg), size = activeSize(rg);
+  async function printImage(url, opts) {
+    opts = opts || {};
+    const { model, size, onProgress } = opts;
     onProgress && onProgress("conectando…");
     await connect(model);
     const { buf, stride } = await imageToPacked(url, size.w_px, size.h_px);
@@ -215,60 +206,24 @@
     onProgress && onProgress("ok");
   }
 
-  async function printBatch(urls, onProgress) {
-    const rg = await loadRegistry();
-    const model = activeModel(rg), size = activeSize(rg);
+  async function printBatch(urls, opts) {
+    opts = opts || {};
+    const { model, size, onProgress } = opts;
     onProgress && onProgress("conectando…");
     await connect(model);
     for (let i = 0; i < urls.length; i++) {
-      onProgress && onProgress(`etiqueta ${i + 1}/${urls.length}…`);
+      const tag = `etiqueta ${i + 1}/${urls.length}`;
+      onProgress && onProgress(`${tag}…`);
       const { buf, stride } = await imageToPacked(urls[i], size.w_px, size.h_px);
       await printOnePacked(model, size, buf, stride,
-        (s) => onProgress && onProgress(`etiqueta ${i + 1}/${urls.length}: ${s}`));
+        (s) => onProgress && onProgress(`${tag}: ${s}`));
     }
     onProgress && onProgress("ok");
   }
 
-  // ── Auto-wiring dos botões ──────────────────────────────────────────────────
-  function wireButton(btn, run) {
-    if (!navigator.bluetooth) {
-      btn.disabled = true;
-      btn.title = "Use Chrome ou Edge em HTTPS para imprimir direto na Niimbot.";
-      return;
-    }
-    const original = btn.innerHTML;
-    btn.addEventListener("click", async (e) => {
-      e.preventDefault();
-      btn.disabled = true;
-      const status = (s) => { btn.innerHTML =
-        `<span class="spinner-border spinner-border-sm me-1"></span>${s}`; };
-      try {
-        await run(status);
-        btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Impresso';
-        setTimeout(() => { btn.innerHTML = original; btn.disabled = false; }, 2500);
-      } catch (err) {
-        console.error("[Niimbot]", err);
-        const msg = (err && err.name === "NotFoundError")
-          ? "Nenhuma impressora selecionada." : (err && err.message) || "Falha na impressão.";
-        btn.innerHTML = original; btn.disabled = false;
-        alert("Niimbot: " + msg);
-      }
-    });
-  }
-
-  function init() {
-    document.querySelectorAll("[data-niimbot-url]").forEach((btn) =>
-      wireButton(btn, (status) => printImage(btn.dataset.niimbotUrl, status)));
-    document.querySelectorAll("[data-niimbot-urls]").forEach((btn) => {
-      let urls = [];
-      try { urls = JSON.parse(btn.dataset.niimbotUrls); } catch (e) { /* ignore */ }
-      wireButton(btn, (status) => printBatch(urls, status));
-    });
-  }
-
-  if (document.readyState === "loading")
-    document.addEventListener("DOMContentLoaded", init);
-  else init();
-
-  window.NiimbotPrinter = { printImage, printBatch };
-})();
+  root.Niimbot = {
+    SVC_UUID, CHAR_UUID,
+    isSupported: () => !!navigator.bluetooth,
+    connect, printImage, printBatch,
+  };
+})(typeof window !== "undefined" ? window : globalThis);

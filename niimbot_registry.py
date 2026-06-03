@@ -1,6 +1,8 @@
 """Registro de modelos de impressora Niimbot e tamanhos de etiqueta.
 
-Fonte de verdade (Python) espelhando o firmware do projeto irmão
+VENDORADO de iscarelli/niimbot (privado): registry.json. Mantenha em sincronia
+com aquele arquivo — o upstream é a fonte de verdade canônica (ver docs/niimbot.md).
+Esta é a versão Python (o app importa este módulo); espelha o firmware do projeto
 ESP32-Telemetria-Suite (lib/NiimbotBLE/src/NiimbotLabels.h + main_programmer.cpp).
 Exposto ao cliente via GET /api/niimbot/registry para o static/niimbot.js.
 

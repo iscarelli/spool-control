@@ -10,6 +10,17 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.11.1] — 2026-06-03
+
+### Corrigido
+- Linha divisória da etiqueta Niimbot (entre família e ID) ficava quase invisível na impressão térmica — agora é **mais grossa** (proporcional à altura).
+
+### Alterado (interno)
+- Driver Web Bluetooth extraído para o repositório dedicado **privado** `iscarelli/niimbot` (driver genérico + documentação do protocolo V4 + registro + demo standalone). O spool-control passa a **vendorar** uma cópia do driver (`static/niimbot.js`) e adiciona o adaptador `static/niimbot-spool.js` (busca o registro + liga os botões). Sem mudança de comportamento.
+- Nova documentação de uso: `docs/niimbot.md`.
+
+---
+
 ## [1.11.0] — 2026-06-03
 
 ### Adicionado
