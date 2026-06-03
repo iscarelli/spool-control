@@ -10,6 +10,19 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.8.0] — 2026-06-02
+
+### Adicionado
+- **Backup e restauração pela interface web** (`Admin → Backup`, `/admin/backup`, só admin):
+  - **Baixar backup**: gera um `.zip` com o banco (`spool.db`, snapshot consistente via SQLite Online Backup API — inclui o WAL) e os logos das marcas (`static/brands/`).
+  - **Restaurar backup**: faz upload do `.zip`, **valida** o banco antes de aplicar e substitui todos os dados; logos restaurados com sanitização (só basename + extensão de imagem, anti zip-slip). Não precisa de root nem reiniciar o serviço.
+  - Pensado para reinstalar e recuperar tudo. `spool.env` (segredos) **não** entra no backup — ao reinstalar, basta logar de novo (senhas vêm no DB).
+
+### Alterado
+- `MAX_CONTENT_LENGTH` 4 MB → 64 MB (headroom para o upload do zip de restore).
+
+---
+
 ## [1.7.2] — 2026-06-02
 
 ### Adicionado

@@ -14,6 +14,49 @@ def get_db():
     return db
 
 
+# ── Backup / restore (SQLite Online Backup API) ──────────────────────────────
+# Usa a API de backup do SQLite, que tira um snapshot consistente (inclui o WAL)
+# e respeita o lock — seguro mesmo com a app rodando e conexões por requisição.
+
+def backup_to(dest_path):
+    """Copia o conteúdo do DB ativo para dest_path (arquivo .db novo)."""
+    src = get_db()
+    dst = sqlite3.connect(dest_path)
+    try:
+        with dst:
+            src.backup(dst)
+    finally:
+        dst.close()
+        src.close()
+
+
+def is_valid_backup_db(path):
+    """Confere que `path` é um SQLite com as tabelas essenciais do Spool Control."""
+    try:
+        con = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+        try:
+            names = {r[0] for r in con.execute(
+                "SELECT name FROM sqlite_master WHERE type='table'")}
+        finally:
+            con.close()
+    except Exception:
+        return False
+    return {"users", "filaments", "spools", "settings"}.issubset(names)
+
+
+def restore_from(src_path):
+    """Substitui TODO o conteúdo do DB ativo pelo de src_path (via backup API).
+    Valide com is_valid_backup_db() antes de chamar."""
+    src = sqlite3.connect(src_path)
+    dst = get_db()
+    try:
+        with dst:
+            src.backup(dst)
+    finally:
+        dst.close()
+        src.close()
+
+
 def init_db():
     DB_PATH.parent.mkdir(exist_ok=True)
     db = get_db()

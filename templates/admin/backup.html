@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Backup') }} — Spool Control{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7 col-lg-6">
+    <h4 class="fw-bold mb-4">{{ _('Backup e restauração') }}</h4>
+
+    <div class="card mb-3">
+      <div class="card-body">
+        <h6 class="text-muted text-uppercase fw-semibold mb-3" style="font-size:.75rem">{{ _('Fazer backup') }}</h6>
+        <p class="mb-3">{{ _('Baixa um arquivo .zip com o banco de dados (filamentos, spools, usuários, configurações) e os logos das marcas. Guarde-o em local seguro.') }}</p>
+        <a class="btn btn-primary w-100" href="{{ url_for('admin_backup_download') }}">
+          <i class="bi bi-download me-1"></i>{{ _('Baixar backup') }}
+        </a>
+      </div>
+    </div>
+
+    <div class="card border-danger-subtle">
+      <div class="card-body">
+        <h6 class="text-muted text-uppercase fw-semibold mb-3" style="font-size:.75rem">{{ _('Restaurar backup') }}</h6>
+        <div class="alert alert-warning d-flex align-items-start gap-2 mb-3">
+          <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+          <div>{{ _('A restauração substitui TODOS os dados atuais (incluindo usuários e senhas) pelos do arquivo. Não há como desfazer.') }}</div>
+        </div>
+        <form method="post" action="{{ url_for('admin_backup_restore') }}" enctype="multipart/form-data"
+              onsubmit="return confirm('{{ _('Tem certeza? Todos os dados atuais serão substituídos.') }}');">
+          <div class="mb-3">
+            <input type="file" name="backup" accept=".zip" class="form-control" required>
+            <div class="form-text">{{ _('Selecione um arquivo .zip gerado por este sistema.') }}</div>
+          </div>
+          <button type="submit" class="btn btn-outline-danger w-100">
+            <i class="bi bi-upload me-1"></i>{{ _('Restaurar backup') }}
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <p class="text-muted mt-3 mb-0" style="font-size:.8rem">
+      <i class="bi bi-info-circle me-1"></i>{{ _('Após reinstalar o sistema, restaure aqui o último backup para recuperar tudo.') }}
+    </p>
+  </div>
+</div>
+{% endblock %}

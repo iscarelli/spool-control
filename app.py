@@ -1,7 +1,10 @@
 import os
+import io
 import re
 import json
 import time
+import zipfile
+import tempfile
 import subprocess
 import urllib.request
 import urllib.error
@@ -75,7 +78,7 @@ app.config.update(
     SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_SECURE=os.environ.get("SECURE_COOKIES", "0") == "1",
     PERMANENT_SESSION_LIFETIME=43200,
-    MAX_CONTENT_LENGTH=4 * 1024 * 1024,   # 4 MB — limita uploads/corpo (anti-DoS)
+    MAX_CONTENT_LENGTH=64 * 1024 * 1024,  # 64 MB — headroom p/ restore de backup (zip: DB + logos); ainda limitado (anti-DoS)
     WTF_CSRF_TIME_LIMIT=None,             # token válido enquanto a sessão durar
 )
 
@@ -962,6 +965,97 @@ def admin_update_status():
     cur = current_version()
     done = bool(latest) and _version_tuple(cur) >= _version_tuple(latest)
     return jsonify(current=cur, latest=latest, done=done)
+
+
+# ── Backup / restauração ─────────────────────────────────────────────────────
+
+# Extensões de logo aceitas no restore — espelha o upload de marcas; SVG fica de
+# fora de propósito (pode embutir <script> e virar XSS servido same-origin).
+BACKUP_LOGO_EXTS = ('.png', '.jpg', '.jpeg', '.webp')
+
+
+@app.route("/admin/backup")
+@admin_required
+def admin_backup():
+    return render_template("admin/backup.html")
+
+
+@app.route("/admin/backup/download")
+@admin_required
+def admin_backup_download():
+    # Snapshot consistente do DB para um temp e empacota com os logos num zip.
+    mem = io.BytesIO()
+    tmp_db = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+    tmp_db.close()
+    try:
+        db.backup_to(tmp_db.name)
+        with zipfile.ZipFile(mem, "w", zipfile.ZIP_DEFLATED) as z:
+            z.write(tmp_db.name, "spool.db")
+            if BRANDS_DIR.is_dir():
+                for p in sorted(BRANDS_DIR.iterdir()):
+                    if p.is_file() and p.suffix.lower() in BACKUP_LOGO_EXTS:
+                        z.write(p, f"brands/{p.name}")
+            z.writestr("manifest.json", json.dumps({
+                "app": "spool-control",
+                "version": APP_VERSION,
+                "created": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            }, indent=2))
+    finally:
+        os.remove(tmp_db.name)
+    mem.seek(0)
+    fname = "spool-backup-" + time.strftime("%Y%m%d-%H%M%S") + ".zip"
+    return Response(
+        mem.read(),
+        mimetype="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{fname}"'},
+    )
+
+
+@app.route("/admin/backup/restore", methods=["POST"])
+@admin_required
+def admin_backup_restore():
+    f = request.files.get("backup")
+    if not f or not f.filename:
+        flash("Selecione um arquivo de backup (.zip)", "danger")
+        return redirect(url_for("admin_backup"))
+    try:
+        zf = zipfile.ZipFile(io.BytesIO(f.read()))
+    except Exception:
+        flash("Arquivo inválido — não é um .zip de backup", "danger")
+        return redirect(url_for("admin_backup"))
+
+    names = zf.namelist()
+    if "spool.db" not in names:
+        flash("Backup inválido: spool.db ausente no arquivo", "danger")
+        return redirect(url_for("admin_backup"))
+
+    # Grava o DB do backup num temp e valida antes de tocar no banco ativo.
+    tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+    try:
+        tmp.write(zf.read("spool.db"))
+        tmp.close()
+        if not db.is_valid_backup_db(tmp.name):
+            flash("Backup inválido: o banco não tem a estrutura do Spool Control", "danger")
+            return redirect(url_for("admin_backup"))
+        db.restore_from(tmp.name)
+    finally:
+        os.remove(tmp.name)
+
+    # Restaura os logos (apenas o basename, extensões de imagem — anti zip-slip).
+    BRANDS_DIR.mkdir(exist_ok=True)
+    restored_logos = 0
+    for name in names:
+        if not name.startswith("brands/") or name.endswith("/"):
+            continue
+        base = os.path.basename(name)
+        if not base or Path(base).suffix.lower() not in BACKUP_LOGO_EXTS:
+            continue
+        (BRANDS_DIR / base).write_bytes(zf.read(name))
+        restored_logos += 1
+
+    flash(f"Backup restaurado com sucesso ({restored_logos} logo(s)). "
+          "Recomendado sair e entrar novamente.", "success")
+    return redirect(url_for("admin_backup"))
 
 
 # ── Health ─────────────────────────────────────────────────────────────────
