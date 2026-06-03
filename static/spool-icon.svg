@@ -1,3 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <path fill-rule="evenodd" fill="currentColor" d="M32 32 m-27 0 a27 27 0 1 0 54 0 a27 27 0 1 0 -54 0 Z M32 32 m-8 0 a8 8 0 1 0 16 0 a8 8 0 1 0 -16 0 Z M32.0 15.5 m-5 0 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 Z M17.71 23.75 m-5 0 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 Z M17.71 40.25 m-5 0 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 Z M32.0 48.5 m-5 0 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 Z M46.29 40.25 m-5 0 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 Z M46.29 23.75 m-5 0 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 Z"/>
+  <style>
+    .flange { fill: #1b1f24; }                                  /* esquema claro: carretel escuro */
+    @media (prefers-color-scheme: dark) { .flange { fill: #f8f9fa; } }  /* esquema escuro: carretel claro */
+  </style>
+  <path class="flange" fill-rule="evenodd" d="M32 32 m-27 0 a27 27 0 1 0 54 0 a27 27 0 1 0 -54 0 Z M32 32 m-8 0 a8 8 0 1 0 16 0 a8 8 0 1 0 -16 0 Z M32.0 15.5 m-5 0 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 Z M17.71 23.75 m-5 0 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 Z M17.71 40.25 m-5 0 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 Z M32.0 48.5 m-5 0 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 Z M46.29 40.25 m-5 0 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 Z M46.29 23.75 m-5 0 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 Z"/>
 </svg>

@@ -10,6 +10,13 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.10.2] — 2026-06-03
+
+### Alterado
+- Favicon SVG da aba (`spool-icon.svg`) agora é totalmente transparente (fundo e furos) e a cor do carretel acompanha o esquema do navegador via `prefers-color-scheme` (escuro em abas claras, claro em abas escuras) em vez de cor fixa — fica visível nos dois casos usando a cor do navegador. O `.ico`/PNG azul continua como fallback para navegadores sem suporte a favicon SVG.
+
+---
+
 ## [1.10.1] — 2026-06-03
 
 ### Corrigido
