@@ -10,6 +10,13 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.10.1] — 2026-06-03
+
+### Corrigido
+- Favicon da aba: removido o arredondamento do tile (`rx`) — os cantos transparentes apareciam brancos na barra de abas claras — e o carretel agora ocupa todo o espaço do tile (antes ficava pequeno, com muito padding). Conjunto de favicons/PWA regenerado a partir do `app-icon.svg` quadrado e full-bleed.
+
+---
+
 ## [1.10.0] — 2026-06-03
 
 ### Adicionado
