@@ -113,13 +113,19 @@ pick_storage() {
   STORAGE=$(whiptail --backtitle "$APP" --title "STORAGE (rootfs)" \
     --radiolist "Where should the container disk be created?" 16 60 6 "${menu[@]}" 3>&1 1>&2 2>&3) \
     || die "Cancelled."
-  [ -z "$STORAGE" ] && die "No storage selected."
+  # `&& die` as the last line would return non-zero on success and trip set -e.
+  if [ -z "$STORAGE" ]; then die "No storage selected."; fi
 }
 
 # ── Template storage (vztmpl) ────────────────────────────────────────────────
 pick_template_storage() {
   TMPL_STORAGE=$(pvesm status -content vztmpl 2>/dev/null | awk 'NR==2{print $1}')
-  [ -z "${TMPL_STORAGE:-}" ] && TMPL_STORAGE="local"
+  # Note: a trailing `[ test ] && cmd` would make the function return the
+  # test's exit status — non-zero on the success path — and `set -e` would
+  # abort. Use an `if` so the function always returns 0.
+  if [ -z "${TMPL_STORAGE:-}" ]; then
+    TMPL_STORAGE="local"
+  fi
 }
 
 if [ "$ADVANCED" = "yes" ]; then

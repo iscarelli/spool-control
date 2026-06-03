@@ -10,6 +10,13 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.6.3] — 2026-06-02
+
+### Corrigido
+- **Causa raiz** da instalação que voltava ao prompt: a função `pick_template_storage` terminava em `[ -z "$TMPL_STORAGE" ] && TMPL_STORAGE="local"`. Quando o storage **era encontrado** (caminho de sucesso), o teste retornava 1, a função retornava 1 e o `set -e` abortava o script — logo após a etapa de domínio. Trocado por `if`. Mesmo padrão corrigido em `pick_storage` (`&& die` na última linha).
+
+---
+
 ## [1.6.2] — 2026-06-02
 
 ### Corrigido
