@@ -10,6 +10,13 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.6.2] — 2026-06-02
+
+### Corrigido
+- `proxmox-deploy.sh` morria silenciosamente (voltava ao prompt sem mensagem) quando qualquer comando falhava sob `set -e`. Agora há um handler global de erro (`set -E` + `trap ... ERR`) que imprime **a linha e o comando que falharam** e oferece destruir um container criado pela metade. Isso torna a causa visível para diagnóstico.
+
+---
+
 ## [1.6.1] — 2026-06-02
 
 ### Corrigido

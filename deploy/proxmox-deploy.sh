@@ -10,7 +10,7 @@
 # resources) and installs Spool Control + a systemd service.
 # Public repository — no token required.
 # =============================================================================
-set -euo pipefail
+set -Eeuo pipefail
 
 # Make sure the interactive dialogs can read the terminal even when the script
 # was piped to bash (e.g. `curl ... | bash`), where stdin is the pipe and
@@ -30,6 +30,28 @@ msg_info()  { echo -ne " ${YW}●${CL} $1..."; }
 msg_ok()    { echo -e "${BFR} ${CM} $1"; }
 msg_error() { echo -e "${BFR} ${CROSS} $1"; }
 die()       { msg_error "$1"; exit 1; }
+
+# ── Global error handler ─────────────────────────────────────────────────────
+# Without this, any command failing under `set -e` exits silently and the user
+# just lands back at the prompt with no idea what happened. This prints the
+# failing line and command, and offers to destroy a half-created container.
+CREATED=0
+on_err() {
+  local rc=$? line="${1:-?}"
+  trap - ERR                      # avoid re-entrancy if cleanup also fails
+  echo
+  msg_error "Failed at line ${line} (exit ${rc}): ${BASH_COMMAND}"
+  if [ "$CREATED" = "1" ] && command -v whiptail >/dev/null 2>&1; then
+    if whiptail --backtitle "$APP" --title "ERROR" \
+        --yesno "Installation failed. Destroy the created container ${CTID:-?}?" 9 60; then
+      pct stop "$CTID"    >/dev/null 2>&1 || true
+      pct destroy "$CTID" >/dev/null 2>&1 || true
+      msg_ok "Container ${CTID} removed."
+    fi
+  fi
+  exit "$rc"
+}
+trap 'on_err $LINENO' ERR
 
 header_info() {
   clear
@@ -150,20 +172,6 @@ if ! pveam list "$TMPL_STORAGE" 2>/dev/null | grep -q "$TEMPLATE"; then
   pveam download "$TMPL_STORAGE" "$TEMPLATE" >/dev/null 2>&1 || die "Failed to download the template."
   msg_ok "Template downloaded"
 fi
-
-# ── Cleanup on error after creation ──────────────────────────────────────────
-CREATED=0
-cleanup_on_err() {
-  [ "$CREATED" = "1" ] || exit 1
-  echo
-  if whiptail --backtitle "$APP" --title "ERROR" --yesno "Installation failed. Destroy the created container $CTID?" 9 60; then
-    pct stop "$CTID" >/dev/null 2>&1 || true
-    pct destroy "$CTID" >/dev/null 2>&1 || true
-    msg_ok "Container $CTID removed."
-  fi
-  exit 1
-}
-trap cleanup_on_err ERR
 
 # ── Container creation ───────────────────────────────────────────────────────
 NET0="name=eth0,bridge=${BRG},ip=${NET}"
