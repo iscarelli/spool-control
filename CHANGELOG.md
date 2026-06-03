@@ -10,6 +10,13 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.10.3] — 2026-06-03
+
+### Corrigido
+- "Fundo azul" no favicon da aba: vinha do PNG/`.ico` (o navegador usa o raster, não o SVG). Os favicons de aba (`favicon-16x16`, `favicon-32x32`, `favicon.ico`) agora são **transparentes** — carretel azul vazado, sem o tile — visíveis em abas claras e escuras. O tile azul full-bleed foi mantido só no `apple-touch-icon` e nos ícones PWA (`android-chrome-*`), que precisam de fundo. Obs.: favicons são muito cacheados — pode ser preciso recarregar com cache limpo ou reabrir a aba.
+
+---
+
 ## [1.10.2] — 2026-06-03
 
 ### Alterado
