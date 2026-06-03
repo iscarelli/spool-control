@@ -10,6 +10,16 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.8.2] — 2026-06-02
+
+### Alterado
+- Os dois botões de criação que **já existiam** no card do dashboard (`+ Novo Spool` / `+ Filamento`) passaram a usar o estilo "pill primary" das páginas internas.
+
+### Corrigido
+- Revertidos os dois botões extras que a 1.8.1 adicionou por engano no cabeçalho do dashboard (a intenção era alterar os existentes, não duplicar).
+
+---
+
 ## [1.8.1] — 2026-06-02
 
 ### Adicionado
