@@ -246,7 +246,7 @@ def inject_globals():
 def _parse_dt(value):
     if not value:
         return None
-    s = str(value).strip().replace("T", " ").split(".")[0].split("+")[0].strip()
+    s = str(value).strip().replace("T", " ").split(".")[0].split("+")[0].rstrip("Z").strip()
     for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
         try:
             return datetime.strptime(s, fmt)

@@ -10,6 +10,17 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.10.0] — 2026-06-03
+
+### Adicionado
+- Nova identidade visual: ícone de carretel redesenhado (flange encorpada com furos) e logo com wordmark "Spool Control", ambos *themeable* (SVG inline via `currentColor`). Aplicados na navbar (`base.html`) e na tela de login.
+- Conjunto completo de favicons + suporte PWA: `favicon.ico`, PNGs 16/32, `apple-touch-icon` 180×180, ícones 192/512, `site.webmanifest` (`display: standalone`, `theme_color #0d6efd`) e `theme-color` no `<head>`. Master em `static/icons/app-icon.svg`.
+
+### Corrigido
+- Datas com timestamp UTC terminadas em `Z` (ex.: log de pesagem) eram exibidas como string ISO crua, com segundos e máscara errada, nos dois idiomas. `_parse_dt` agora remove o sufixo `Z` antes do parse; `localdt`/`localdate` voltam a formatar corretamente no dashboard, histórico de peso e detalhe do spool.
+
+---
+
 ## [1.9.1] — 2026-06-03
 
 ### Adicionado

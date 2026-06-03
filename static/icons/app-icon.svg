@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#0d6efd"/>
+  <g transform="translate(78.22,78.22) scale(5.5556)">
+    <path fill-rule="evenodd" fill="#ffffff" d="M32 32 m-27 0 a27 27 0 1 0 54 0 a27 27 0 1 0 -54 0 Z M32 32 m-8 0 a8 8 0 1 0 16 0 a8 8 0 1 0 -16 0 Z M32.0 15.5 m-5 0 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 Z M17.71 23.75 m-5 0 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 Z M17.71 40.25 m-5 0 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 Z M32.0 48.5 m-5 0 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 Z M46.29 40.25 m-5 0 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 Z M46.29 23.75 m-5 0 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 Z"/>
+  </g>
+</svg>

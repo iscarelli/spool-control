@@ -6,6 +6,12 @@
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>{% block title %}Spool Control{% endblock %}</title>
   <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='spool-icon.svg') }}">
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='icons/favicon-32x32.png') }}">
+  <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='icons/favicon-16x16.png') }}">
+  <link rel="shortcut icon" href="{{ url_for('static', filename='icons/favicon.ico') }}">
+  <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}">
+  <link rel="manifest" href="{{ url_for('static', filename='icons/site.webmanifest') }}">
+  <meta name="theme-color" content="#0d6efd">
   <script>
     /* Apply saved theme before CSS loads — prevents flash */
     document.documentElement.setAttribute(
@@ -22,9 +28,8 @@
 {% set ep = request.endpoint %}
 <nav class="navbar navbar-expand-lg">
   <div class="container-fluid">
-    <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url_for('dashboard') }}">
-      <img src="{{ url_for('static', filename='spool-icon.svg') }}" width="20" height="20"
-           class="brand-icon" alt="">Spool Control
+    <a class="navbar-brand d-flex align-items-center" href="{{ url_for('dashboard') }}">
+      {% set logo_h = 26 %}{% include '_brand.html' %}
     </a>
     <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
       <span class="navbar-toggler-icon"></span>

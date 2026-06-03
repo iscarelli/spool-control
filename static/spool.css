@@ -364,9 +364,8 @@ h1, h2, h3, h4, h5, h6 { letter-spacing: -0.02em; }
 /* ── Donuts ─────────────────────────────────────────────────────────────── */
 .donut-track { stroke: var(--sc-border); }
 
-/* ── Brand icon (adapts to theme) ───────────────────────────────────────── */
-.brand-icon { filter: invert(1); }
-[data-bs-theme="light"] .brand-icon { filter: none; }
+/* ── Brand logo (inline SVG, inherits theme color via currentColor) ─────── */
+.sc-logo { display: block; }
 
 /* ── btn-outline-primary ────────────────────────────────────────────────── */
 .btn-outline-primary {
