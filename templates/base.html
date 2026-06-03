@@ -105,31 +105,31 @@
           <input class="form-control" type="search" name="q"
                  placeholder="{{ _('Buscar...') }}"
                  value="{{ request.args.get('q','') if request.endpoint == 'search' else '' }}"
-                 style="min-width:140px">
-          <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
+                 style="min-width:140px;height:2rem">
+          <button class="btn btn-outline-secondary d-inline-flex align-items-center justify-content-center" type="submit" style="height:2rem"><i class="bi bi-search"></i></button>
         </div>
       </form>
 
       {# Theme toggle #}
-      <button class="btn btn-outline-secondary btn-sm me-1" id="themeToggle" title="{{ _('Tema') }}">
+      <button class="btn btn-outline-secondary btn-sm me-1 d-inline-flex align-items-center justify-content-center" id="themeToggle" title="{{ _('Tema') }}" style="height:2rem;width:2rem">
         <i class="bi" id="themeIcon"></i>
       </button>
 
       {# Language switcher #}
       <div class="dropdown me-2">
-        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown"
-                style="font-size:0.75rem;letter-spacing:0.04em;min-width:2.4rem">
-          {{ lang.upper() }}
+        <button class="btn btn-outline-secondary btn-sm dropdown-toggle d-inline-flex align-items-center justify-content-center" data-bs-toggle="dropdown"
+                style="height:2rem;font-size:0.8rem;letter-spacing:0.03em;gap:.3rem">
+          <span style="font-size:1.05rem;line-height:1">{% if lang == 'pt' %}🇧🇷{% else %}🇺🇸{% endif %}</span>{{ lang.upper() }}
         </button>
         <ul class="dropdown-menu dropdown-menu-end" style="min-width:0">
-          <li><a class="dropdown-item" href="{{ url_for('set_lang', code='pt') }}">PT</a></li>
-          <li><a class="dropdown-item" href="{{ url_for('set_lang', code='en') }}">EN</a></li>
+          <li><a class="dropdown-item d-flex align-items-center gap-2" href="{{ url_for('set_lang', code='pt') }}"><span style="font-size:1.05rem">🇧🇷</span>PT</a></li>
+          <li><a class="dropdown-item d-flex align-items-center gap-2" href="{{ url_for('set_lang', code='en') }}"><span style="font-size:1.05rem">🇺🇸</span>EN</a></li>
         </ul>
       </div>
 
       <span class="navbar-text me-2">{{ session.username }}</span>
       <form method="post" action="{{ url_for('logout') }}" class="d-inline">
-        <button class="btn btn-outline-secondary btn-sm" type="submit">{{ _('Sair') }}</button>
+        <button class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center justify-content-center" type="submit" style="height:2rem">{{ _('Sair') }}</button>
       </form>
     </div>
   </div>

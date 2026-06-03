@@ -96,6 +96,21 @@ _EN = {
     "Ativo":                     "Active",
     "Finalizado":                "Finished",
 
+    # Dashboard
+    "Dashboard":          "Dashboard",
+    "Restante":           "Remaining",
+    "Pesagens Recentes":  "Recent Weighings",
+    "Quando":             "When",
+    "Peso Net":           "Net Weight",
+
+    # Filament form
+    "Editar Filamento":          "Edit Filament",
+    "Cor (hex)":                 "Color (hex)",
+    "Diâmetro (mm)":             "Diameter (mm)",
+    "Pesquise ou digite...":     "Search or type...",
+    "Remover":                   "Remove",
+    "Remover este filamento?":   "Remove this filament?",
+
     # Buttons
     "Ver":       "View",
     "Editar":    "Edit",

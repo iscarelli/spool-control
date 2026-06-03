@@ -10,6 +10,21 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.9.0] — 2026-06-03
+
+### Adicionado
+- Material e Marca no cadastro de filamento agora são **campos com busca** (`input` + `datalist`): filtram ao digitar e ainda aceitam um valor novo (substitui o select + opção "— Novo…").
+- Bandeiras (🇧🇷/🇺🇸) no seletor de idioma.
+
+### Alterado
+- Dashboard totalmente traduzido (cards, tabelas de Estoque Baixo e Pesagens Recentes); form de filamento traduzido.
+- Itens do canto superior direito (busca, tema, idioma, sair) com a mesma altura (`2rem`).
+
+### Corrigido
+- Cantos arredondados das tabelas dentro de cards (dashboard e usuários): `overflow-hidden` no card elimina o "fio" nos cantos.
+
+---
+
 ## [1.8.4] — 2026-06-02
 
 ### Corrigido

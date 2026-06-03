@@ -2,7 +2,7 @@
 {% block title %}Dashboard — Spool Control{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <h4 class="mb-0 fw-bold">Dashboard</h4>
+  <h4 class="mb-0 fw-bold">{{ _('Dashboard') }}</h4>
   <a href="{{ url_for('spools_weigh', spool_id=0) }}" class="d-none" id="quickWeigh"></a>
 </div>
 
@@ -11,7 +11,7 @@
     <div class="card text-center border-0 bg-dark text-white h-100">
       <div class="card-body py-3 d-flex flex-column justify-content-center">
         <div class="fs-2 fw-bold">{{ stats.total_spools }}</div>
-        <div class="small">Spools Ativos</div>
+        <div class="small">{{ _('Spools Ativos') }}</div>
       </div>
     </div>
   </div>
@@ -19,7 +19,7 @@
     <div class="card text-center border-0 bg-secondary text-white h-100">
       <div class="card-body py-3 d-flex flex-column justify-content-center">
         <div class="fs-2 fw-bold">{{ stats.total_filaments }}</div>
-        <div class="small">Filamentos</div>
+        <div class="small">{{ _('Filamentos') }}</div>
       </div>
     </div>
   </div>
@@ -27,7 +27,7 @@
     <div class="card text-center border-0 h-100 {% if low_stock|length > 0 %}bg-warning{% else %}bg-success text-white{% endif %}">
       <div class="card-body py-3 d-flex flex-column justify-content-center">
         <div class="fs-2 fw-bold">{{ low_stock|length }}</div>
-        <div class="small">Estoque Baixo</div>
+        <div class="small">{{ _('Estoque Baixo') }}</div>
       </div>
     </div>
   </div>
@@ -48,12 +48,12 @@
 </div>
 
 {% if low_stock %}
-<div class="card mb-4 border-warning">
-  <div class="card-header bg-warning fw-bold"><i class="bi bi-exclamation-triangle-fill me-1"></i>Estoque Baixo</div>
+<div class="card mb-4 border-warning overflow-hidden">
+  <div class="card-header bg-warning fw-bold"><i class="bi bi-exclamation-triangle-fill me-1"></i>{{ _('Estoque Baixo') }}</div>
   <div class="table-responsive">
     <table class="table table-sm mb-0">
       <thead class="table-light">
-        <tr><th>Material</th><th>Marca / Família</th><th>Local</th><th>Restante</th><th>%</th><th></th></tr>
+        <tr><th>{{ _('Material') }}</th><th>{{ _('Marca / Família') }}</th><th>{{ _('Local') }}</th><th>{{ _('Restante') }}</th><th>%</th><th></th></tr>
       </thead>
       <tbody>
         {% for s in low_stock %}
@@ -67,7 +67,7 @@
               <div class="progress-bar bg-warning" style="width:{{ s.pct_remaining }}%">{{ s.pct_remaining }}%</div>
             </div>
           </td>
-          <td><a href="{{ url_for('spools_detail', spool_id=s.id) }}" class="btn btn-sm btn-outline-secondary">Ver</a></td>
+          <td><a href="{{ url_for('spools_detail', spool_id=s.id) }}" class="btn btn-sm btn-outline-secondary">{{ _('Ver') }}</a></td>
         </tr>
         {% endfor %}
       </tbody>
@@ -77,12 +77,12 @@
 {% endif %}
 
 {% if stats.recent_weighings %}
-<div class="card">
-  <div class="card-header fw-bold"><i class="bi bi-clock-history me-1"></i>Pesagens Recentes</div>
+<div class="card overflow-hidden">
+  <div class="card-header fw-bold"><i class="bi bi-clock-history me-1"></i>{{ _('Pesagens Recentes') }}</div>
   <div class="table-responsive">
     <table class="table table-sm mb-0">
       <thead class="table-light">
-        <tr><th>Quando</th><th>Material</th><th>Marca / Família</th><th>Peso Net</th><th></th></tr>
+        <tr><th>{{ _('Quando') }}</th><th>{{ _('Material') }}</th><th>{{ _('Marca / Família') }}</th><th>{{ _('Peso Net') }}</th><th></th></tr>
       </thead>
       <tbody>
         {% for r in stats.recent_weighings %}
@@ -91,7 +91,7 @@
           <td>{{ r.material }}</td>
           <td>{{ r.brand }} / {{ r.family }}</td>
           <td>{{ "%.0f"|format(r.net_weight_g) }}g</td>
-          <td><a href="{{ url_for('spools_detail', spool_id=r.spool_id) }}" class="btn btn-sm btn-outline-secondary">Ver</a></td>
+          <td><a href="{{ url_for('spools_detail', spool_id=r.spool_id) }}" class="btn btn-sm btn-outline-secondary">{{ _('Ver') }}</a></td>
         </tr>
         {% endfor %}
       </tbody>

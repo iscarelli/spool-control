@@ -5,7 +5,7 @@
   <div class="col-md-7 col-lg-6">
     <div class="d-flex align-items-center mb-3">
       <a href="{{ url_for('filaments_list') }}" class="btn btn-sm btn-outline-secondary me-2"><i class="bi bi-arrow-left"></i></a>
-      <h4 class="mb-0 fw-bold">{{ 'Editar Filamento' if filament else 'Novo Filamento' }}</h4>
+      <h4 class="mb-0 fw-bold">{{ _('Editar Filamento') if filament else _('Novo Filamento') }}</h4>
     </div>
     <div class="card">
       <div class="card-body">
@@ -13,53 +13,29 @@
           {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
           <div class="row g-3">
             <div class="col-12">
-              <label class="form-label fw-semibold">Material <span class="text-danger">*</span></label>
-              <select name="material" id="materialSelect" class="form-select" required>
-                <option value="">Selecione...</option>
-                {% for m in materials %}
-                <option value="{{ m }}" {% if filament and filament.material == m %}selected{% endif %}>{{ m }}</option>
-                {% endfor %}
-                <option value="__new__">— Novo material...</option>
-              </select>
-              <input type="text" name="new_material_name" id="newMaterialInput"
-                     class="form-control mt-2 d-none" placeholder="Nome do novo material (ex: PLA-Silk)">
+              <label class="form-label fw-semibold">{{ _('Material') }} <span class="text-danger">*</span></label>
+              <input type="text" name="material" class="form-control" list="materialOptions" autocomplete="off"
+                     value="{{ filament.material if filament else '' }}" required
+                     placeholder="{{ _('Pesquise ou digite...') }}">
+              <datalist id="materialOptions">
+                {% for m in materials %}<option value="{{ m }}"></option>{% endfor %}
+              </datalist>
             </div>
             <div class="col-12">
-              <label class="form-label fw-semibold">Marca <span class="text-danger">*</span></label>
-              {% set current_brand = filament.brand if filament else '' %}
-              {% set known_names = brands | map(attribute='name') | list %}
-              <select name="brand" id="brandSelect" class="form-select" required>
-                <option value="">Selecione...</option>
-                {% set in_use = brands | selectattr('filament_count', '>', 0) | list %}
-                {% set others = brands | selectattr('filament_count', '==', 0) | list %}
-                {% if in_use %}
-                <optgroup label="Em uso">
-                  {% for b in in_use %}
-                  <option value="{{ b.name }}" {% if current_brand == b.name %}selected{% endif %}>{{ b.name }}</option>
-                  {% endfor %}
-                </optgroup>
-                {% endif %}
-                {% if others %}
-                <optgroup label="Outras marcas">
-                  {% for b in others %}
-                  <option value="{{ b.name }}" {% if current_brand == b.name %}selected{% endif %}>{{ b.name }}</option>
-                  {% endfor %}
-                </optgroup>
-                {% endif %}
-                {% if current_brand and current_brand not in known_names %}
-                <option value="{{ current_brand }}" selected>{{ current_brand }}</option>
-                {% endif %}
-                <option value="__new__">— Nova marca...</option>
-              </select>
-              <input type="text" name="new_brand_name" id="newBrandInput"
-                     class="form-control mt-2 d-none" placeholder="Nome da nova marca">
+              <label class="form-label fw-semibold">{{ _('Marca') }} <span class="text-danger">*</span></label>
+              <input type="text" name="brand" class="form-control" list="brandOptions" autocomplete="off"
+                     value="{{ filament.brand if filament else '' }}" required
+                     placeholder="{{ _('Pesquise ou digite...') }}">
+              <datalist id="brandOptions">
+                {% for b in brands %}<option value="{{ b.name }}"></option>{% endfor %}
+              </datalist>
             </div>
             <div class="col-12">
-              <label class="form-label fw-semibold">Família <span class="text-danger">*</span></label>
+              <label class="form-label fw-semibold">{{ _('Família') }} <span class="text-danger">*</span></label>
               <input type="text" name="family" class="form-control" value="{{ filament.family if filament else '' }}" required placeholder="ex: Basic, Matte, Rapid, HS">
             </div>
             <div class="col-6">
-              <label class="form-label fw-semibold">Cor (hex)</label>
+              <label class="form-label fw-semibold">{{ _('Cor (hex)') }}</label>
               <div class="input-group">
                 <span class="input-group-text p-1">
                   <input type="color" id="colorPicker" value="{{ filament.color_hex if filament and filament.color_hex else '#cccccc' }}" style="width:32px;height:32px;border:none;cursor:pointer">
@@ -70,24 +46,24 @@
               </div>
             </div>
             <div class="col-6">
-              <label class="form-label fw-semibold">Diâmetro (mm)</label>
+              <label class="form-label fw-semibold">{{ _('Diâmetro (mm)') }}</label>
               <select name="diameter_mm" class="form-select">
                 <option value="1.75" {% if not filament or filament.diameter_mm == 1.75 %}selected{% endif %}>1.75 mm</option>
                 <option value="2.85" {% if filament and filament.diameter_mm == 2.85 %}selected{% endif %}>2.85 mm</option>
               </select>
             </div>
             <div class="col-12">
-              <label class="form-label fw-semibold">Notas</label>
+              <label class="form-label fw-semibold">{{ _('Notas') }}</label>
               <textarea name="notes" class="form-control" rows="2">{{ filament.notes if filament else '' }}</textarea>
             </div>
           </div>
           <div class="mt-4 d-flex gap-2">
-            <button type="submit" class="btn btn-dark">Salvar</button>
-            <a href="{{ url_for('filaments_detail', filament_id=filament.id) if filament else url_for('filaments_list') }}" class="btn btn-outline-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-dark">{{ _('Salvar') }}</button>
+            <a href="{{ url_for('filaments_detail', filament_id=filament.id) if filament else url_for('filaments_list') }}" class="btn btn-outline-secondary">{{ _('Cancelar') }}</a>
             {% if filament and session.role == 'admin' %}
             <form method="post" action="{{ url_for('filaments_delete', filament_id=filament.id) }}" class="ms-auto"
-                  onsubmit="return confirm('Remover este filamento?')">
-              <button type="submit" class="btn btn-outline-danger btn-sm">Remover</button>
+                  onsubmit="return confirm('{{ _('Remover este filamento?') }}')">
+              <button type="submit" class="btn btn-outline-danger btn-sm">{{ _('Remover') }}</button>
             </form>
             {% endif %}
           </div>
@@ -103,25 +79,5 @@ const picker = document.getElementById('colorPicker');
 const hex = document.getElementById('colorHex');
 picker.addEventListener('input', () => hex.value = picker.value);
 hex.addEventListener('input', () => { if(/^#[0-9a-fA-F]{6}$/.test(hex.value)) picker.value = hex.value; });
-
-const materialSelect = document.getElementById('materialSelect');
-const newMaterialInput = document.getElementById('newMaterialInput');
-function toggleNewMaterial() {
-  const isNew = materialSelect.value === '__new__';
-  newMaterialInput.classList.toggle('d-none', !isNew);
-  newMaterialInput.required = isNew;
-}
-materialSelect.addEventListener('change', toggleNewMaterial);
-toggleNewMaterial();
-
-const brandSelect = document.getElementById('brandSelect');
-const newBrandInput = document.getElementById('newBrandInput');
-function toggleNewBrand() {
-  const isNew = brandSelect.value === '__new__';
-  newBrandInput.classList.toggle('d-none', !isNew);
-  newBrandInput.required = isNew;
-}
-brandSelect.addEventListener('change', toggleNewBrand);
-toggleNewBrand();
 </script>
 {% endblock %}
