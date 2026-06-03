@@ -111,7 +111,7 @@
   </div>
 </div>
 
-<form id="queueAllForm" method="post" action="{{ url_for('label_queue_add_all') }}" style="display:none">
+<form id="queueAllForm" method="post" action="" style="display:none">
   <input type="hidden" name="next" value="{{ url_for('spools_list') }}">
   <div id="queueAllIds"></div>
 </form>
@@ -147,17 +147,43 @@ document.querySelectorAll('.spool-row').forEach(row => {
   });
 });
 
-/* ── Fila: Todos ─────────────────────────────────────────────────────────── */
-document.getElementById('markAllBtn').addEventListener('click', () => {
-  const container = document.getElementById('queueAllIds');
-  container.innerHTML = '';
+/* ── Fila: toggle todos ──────────────────────────────────────────────────── */
+const _queueIds = new Set({{ queue_ids | list | tojson }});
+const _markBtn  = document.getElementById('markAllBtn');
+
+function _visibleSpoolIds() {
+  const ids = [];
   document.querySelectorAll('#spoolTable tbody tr[data-spool-id]').forEach(row => {
     if (row.style.display === 'none') return;
+    ids.push(parseInt(row.dataset.spoolId));
+  });
+  return ids;
+}
+
+function _updateMarkBtn() {
+  const ids = _visibleSpoolIds();
+  const allIn = ids.length > 0 && ids.every(id => _queueIds.has(id));
+  _markBtn.classList.toggle('btn-warning', allIn);
+  _markBtn.classList.toggle('btn-outline-warning', !allIn);
+  _markBtn.title = allIn ? 'Remover todos da fila' : 'Adicionar todos à fila';
+}
+_updateMarkBtn();
+
+_markBtn.addEventListener('click', () => {
+  const ids = _visibleSpoolIds();
+  const allIn = ids.length > 0 && ids.every(id => _queueIds.has(id));
+  const form = document.getElementById('queueAllForm');
+  const container = document.getElementById('queueAllIds');
+  container.innerHTML = '';
+  ids.forEach(id => {
     const inp = document.createElement('input');
-    inp.type = 'hidden'; inp.name = 'spool_ids'; inp.value = row.dataset.spoolId;
+    inp.type = 'hidden'; inp.name = 'spool_ids'; inp.value = id;
     container.appendChild(inp);
   });
-  document.getElementById('queueAllForm').submit();
+  form.action = allIn
+    ? '{{ url_for("label_queue_remove_all") }}'
+    : '{{ url_for("label_queue_add_all") }}';
+  form.submit();
 });
 
 /* ── Modal de pesagem ────────────────────────────────────────────────────── */

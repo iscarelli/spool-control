@@ -126,16 +126,32 @@
 </nav>
 {% endif %}
 
-<div class="container-fluid py-4 px-4">
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% for cat, msg in messages %}
-    <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert">
-      {{ msg }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="position-fixed top-0 start-50 translate-middle-x pt-3" style="z-index:1090;pointer-events:none">
+  <div class="d-flex flex-column align-items-center gap-2">
+  {% for cat, msg in messages %}
+  {% if cat == 'success' %}
+  <div class="toast align-items-center text-bg-success border-0 sc-toast" role="alert"
+       data-bs-autohide="true" data-bs-delay="3000" style="pointer-events:auto;min-width:260px">
+    <div class="d-flex">
+      <div class="toast-body fw-semibold"><i class="bi bi-check-circle-fill me-2"></i>{{ msg }}</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
     </div>
-    {% endfor %}
-  {% endwith %}
+  </div>
+  {% else %}
+  <div class="alert alert-{{ cat }} alert-dismissible fade show mb-0" role="alert" style="pointer-events:auto;min-width:260px">
+    {{ msg }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% endif %}
+  {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% endwith %}
 
+<div class="container-fluid py-4 px-4">
   {% block content %}{% endblock %}
 </div>
 
@@ -144,6 +160,8 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{{ url_for('static', filename='spool.js') }}"></script>
 <script>
+/* ── Toast init ──────────────────────────────────────────────────────────── */
+document.querySelectorAll('.sc-toast').forEach(el => new bootstrap.Toast(el).show());
 /* ── Theme toggle ────────────────────────────────────────────────────────── */
 (function() {
   const icon = document.getElementById('themeIcon');

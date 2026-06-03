@@ -616,6 +616,21 @@ def label_queue_print():
     )
 
 
+@app.route("/label-queue/remove-all", methods=["POST"])
+@login_required
+def label_queue_remove_all():
+    ids = request.form.getlist("spool_ids")
+    removed = 0
+    for sid in ids:
+        try:
+            db.queue_remove(int(sid))
+            removed += 1
+        except Exception:
+            pass
+    flash(f"{removed} spool(s) removido(s) da fila", "success")
+    return redirect(request.form.get("next") or url_for("spools_list"))
+
+
 @app.route("/label-queue/clear", methods=["POST"])
 @login_required
 def label_queue_clear():

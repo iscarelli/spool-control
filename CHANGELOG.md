@@ -10,6 +10,14 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.4.7] — 2026-06-02
+
+### Adicionado
+- Botão "Todos" na lista de spools vira toggle: se todos visíveis já estão na fila, remove todos; caso contrário, adiciona todos
+- Flash de sucesso agora exibe como toast top-center que some automaticamente em 3 segundos
+
+---
+
 ## [1.4.6] — 2026-06-02
 
 ### Adicionado
