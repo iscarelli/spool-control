@@ -10,6 +10,15 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.11.2] — 2026-06-03
+
+### Corrigido (robustez do deploy)
+- **`update-lxc.sh` não derruba mais o serviço por arquivo faltando.** Causa do crash loop / 404 aleatório: o script copiava os `.py` por nome, e bastava esquecer um módulo novo (foi o caso do `niimbot_registry.py`) para o `app.py` não importar e o serviço reiniciar em loop. Duas camadas de correção:
+  1. **Aplica toda a árvore versionada via `git archive`** — não há mais lista de arquivos para esquecer; o que está no git é aplicado. Não apaga itens fora do git (`data/`, `spool.env`, `.venv`, `static/brands/`).
+  2. **Smoke test (`import app`) antes de reiniciar** — se o novo código não importar (módulo faltando, erro de sintaxe, etc.), o deploy **aborta e mantém o serviço atual no ar**, em vez de reiniciar para um crash loop.
+
+---
+
 ## [1.11.1] — 2026-06-03
 
 ### Corrigido

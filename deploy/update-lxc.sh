@@ -62,27 +62,28 @@ main() {
         warn "Deploying ref '$REF' — nao e a HEAD do main."
     fi
 
-    info "Atualizando arquivos em $APP_DIR..."
-    cp "$REPO_DIR/app.py"               "$APP_DIR/app.py"
-    cp "$REPO_DIR/database.py"          "$APP_DIR/database.py"
-    cp "$REPO_DIR/labels.py"            "$APP_DIR/labels.py"
-    cp "$REPO_DIR/niimbot_registry.py"  "$APP_DIR/niimbot_registry.py"
-    cp "$REPO_DIR/translations.py"      "$APP_DIR/translations.py"
-    cp "$REPO_DIR/requirements.txt" "$APP_DIR/requirements.txt"
-    cp "$REPO_DIR/VERSION"          "$APP_DIR/VERSION"
-    cp "$REPO_DIR/CHANGELOG.md"     "$APP_DIR/CHANGELOG.md"
-    cp -r "$REPO_DIR/templates/." "$APP_DIR/templates/"
-    cp -r "$REPO_DIR/static/."    "$APP_DIR/static/"
-    cp "$REPO_DIR/deploy/update-lxc.sh"          "$APP_DIR/deploy/update-lxc.sh"
-    cp "$REPO_DIR/deploy/spool-control.service"  "$APP_DIR/deploy/spool-control.service"
-    cp "$REPO_DIR/deploy/spool-update.service"   "$APP_DIR/deploy/spool-update.service"
-    cp "$REPO_DIR/deploy/sudoers-spool-update"   "$APP_DIR/deploy/sudoers-spool-update"
-    cp "$REPO_DIR/deploy/seed_brands.py"         "$APP_DIR/deploy/seed_brands.py"
+    # ── Smoke test ANTES de tocar em $APP_DIR ────────────────────────────────
+    # Instala as deps e tenta importar o app a partir do CLONE. Se falhar, aborta
+    # sem copiar nada: o servico atual continua intacto (evita crash loop / 404
+    # por modulo faltando, erro de sintaxe, import quebrado etc.).
+    info "Instalando dependencias e validando o novo codigo (smoke test)..."
+    "${APP_DIR}/.venv/bin/pip" install --quiet -r "$REPO_DIR/requirements.txt"
+    if ! ( cd "$REPO_DIR"; set -a
+           if [ -f "${APP_DIR}/spool.env" ]; then . "${APP_DIR}/spool.env"; else SECRET_KEY=smoketest; fi
+           set +a
+           PYTHONPATH="$REPO_DIR" "${APP_DIR}/.venv/bin/python" -c "import app" ) 2>/tmp/spool-smoke.log; then
+        error "Novo codigo NAO importa — deploy abortado, servico atual mantido no ar. Detalhe: $(tail -n 3 /tmp/spool-smoke.log)"
+    fi
+    info "Smoke test OK — aplicando."
+
+    # Aplica TODO o conteudo versionado (git archive) — nao ha lista de arquivos
+    # para esquecer: o que estiver no git e' aplicado. Nao apaga itens fora do git
+    # (data/, spool.env, .venv, static/brands/), pois o tar so extrai/sobrescreve
+    # os arquivos rastreados. (Deps ja instaladas no smoke test acima.)
+    info "Aplicando arquivos versionados em $APP_DIR..."
+    git -C "$REPO_DIR" archive HEAD | tar -x -C "$APP_DIR"
     chmod +x "$APP_DIR/deploy/update-lxc.sh"
     rm -rf "$REPO_DIR"
-
-    info "Atualizando dependencias Python..."
-    "${APP_DIR}/.venv/bin/pip" install --quiet -r "${APP_DIR}/requirements.txt"
 
     # Garante que spool.env existe
     local ENV_FILE="${APP_DIR}/spool.env"
