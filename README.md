@@ -9,7 +9,7 @@ Registre filamentos, catalogue carretéis, pesagem com cálculo automático de t
 - Cadastro de filamentos (material, marca, família, cor) com logos de marca automáticos
 - Múltiplos spools por filamento com histórico de pesagens
 - Pesagem rápida: informe o código do spool e o peso bruto — o sistema subtrai a tara
-- Etiquetas PDF 60×40mm com QR code (aponta para página pública do spool)
+- Etiquetas PDF 60×40mm com QR code (aponta para a página do spool — requer login)
 - Fila de impressão de etiquetas em lote
 - Relatórios: por material, por local, estoque baixo, histórico de pesos
 - Busca e ordenação nas listagens
@@ -40,8 +40,9 @@ spool-control/
 │   └── brands/         # Logos de marcas (gerados em deploy)
 ├── templates/
 └── deploy/
+    ├── proxmox-deploy.sh   # Instalador LXC p/ Proxmox (cria o container + instala)
     ├── spool-control.service
-    ├── setup-inside.sh     # Instalação inicial (dentro do LXC)
+    ├── setup-inside.sh     # Instalação dentro do LXC (clone público + venv + systemd)
     ├── update-lxc.sh       # Atualização via git pull
     └── seed_brands.py      # Download de logos de marcas
 ```
@@ -50,48 +51,35 @@ spool-control/
 
 ## Deploy — Proxmox LXC
 
-Testado em Debian 12 (Bookworm). O script `setup-inside.sh` automatiza toda a instalação.
+### Instalação automática (recomendado)
 
-### Pré-requisitos
-
-- LXC Debian 12 com acesso à internet
-- Repositório clonável via token GitHub (`gh auth token`)
-- Traefik rodando na rede com suporte ao [Proxmox Provider](https://github.com/juliens/traefik-proxmox-provider) (opcional — para HTTPS automático)
-
-### 1 — Criar o LXC
+Execute **no host Proxmox VE** (PVE 7+). O instalador cria um LXC Debian 12 e
+configura todo o sistema, perguntando CTID, hostname, rede, recursos e URL:
 
 ```bash
-pct create <VMID> local:vztmpl/debian-12-standard_12.12-1_amd64.tar.zst \
-  --hostname spool \
-  --cores 1 --memory 512 --swap 512 \
-  --rootfs local-lvm:8 \
-  --net0 name=eth0,bridge=vmbr0,ip=dhcp \
-  --nameserver <DNS_IP> \
-  --unprivileged 1 --features nesting=1 \
-  --start 1
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/iscarelli/spool-control/main/deploy/proxmox-deploy.sh)"
 ```
 
-### 2 — Reservar IP fixo
+Ao final imprime o IP, a URL de acesso e a **senha inicial do admin**. O
+repositório é público — nenhuma credencial GitHub é necessária.
 
-Configure a reserva DHCP no seu roteador para o MAC da LXC antes de reiniciar. Após reiniciar, confirme o IP:
+> Se informar um **domínio** (atrás de proxy HTTPS), o instalador ativa
+> `SECURE_COOKIES=1`. Sem domínio, configura acesso direto via `http://IP:8001`.
+
+### Instalação manual (alternativa)
+
+Em um LXC Debian 12 já existente, como root:
 
 ```bash
-pct exec <VMID> -- ip addr show eth0 | grep 'inet '
+bash <(curl -fsSL https://raw.githubusercontent.com/iscarelli/spool-control/main/deploy/setup-inside.sh)
 ```
 
-### 3 — Instalar o projeto
+Variáveis opcionais: `DOMAIN`, `APP_BASE_URL`, `SECURE_COOKIES`, `USE_BR_MIRROR`,
+`ADMIN_DEFAULT_PASS`. O script instala dependências, clona o repositório
+(anônimo), cria o virtualenv, configura o serviço systemd e imprime a senha
+inicial do admin.
 
-Copie `deploy/setup-inside.sh` para dentro da LXC e execute como root, passando o GitHub token:
-
-```bash
-# Do nó Proxmox
-pct push <VMID> /caminho/setup-inside.sh /tmp/setup-inside.sh
-pct exec <VMID> -- bash /tmp/setup-inside.sh <GITHUB_TOKEN>
-```
-
-O script instala dependências, clona o repositório, cria o virtualenv, configura o serviço systemd e imprime a **senha inicial do admin** ao final.
-
-### 4 — Configurar HTTPS via Traefik (Proxmox Provider)
+### Configurar HTTPS via Traefik (Proxmox Provider)
 
 O Traefik lê o campo **Notes** da LXC via API do Proxmox. Configure assim:
 
@@ -107,21 +95,17 @@ traefik.http.services.spool.loadbalancer.server.url: http://<IP_DA_LXC>:8001'
 
 Aguarde ~30s para o Traefik detectar a rota. Verifique em `https://spool.exemplo.com.br/health`.
 
-### 5 — Atualizações futuras
+### Atualizações futuras
 
-Após o primeiro deploy, salve o token para uso interno:
-
-```bash
-pct exec <VMID> -- bash /opt/spool-control/deploy/update-lxc.sh --setup <GITHUB_TOKEN>
-```
-
-A partir daí, atualizações são feitas com:
+Atualizações puxam a versão mais recente do repositório público (sem token):
 
 ```bash
 pct exec <VMID> -- bash /opt/spool-control/deploy/update-lxc.sh
+# rollback para uma tag/branch específica:
+pct exec <VMID> -- bash /opt/spool-control/deploy/update-lxc.sh --ref v1.5.0
 ```
 
-### 6 — Download de logos de marcas
+### Download de logos de marcas
 
 Após o primeiro acesso, execute para baixar logos das marcas mais conhecidas:
 

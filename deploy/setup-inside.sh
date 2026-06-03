@@ -4,13 +4,24 @@
 # Execute DENTRO do container como root: bash setup-inside.sh
 #
 # O repositório é PÚBLICO — clone anônimo, sem credenciais no servidor.
+#
+# Parametrizável por variáveis de ambiente (usado pelo proxmox-deploy.sh):
+#   DOMAIN              domínio público (default: spool.lojinharacer.com.br)
+#   APP_BASE_URL        URL base p/ QR/etiquetas (default: https://$DOMAIN)
+#   SECURE_COOKIES      1 atrás de HTTPS/proxy; 0 p/ acesso direto http (default 1)
+#   USE_BR_MIRROR       1 usa mirror Debian BR (UFPR); 0 mantém o padrão (default 1)
+#   ADMIN_DEFAULT_PASS  senha inicial do admin (default: gerada aleatoriamente)
 # =============================================================================
 set -euo pipefail
 
 APP_DIR=/opt/spool-control
 REPO="https://github.com/iscarelli/spool-control.git"
 REPO_DIR=/tmp/spool-repo
-DOMAIN="spool.lojinharacer.com.br"
+DOMAIN="${DOMAIN:-spool.lojinharacer.com.br}"
+APP_BASE_URL="${APP_BASE_URL:-https://${DOMAIN}}"
+SECURE_COOKIES="${SECURE_COOKIES:-1}"
+USE_BR_MIRROR="${USE_BR_MIRROR:-1}"
+ADMIN_DEFAULT_PASS="${ADMIN_DEFAULT_PASS:-}"
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
 info()  { echo -e "${GREEN}[INFO]${NC}  $*"; }
@@ -20,12 +31,14 @@ error() { echo -e "${RED}[ERROR]${NC} $*"; exit 1; }
 [ "$(id -u)" -eq 0 ] || error "Execute como root."
 
 # ── 1. Mirror UFPR (mais rápido no Brasil) ────────────────────────────────────
-info "Configurando mirror Debian (UFPR)..."
-cat > /etc/apt/sources.list << 'SOURCES'
+if [ "$USE_BR_MIRROR" = "1" ]; then
+    info "Configurando mirror Debian (UFPR)..."
+    cat > /etc/apt/sources.list << 'SOURCES'
 deb http://debian.c3sl.ufpr.br/debian bookworm main contrib non-free non-free-firmware
 deb http://debian.c3sl.ufpr.br/debian bookworm-updates main contrib non-free non-free-firmware
 deb http://security.debian.org/debian-security bookworm-security main contrib non-free non-free-firmware
 SOURCES
+fi
 
 # ── 2. Suprimir apt-listchanges e atualizar ───────────────────────────────────
 printf '[apt]\nfrontend=none\n' > /etc/apt/listchanges.conf
@@ -57,11 +70,15 @@ info "Copiando arquivos para $APP_DIR..."
 cp "$REPO_DIR/app.py"           "$APP_DIR/app.py"
 cp "$REPO_DIR/database.py"      "$APP_DIR/database.py"
 cp "$REPO_DIR/labels.py"        "$APP_DIR/labels.py"
+cp "$REPO_DIR/translations.py"  "$APP_DIR/translations.py"
 cp "$REPO_DIR/requirements.txt" "$APP_DIR/requirements.txt"
+cp "$REPO_DIR/VERSION"          "$APP_DIR/VERSION"
+cp "$REPO_DIR/CHANGELOG.md"     "$APP_DIR/CHANGELOG.md"
 cp -r "$REPO_DIR/templates"     "$APP_DIR/templates"
 cp -r "$REPO_DIR/static"        "$APP_DIR/static"
 cp "$REPO_DIR/deploy/update-lxc.sh"          "$APP_DIR/deploy/update-lxc.sh"
 cp "$REPO_DIR/deploy/spool-control.service"  "$APP_DIR/deploy/spool-control.service"
+cp "$REPO_DIR/deploy/seed_brands.py"         "$APP_DIR/deploy/seed_brands.py"
 chmod +x "$APP_DIR/deploy/update-lxc.sh"
 
 rm -rf "$REPO_DIR"
@@ -76,12 +93,12 @@ python3 -m venv "${APP_DIR}/.venv"
 info "Gerando spool.env..."
 ENV_FILE="${APP_DIR}/spool.env"
 SECRET_KEY=$(openssl rand -hex 32)
-ADMIN_PASS=$(openssl rand -base64 12 | tr -d '/+=')
+ADMIN_PASS="${ADMIN_DEFAULT_PASS:-$(openssl rand -base64 12 | tr -d '/+=')}"
 cat > "$ENV_FILE" << EOF
 SECRET_KEY=${SECRET_KEY}
 ADMIN_DEFAULT_PASS=${ADMIN_PASS}
-APP_BASE_URL=https://${DOMAIN}
-SECURE_COOKIES=1
+APP_BASE_URL=${APP_BASE_URL}
+SECURE_COOKIES=${SECURE_COOKIES}
 EOF
 chmod 600 "$ENV_FILE"
 
@@ -107,7 +124,7 @@ echo ""
 echo -e "${GREEN}=====================================================${NC}"
 echo -e "${GREEN}  Setup concluido!${NC}"
 echo -e "${GREEN}=====================================================${NC}"
-echo -e "  URL:       ${GREEN}https://${DOMAIN}${NC}"
+echo -e "  URL:       ${GREEN}${APP_BASE_URL}${NC}"
 echo -e "  Login:     admin / ${GREEN}${ADMIN_PASS}${NC}"
 echo -e "  Health:    http://$(hostname -I | awk '{print $1}'):8001/health → HTTP ${HTTP_CODE}"
 echo -e "  Updates:   bash ${APP_DIR}/deploy/update-lxc.sh"

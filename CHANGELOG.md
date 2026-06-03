@@ -10,6 +10,24 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.6.0] — 2026-06-02
+
+### Adicionado
+- **Instalador Proxmox** (`deploy/proxmox-deploy.sh`) no padrão Proxmox Helper Scripts: roda no host PVE, pergunta CTID/hostname/rede/recursos/URL via whiptail, cria o LXC Debian 12 (não-privilegiado, nesting) e instala tudo. One-liner:
+  ```bash
+  bash -c "$(curl -fsSL https://raw.githubusercontent.com/iscarelli/spool-control/main/deploy/proxmox-deploy.sh)"
+  ```
+  Sem domínio → acesso direto `http://IP:8001` (`SECURE_COOKIES=0`); com domínio → `SECURE_COOKIES=1`.
+
+### Corrigido
+- `setup-inside.sh` não copiava `VERSION` nem `translations.py` — instalação nova quebrava no boot (`app.py` lê ambos). Agora copia o conjunto completo (igual ao `update-lxc.sh`).
+
+### Alterado
+- `setup-inside.sh` parametrizável por ambiente: `DOMAIN`, `APP_BASE_URL`, `SECURE_COOKIES`, `USE_BR_MIRROR`, `ADMIN_DEFAULT_PASS`. Pode rodar via `bash <(curl -fsSL .../setup-inside.sh)`.
+- README: deploy reescrito em torno do instalador automático; removidas referências a token GitHub.
+
+---
+
 ## [1.5.0] — 2026-06-02
 
 ### Segurança (hardening para exposição na internet)
