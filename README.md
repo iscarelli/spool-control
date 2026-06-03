@@ -97,7 +97,11 @@ Aguarde ~30s para o Traefik detectar a rota. Verifique em `https://spool.exemplo
 
 ### Atualizações futuras
 
-Atualizações puxam a versão mais recente do repositório público (sem token):
+**Pela interface web (recomendado):** em **Admin → Atualizações** (`/admin/update`),
+o admin vê a versão atual × a última release e atualiza com um clique. Um badge no
+menu sinaliza quando há versão nova.
+
+**Pela linha de comando** (alternativa / recuperação):
 
 ```bash
 pct exec <VMID> -- bash /opt/spool-control/deploy/update-lxc.sh

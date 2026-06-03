@@ -118,14 +118,21 @@ pick_storage() {
 }
 
 # ── Template storage (vztmpl) ────────────────────────────────────────────────
+# Mesmo comportamento do rootfs: auto-seleciona se houver um único storage de
+# template; pergunta via radiolist quando houver mais de um; cai para 'local' se
+# nenhum estiver disponível.
 pick_template_storage() {
-  TMPL_STORAGE=$(pvesm status -content vztmpl 2>/dev/null | awk 'NR==2{print $1}')
-  # Note: a trailing `[ test ] && cmd` would make the function return the
-  # test's exit status — non-zero on the success path — and `set -e` would
-  # abort. Use an `if` so the function always returns 0.
-  if [ -z "${TMPL_STORAGE:-}" ]; then
-    TMPL_STORAGE="local"
-  fi
+  local menu=() count=0 tag type
+  while read -r tag type _; do
+    [ -z "$tag" ] && continue
+    menu+=("$tag" "$type" "OFF"); count=$((count+1))
+  done < <(pvesm status -content vztmpl 2>/dev/null | awk 'NR>1{print $1, $2}')
+  if [ "$count" -eq 0 ]; then TMPL_STORAGE="local"; return 0; fi
+  if [ "$count" -eq 1 ]; then TMPL_STORAGE="${menu[0]}"; return 0; fi
+  TMPL_STORAGE=$(whiptail --backtitle "$APP" --title "TEMPLATE STORAGE (vztmpl)" \
+    --radiolist "Where should the LXC template be stored?" 16 60 6 "${menu[@]}" 3>&1 1>&2 2>&3) \
+    || die "Cancelled."
+  if [ -z "$TMPL_STORAGE" ]; then die "No template storage selected."; fi
 }
 
 if [ "$ADVANCED" = "yes" ]; then

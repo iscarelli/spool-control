@@ -10,6 +10,16 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.7.2] — 2026-06-02
+
+### Adicionado
+- `proxmox-deploy.sh` agora pergunta **onde armazenar o template** (storage vztmpl) via radiolist quando há mais de uma opção — mesmo comportamento da seleção de storage do rootfs. Auto-seleciona se houver só um; cai para `local` se nenhum.
+
+### Alterado
+- README: "Atualizações futuras" destaca o update pela interface web (`/admin/update`) como recomendado; CLI vira alternativa/recuperação.
+
+---
+
 ## [1.7.1] — 2026-06-02
 
 ### Alterado
