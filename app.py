@@ -586,7 +586,9 @@ def label_queue_add_all():
             added += 1
         except Exception:
             pass
-    flash(f"{added} spool(s) adicionado(s) à fila de impressão", "success")
+    noun = "spool" if added == 1 else "spools"
+    verb = "adicionado" if added == 1 else "adicionados"
+    flash(f"{added} {noun} {verb} à fila de impressão", "success")
     return redirect(request.form.get("next") or url_for("spools_list"))
 
 
@@ -627,7 +629,9 @@ def label_queue_remove_all():
             removed += 1
         except Exception:
             pass
-    flash(f"{removed} spool(s) removido(s) da fila", "success")
+    noun = "spool" if removed == 1 else "spools"
+    verb = "removido" if removed == 1 else "removidos"
+    flash(f"{removed} {noun} {verb} da fila", "success")
     return redirect(request.form.get("next") or url_for("spools_list"))
 
 

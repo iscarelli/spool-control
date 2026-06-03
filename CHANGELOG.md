@@ -10,6 +10,13 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.4.8] — 2026-06-02
+
+### Corrigido
+- Mensagem da fila usa singular/plural correto: "1 spool adicionado" vs "N spools adicionados/removidos"
+
+---
+
 ## [1.4.7] — 2026-06-02
 
 ### Adicionado
