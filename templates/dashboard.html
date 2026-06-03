@@ -8,31 +8,31 @@
 
 <div class="row g-3 mb-4">
   <div class="col-6 col-md-3">
-    <div class="card text-center border-0 bg-dark text-white">
-      <div class="card-body py-3">
+    <div class="card text-center border-0 bg-dark text-white h-100">
+      <div class="card-body py-3 d-flex flex-column justify-content-center">
         <div class="fs-2 fw-bold">{{ stats.total_spools }}</div>
         <div class="small">Spools Ativos</div>
       </div>
     </div>
   </div>
   <div class="col-6 col-md-3">
-    <div class="card text-center border-0 bg-secondary text-white">
-      <div class="card-body py-3">
+    <div class="card text-center border-0 bg-secondary text-white h-100">
+      <div class="card-body py-3 d-flex flex-column justify-content-center">
         <div class="fs-2 fw-bold">{{ stats.total_filaments }}</div>
         <div class="small">Filamentos</div>
       </div>
     </div>
   </div>
   <div class="col-6 col-md-3">
-    <div class="card text-center border-0 {% if low_stock|length > 0 %}bg-warning{% else %}bg-success text-white{% endif %}">
-      <div class="card-body py-3">
+    <div class="card text-center border-0 h-100 {% if low_stock|length > 0 %}bg-warning{% else %}bg-success text-white{% endif %}">
+      <div class="card-body py-3 d-flex flex-column justify-content-center">
         <div class="fs-2 fw-bold">{{ low_stock|length }}</div>
         <div class="small">Estoque Baixo</div>
       </div>
     </div>
   </div>
   <div class="col-6 col-md-3">
-    <div class="card text-center border-0 bg-light">
+    <div class="card text-center border-0 bg-light h-100">
       <div class="card-body py-3 d-flex flex-column align-items-center justify-content-center gap-2">
         <a href="{{ url_for('spools_new') }}" class="btn btn-primary btn-sm rounded-pill px-3 d-inline-flex flex-column align-items-center justify-content-center" style="height:2rem;width:8rem;padding-top:0;padding-bottom:0;gap:1px">
           <i class="bi bi-plus-circle-fill" style="font-size:.75rem;line-height:1"></i>

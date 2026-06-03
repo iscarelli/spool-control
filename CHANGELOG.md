@@ -10,6 +10,13 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.8.4] — 2026-06-02
+
+### Corrigido
+- Dashboard: o 4º card (botões) estava mais alto que os demais. Os quatro cards agora têm a mesma altura (`h-100`) com o conteúdo centralizado verticalmente.
+
+---
+
 ## [1.8.3] — 2026-06-02
 
 ### Alterado
