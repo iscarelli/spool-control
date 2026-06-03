@@ -9,6 +9,9 @@ from flask import (
     session, flash, Response, abort, jsonify,
 )
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.middleware.proxy_fix import ProxyFix
+from flask_wtf import CSRFProtect
+from flask_wtf.csrf import CSRFError
 import database as db
 import labels as lbl
 import translations as i18n
@@ -45,13 +48,66 @@ def _fetch_brand_logo(brand_name: str, domain: str) -> bool:
     return False
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
+
+# Atrás do Traefik: confia em 1 proxy para X-Forwarded-For/Proto/Host.
+# Necessário para que request.remote_addr seja o IP real do cliente (rate-limit
+# e auditoria) e para request.is_secure refletir o HTTPS terminado no proxy.
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+
+# SECRET_KEY é obrigatória em produção: sem ela, cookies de sessão seriam
+# assináveis por qualquer um (forja de sessão de admin). Só caímos para um
+# valor de dev quando o módulo é executado diretamente (python app.py).
+_secret = os.environ.get("SECRET_KEY")
+if not _secret:
+    if __name__ == "__main__":
+        _secret = "dev-only-insecure-key"
+    else:
+        raise RuntimeError(
+            "SECRET_KEY ausente — defina no ambiente (spool.env) antes de iniciar."
+        )
+app.secret_key = _secret
+
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_SECURE=os.environ.get("SECURE_COOKIES", "0") == "1",
     PERMANENT_SESSION_LIFETIME=43200,
+    MAX_CONTENT_LENGTH=4 * 1024 * 1024,   # 4 MB — limita uploads/corpo (anti-DoS)
+    WTF_CSRF_TIME_LIMIT=None,             # token válido enquanto a sessão durar
 )
+
+# Proteção CSRF global em todos os POST/PUT/PATCH/DELETE.
+csrf = CSRFProtect(app)
+
+# Janela e limite do throttle de login (anti força-bruta), por IP.
+LOGIN_MAX_FAILURES = 10
+LOGIN_WINDOW_MIN = 15
+
+
+@app.after_request
+def set_security_headers(resp):
+    resp.headers["X-Content-Type-Options"] = "nosniff"
+    resp.headers["X-Frame-Options"] = "DENY"
+    resp.headers["Referrer-Policy"] = "same-origin"
+    resp.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "img-src 'self' data:; "
+        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+        "font-src 'self' https://cdn.jsdelivr.net; "
+        "frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    )
+    if request.is_secure:
+        resp.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return resp
+
+
+@app.errorhandler(CSRFError)
+def handle_csrf_error(e):
+    if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return jsonify(error="CSRF token inválido ou ausente"), 400
+    flash("Sessão expirada ou token inválido. Tente novamente.", "danger")
+    return redirect(request.referrer or url_for("login")), 400
 
 
 # ── Bootstrap ──────────────────────────────────────────────────────────────
@@ -159,16 +215,29 @@ def admin_required(f):
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
+        ip = request.remote_addr or ""
+        if db.count_recent_login_failures(ip, LOGIN_WINDOW_MIN) >= LOGIN_MAX_FAILURES:
+            flash(
+                f"Muitas tentativas. Aguarde {LOGIN_WINDOW_MIN} minutos e tente novamente.",
+                "danger",
+            )
+            return render_template("login.html"), 429
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
         user = db.get_user_by_username(username)
         if user and check_password_hash(user["password_hash"], password):
+            db.clear_login_failures(ip)
             session.permanent = True
             session["user_id"] = user["id"]
             session["username"] = user["username"]
             session["role"] = user["role"]
-            db.log_login(username, request.remote_addr or "")
-            return redirect(request.args.get("next") or url_for("dashboard"))
+            db.log_login(username, ip)
+            # Evita open redirect: só aceita next relativo ao próprio site.
+            nxt = request.args.get("next") or ""
+            if not nxt.startswith("/") or nxt.startswith("//"):
+                nxt = url_for("dashboard")
+            return redirect(nxt)
+        db.record_login_failure(ip, username)
         flash("Usuário ou senha incorretos", "danger")
     return render_template("login.html")
 
@@ -405,14 +474,15 @@ def spools_new():
 
 
 @app.route("/spools/<int:spool_id>")
+@login_required
 def spools_detail(spool_id):
     spool = db.get_spool(spool_id)
     if not spool:
         abort(404)
     readings = db.list_weight_readings(spool_id=spool_id, limit=10)
-    logged_in = "user_id" in session
-    in_queue = db.is_in_queue(spool_id) if logged_in else False
-    queue_prompt = request.args.get("queue_prompt") == "1" and logged_in
+    logged_in = True
+    in_queue = db.is_in_queue(spool_id)
+    queue_prompt = request.args.get("queue_prompt") == "1"
     return render_template("spools/detail.html", spool=spool, readings=readings,
                            logged_in=logged_in, in_queue=in_queue, queue_prompt=queue_prompt)
 
@@ -765,8 +835,10 @@ def admin_brand_upload():
         flash("Arquivo inválido", "danger")
         return redirect(url_for("admin_brands"))
     ext = Path(f.filename).suffix.lower()
-    if ext not in ('.png', '.jpg', '.jpeg', '.svg', '.webp'):
-        flash("Formato não suportado (PNG, JPG ou SVG)", "danger")
+    # SVG omitido de propósito: pode embutir <script> e virar XSS armazenado
+    # quando servido same-origin a partir de /static/brands/.
+    if ext not in ('.png', '.jpg', '.jpeg', '.webp'):
+        flash("Formato não suportado (PNG, JPG ou WEBP)", "danger")
         return redirect(url_for("admin_brands"))
     BRANDS_DIR.mkdir(exist_ok=True)
     slug = re.sub(r'[^a-z0-9]+', '-', brand_name.lower()).strip('-')

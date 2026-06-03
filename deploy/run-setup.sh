@@ -1,6 +1,6 @@
 #!/bin/bash
+# Repositório público — sem token. O setup clona anonimamente.
 set -e
-GH_TOKEN=$(gh auth token)
 SCRIPT=~/Library/CloudStorage/OneDrive-Personal/Projects/spool-control/deploy/setup-inside.sh
 
 echo "==> Enviando setup-inside.sh para a LXC..."
@@ -10,4 +10,4 @@ ssh -i ~/.ssh/claude_proxmox claude@10.1.0.16 \
 
 echo "==> Executando setup..."
 ssh -i ~/.ssh/claude_proxmox claude@10.1.0.16 \
-  "sudo /usr/sbin/pct exec 117 -- bash /tmp/setup-inside.sh $GH_TOKEN"
+  "sudo /usr/sbin/pct exec 117 -- bash /tmp/setup-inside.sh"

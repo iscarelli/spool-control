@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
 # =============================================================================
 # setup-inside.sh — Setup completo do Spool Control num LXC Debian 12
-# Execute DENTRO do container como root: bash setup-inside.sh <GITHUB_TOKEN>
+# Execute DENTRO do container como root: bash setup-inside.sh
+#
+# O repositório é PÚBLICO — clone anônimo, sem credenciais no servidor.
 # =============================================================================
 set -euo pipefail
 
-[ -z "${1:-}" ] && { echo "Uso: bash setup-inside.sh <GITHUB_TOKEN>"; exit 1; }
-GITHUB_TOKEN="$1"
-
 APP_DIR=/opt/spool-control
-REPO="github.com/iscarelli/spool-control.git"
+REPO="https://github.com/iscarelli/spool-control.git"
 REPO_DIR=/tmp/spool-repo
 DOMAIN="spool.lojinharacer.com.br"
 
@@ -52,7 +51,7 @@ mkdir -p "${APP_DIR}/data" "${APP_DIR}/deploy"
 # ── 6. Clonar repositório ─────────────────────────────────────────────────────
 info "Clonando repositorio..."
 rm -rf "$REPO_DIR"
-git clone -q "https://${GITHUB_TOKEN}@${REPO}" "$REPO_DIR"
+git clone -q "$REPO" "$REPO_DIR"
 
 info "Copiando arquivos para $APP_DIR..."
 cp "$REPO_DIR/app.py"           "$APP_DIR/app.py"
@@ -65,8 +64,6 @@ cp "$REPO_DIR/deploy/update-lxc.sh"          "$APP_DIR/deploy/update-lxc.sh"
 cp "$REPO_DIR/deploy/spool-control.service"  "$APP_DIR/deploy/spool-control.service"
 chmod +x "$APP_DIR/deploy/update-lxc.sh"
 
-echo "$GITHUB_TOKEN" > "${APP_DIR}/.gh_token"
-chmod 600 "${APP_DIR}/.gh_token"
 rm -rf "$REPO_DIR"
 
 # ── 7. Virtualenv e dependências Python ───────────────────────────────────────

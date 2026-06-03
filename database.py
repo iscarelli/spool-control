@@ -1,7 +1,7 @@
 import sqlite3
 import os
 from pathlib import Path
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 DB_PATH = Path(__file__).parent / "data" / "spool.db"
 
@@ -81,6 +81,15 @@ def init_db():
             username TEXT NOT NULL,
             ip       TEXT NOT NULL DEFAULT ''
         );
+
+        CREATE TABLE IF NOT EXISTS login_failures (
+            id       INTEGER PRIMARY KEY AUTOINCREMENT,
+            ts       TEXT NOT NULL,
+            ip       TEXT NOT NULL DEFAULT '',
+            username TEXT NOT NULL DEFAULT ''
+        );
+        CREATE INDEX IF NOT EXISTS idx_login_failures_ip_ts
+            ON login_failures (ip, ts);
 
         CREATE TABLE IF NOT EXISTS label_queue (
             id        INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -176,6 +185,38 @@ def log_login(username, ip):
         "INSERT INTO login_log (ts, username, ip) VALUES (?,?,?)",
         (now_iso(), username, ip),
     )
+    db.commit()
+    db.close()
+
+
+# ── Login throttle (anti força-bruta) ──────────────────────────────────────
+
+def record_login_failure(ip, username):
+    db = get_db()
+    db.execute(
+        "INSERT INTO login_failures (ts, ip, username) VALUES (?,?,?)",
+        (now_iso(), ip, username),
+    )
+    db.commit()
+    db.close()
+
+
+def count_recent_login_failures(ip, window_minutes):
+    """Falhas de login deste IP nos últimos window_minutes."""
+    cutoff = (datetime.now(timezone.utc)
+              - timedelta(minutes=window_minutes)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    db = get_db()
+    n = db.execute(
+        "SELECT COUNT(*) FROM login_failures WHERE ip=? AND ts >= ?",
+        (ip, cutoff),
+    ).fetchone()[0]
+    db.close()
+    return n
+
+
+def clear_login_failures(ip):
+    db = get_db()
+    db.execute("DELETE FROM login_failures WHERE ip=?", (ip,))
     db.commit()
     db.close()
 

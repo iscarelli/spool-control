@@ -183,7 +183,7 @@ _markBtn.addEventListener('click', () => {
   form.action = allIn
     ? '{{ url_for("label_queue_remove_all") }}'
     : '{{ url_for("label_queue_add_all") }}';
-  form.submit();
+  form.requestSubmit();
 });
 
 /* ── Modal de pesagem ────────────────────────────────────────────────────── */

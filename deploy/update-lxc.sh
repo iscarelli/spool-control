@@ -3,17 +3,19 @@
 # update-lxc.sh — Atualiza o Spool Control via git clone
 # Execute DENTRO do LXC como root: bash /opt/spool-control/deploy/update-lxc.sh
 #
-# Primeira execução: bash update-lxc.sh --setup <GITHUB_TOKEN>
+# Primeira execução: bash update-lxc.sh --setup
 # Deploy normal:     bash update-lxc.sh
 # Deploy de versão:  bash update-lxc.sh --ref v1.2.1   (rollback para tag/branch)
+#
+# O repositório é PÚBLICO — o clone é anônimo (sem token). Nenhuma credencial
+# do GitHub fica armazenada no servidor.
 # =============================================================================
 # ESTRUTURA: tudo dentro de main() para que bash compile a função inteira
 # antes de executá-la — evita que o 'cp' deste próprio script corrompa a execução.
 set -euo pipefail
 
 APP_DIR=/opt/spool-control
-REPO="github.com/iscarelli/spool-control.git"
-TOKEN_FILE="${APP_DIR}/.gh_token"
+REPO="https://github.com/iscarelli/spool-control.git"
 REPO_DIR=/tmp/spool-repo
 
 GREEN='\033[0;32m'; RED='\033[0;31m'; YELLOW='\033[1;33m'; NC='\033[0m'
@@ -24,14 +26,8 @@ error() { echo -e "${RED}[ERROR]${NC} $*"; exit 1; }
 main() {
     # ── Dispatcher ───────────────────────────────────────────────────────────
     if [ "${1:-}" = "--setup" ]; then
-        [ -z "${2:-}" ] && error "Uso: $0 --setup <GITHUB_TOKEN>"
-        local TOKEN="$2"
         info "Instalando git..."
         apt-get install -y -q git
-        info "Salvando token..."
-        echo "$TOKEN" > "$TOKEN_FILE"
-        chmod 600 "$TOKEN_FILE"
-        chown spool:spool "$TOKEN_FILE" 2>/dev/null || true
         info "Setup concluido. Proximos deploys: bash $0"
         return 0
     fi
@@ -44,13 +40,13 @@ main() {
     fi
 
     [ "$(id -u)" -eq 0 ] || error "Execute como root."
-    [ -f "$TOKEN_FILE" ] || error "Token nao encontrado. Execute primeiro: $0 --setup <TOKEN>"
-    local TOKEN
-    TOKEN=$(cat "$TOKEN_FILE")
+
+    # Remove token legado, se existir (não é mais necessário — repo público).
+    rm -f "${APP_DIR}/.gh_token"
 
     info "Clonando repositorio${REF:+ (ref: $REF)}..."
     rm -rf "$REPO_DIR"
-    git clone -q "https://${TOKEN}@${REPO}" "$REPO_DIR"
+    git clone -q "$REPO" "$REPO_DIR"
     if [ -n "$REF" ]; then
         git -C "$REPO_DIR" checkout -q "$REF"
         warn "Deploying ref '$REF' — nao e a HEAD do main."

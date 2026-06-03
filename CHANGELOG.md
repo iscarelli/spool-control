@@ -10,6 +10,25 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.5.0] — 2026-06-02
+
+### Segurança (hardening para exposição na internet)
+- **CSRF**: proteção global (Flask-WTF) em todos os POST. Token entregue via `<meta>`/hidden input e header `X-CSRFToken` no fetch.
+- **SECRET_KEY obrigatória**: a aplicação recusa subir em produção sem `SECRET_KEY` (evita forja de sessão com chave default).
+- **Detalhe de spool agora exige login** (`/spools/<id>`): antes era público e, com IDs sequenciais, permitia enumerar todo o estoque (preços, locais, histórico). O QR redireciona ao login quando necessário.
+- **Throttle de login**: bloqueio por IP após 10 falhas em 15 min (anti força-bruta), com tabela `login_failures`.
+- **Headers de segurança**: Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, Referrer-Policy e HSTS (em HTTPS).
+- **ProxyFix**: IP real do cliente atrás do Traefik (auditoria/throttle corretos).
+- **MAX_CONTENT_LENGTH** de 4 MB e remoção de SVG do upload de logos (evita XSS armazenado).
+- **Proteção contra open redirect** no parâmetro `next` do login.
+
+### Infraestrutura
+- Deploy sem token GitHub — repositório é público, clone anônimo; `.gh_token` eliminado do servidor.
+- Firewall (nftables) no LXC: porta `:8001` acessível apenas pelo Traefik e localmente (não mais exposta na LAN em HTTP puro).
+- VMID 117 incluído no job de backup do nó CasaMMD1.
+
+---
+
 ## [1.4.8] — 2026-06-02
 
 ### Corrigido

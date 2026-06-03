@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>{% block title %}Spool Control{% endblock %}</title>
   <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='spool-icon.svg') }}">
   <script>
@@ -158,6 +159,36 @@
 <div class="sc-version">v{{ app_version }}</div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+/* ── CSRF ─────────────────────────────────────────────────────────────────
+   Injeta o token em todo POST: hidden input nos forms + header X-CSRFToken
+   no fetch. O servidor (Flask-WTF) valida em toda requisição não-segura. */
+(function () {
+  var meta = document.querySelector('meta[name="csrf-token"]');
+  var token = meta ? meta.getAttribute('content') : '';
+  document.addEventListener('submit', function (e) {
+    var f = e.target;
+    if (f && (f.method || '').toLowerCase() === 'post' &&
+        !f.querySelector('input[name="csrf_token"]')) {
+      var i = document.createElement('input');
+      i.type = 'hidden'; i.name = 'csrf_token'; i.value = token;
+      f.appendChild(i);
+    }
+  }, true);
+  var _fetch = window.fetch;
+  window.fetch = function (input, init) {
+    init = init || {};
+    var method = (init.method ||
+      (input && typeof input !== 'string' && input.method) || 'GET').toUpperCase();
+    if (method !== 'GET' && method !== 'HEAD') {
+      var h = new Headers(init.headers || {});
+      if (!h.has('X-CSRFToken')) h.set('X-CSRFToken', token);
+      init.headers = h;
+    }
+    return _fetch(input, init);
+  };
+})();
+</script>
 <script src="{{ url_for('static', filename='spool.js') }}"></script>
 <script>
 /* ── Toast init ──────────────────────────────────────────────────────────── */
