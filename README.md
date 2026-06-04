@@ -14,6 +14,7 @@ Registre filamentos, catalogue carretéis, pesagem com cálculo automático de t
 - Relatórios: por material, por local, estoque baixo, histórico de pesos
 - Busca e ordenação nas listagens
 - Autenticação com controle de acesso (admin / viewer)
+- Interface multi-idioma: **Português, Inglês e Espanhol** (ver [Idiomas (i18n)](#idiomas-i18n))
 
 ## Stack
 
@@ -32,6 +33,7 @@ spool-control/
 ├── app.py              # Rotas Flask
 ├── database.py         # Schema SQLite e helpers
 ├── labels.py           # Geração de PDF de etiquetas
+├── translations.py     # Traduções da interface (i18n: PT/EN/ES)
 ├── requirements.txt
 ├── static/
 │   ├── spool.css
@@ -48,6 +50,14 @@ spool-control/
 ```
 
 `data/spool.db` e `spool.env` ficam fora do git (gerados no servidor).
+
+## Idiomas (i18n)
+
+A interface está disponível em **Português (PT-BR)**, **Inglês (EN)** e **Espanhol (ES)**,
+selecionáveis pela bandeira no topo. As traduções ficam em **`translations.py`** (tabelas
+`_EN`/`_ES`/`_PT`).
+
+O passo a passo para **adicionar um novo idioma** está em [`docs/i18n.md`](docs/i18n.md).
 
 ## Deploy — Proxmox LXC
 
