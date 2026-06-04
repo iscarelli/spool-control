@@ -194,7 +194,7 @@ float SCALE_FACTOR    = 2280.0;   // calibrar com peso conhecido
 ## Ordem de implementação
 
 1. ~~**QR** — subir o ECC em `labels.py` (mantendo a URL `app_base_url` = domínio público).~~ ✅ **feito em v1.2.1** — `ERROR_CORRECT_M` → `ERROR_CORRECT_Q`
-2. **Flask** — adicionar `POST /api/weigh` (+ `GET /api/spools/<id>`) em `app.py`.
+2. ~~**Flask** — adicionar `POST /api/weigh` (+ `GET /api/spools/<id>`) em `app.py`.~~ ✅ **implementado** — isento de CSRF, auth por `X-API-Key`==`SPOOL_API_KEY`, `recorded_by="estação"`; 400/401/404/422. **URL pública garantida na instalação:** `public_base_url()` (env `APP_BASE_URL` quando a setting está vazia/localhost) + seed da setting a partir do env + `setup-inside.sh`/`proxmox-deploy.sh` sem default de domínio de terceiros (sem domínio → IP interno, com aviso de "rede local apenas") + `SPOOL_API_KEY` gerado no `spool.env`. Validação sem hardware: `tools/validate_qr_autoweigh.py`.
 3. **Testar a API** via `curl` antes de tocar no hardware.
 4. **ESP32** — montar HX711 + célula, calibrar (`SCALE_FACTOR`), validar leitura de peso.
 5. **ESP32** — ligar GM861 na UART2, pôr em Command Triggered Mode, testar trigger+leitura.

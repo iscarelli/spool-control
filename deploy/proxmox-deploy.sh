@@ -162,8 +162,8 @@ else
 fi
 
 # ── Domain / proxy ───────────────────────────────────────────────────────────
-DOMAIN=$(whiptail --backtitle "$APP" --title "PUBLIC URL (optional)" \
-  --inputbox "Public domain behind an HTTPS proxy (e.g. spool.example.com).\n\nLeave EMPTY for direct access via http://IP:8001\n(sets SECURE_COOKIES accordingly)." 12 66 "" 3>&1 1>&2 2>&3) || DOMAIN=""
+DOMAIN=$(whiptail --backtitle "$APP" --title "PUBLIC URL (recommended)" \
+  --inputbox "Your PUBLIC domain behind an HTTPS proxy (e.g. spool.example.com).\n\nThis URL is encoded in the label QR codes (incl. automatic weighing).\n\nLeave EMPTY to use the internal IP (http://IP:8001):\n  - works ONLY on the local network\n  - QR codes won't open from outside the LAN\n  - you can fix it later in Admin > Settings (applies everywhere)." 16 70 "" 3>&1 1>&2 2>&3) || DOMAIN=""
 
 pick_template_storage
 
@@ -257,5 +257,9 @@ echo -e "  Direct:    http://${IP}:8001   (health → HTTP ${HEALTH})"
 echo -e "  Login:     admin / ${GN}${ADMIN_PASS}${CL}"
 echo -e "  Update:    pct exec ${CTID} -- bash /opt/spool-control/deploy/update-lxc.sh"
 echo -e "${GN}=====================================================${CL}"
-[ -z "$DOMAIN" ] && echo -e "  ${YW}Direct HTTP access — for HTTPS, put it behind a proxy and re-run with a domain.${CL}"
+if [ -z "$DOMAIN" ]; then
+  echo -e "  ${YW}No public domain set — using internal IP (${APP_BASE_URL}).${CL}"
+  echo -e "  ${YW}LOCAL NETWORK ONLY: QR codes (incl. auto-weighing) won't work outside the LAN.${CL}"
+  echo -e "  ${YW}Fix anytime in Admin > Settings > 'URL Base do Sistema' (applies everywhere).${CL}"
+fi
 echo

@@ -10,6 +10,19 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.13.0] — 2026-06-04
+
+### Adicionado
+- **Novo layout da etiqueta** (PDF 60×40mm + PNG térmico Niimbot): topo com **logo + nome da marca** à esquerda e **código do rolo** à direita; separador horizontal grosso; bloco à esquerda com **Material** (grande), **Família**, **Cor** (nome classificado do hexa) e **Local:** ancorado no rodapé; **QR maior à direita**. O nome da cor é **traduzido** para o idioma da sessão (PT/EN/ES). O logo da marca entra também no térmico (achatado sobre branco para 1-bit). `get_spool` passou a trazer `brand_logo`.
+- **API da estação de pesagem automática**: `POST /api/weigh` (`{spool_id, gross_weight_g}`) e `GET /api/spools/<id>` (read-only, para o OLED confirmar antes de gravar). Máquina-a-máquina: isenta de CSRF, autenticada por `X-API-Key` (== `SPOOL_API_KEY`), `recorded_by="estação"`, respostas JSON com 400/401/404/422. Base para a estação ESP32 + leitor serial (ver `docs/estudo_balanca_qrcode.md`).
+- **`tools/validate_qr_autoweigh.py`** — valida, sem hardware, o round-trip do QR (gera → decodifica → extrai o id ancorado em `/spools/(\d+)`) e a aritmética da pesagem, com códigos pequenos e grandes; checagem opcional contra a API ao vivo (read-only).
+
+### Alterado
+- **URL pública garantida na instalação** (cada usuário roda no próprio servidor): novo `public_base_url()` usa a setting do banco e cai no `APP_BASE_URL` do ambiente quando ela está vazia/`localhost`; a setting passa a ser **semeada a partir do ambiente** no `init_db`. Os instaladores (`setup-inside.sh`/`proxmox-deploy.sh`) **não** têm mais default para domínio de terceiros — sem domínio usam o **IP interno** com **aviso de "rede local apenas"** e geram `SPOOL_API_KEY` no `spool.env`. A tela de **Configurações** pré-preenche a URL efetiva (salvar passa a valer para tudo).
+
+### Segurança
+- `POST /api/weigh` exige `X-API-Key` quando `SPOOL_API_KEY` está definido (gerado por padrão na instalação). Sem chave configurada, a API fica aberta — adequado só a dev/LAN.
+
 ## [1.12.0] — 2026-06-04
 
 ### Adicionado

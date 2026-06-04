@@ -18,55 +18,121 @@ def _make_qr_image(url: str) -> Image.Image:
     return qr.make_image(fill_color="black", back_color="white").convert("RGB")
 
 
+def _spool_code(spool: dict) -> str:
+    return f"SP-{str(spool['id']).zfill(4)}"
+
+
+# ── Layout (PDF vetorial) ─────────────────────────────────────────────────────
+# Topo: logo + nome da marca (esq.) | código do rolo (dir.). Separador horizontal
+# grosso. Abaixo, à esquerda: Material (grande) / Família / Cor; "Local: <…>" no
+# rodapé. Linha vertical fina e o QR à direita ocupando a altura disponível.
+
+def _fit_pdf(c, text: str, font: str, size: float, max_w: float) -> str:
+    """Trunca `text` com reticências para caber em `max_w` pontos."""
+    text = text or ""
+    if c.stringWidth(text, font, size) <= max_w:
+        return text
+    while text and c.stringWidth(text + "…", font, size) > max_w:
+        text = text[:-1]
+    return (text + "…") if text else ""
+
+
 def _draw_label(c, spool: dict, base_url: str, page_w: float, page_h: float):
-    """Draw one label on the current canvas page. Coordinates in ReportLab points."""
+    """Desenha uma etiqueta na página atual. Coordenadas em pontos (origem inf-esq)."""
     margin = 3 * mm
-    # QR fills 70% of height, capped so text area has room
-    qr_size = min(page_h * 0.70, page_w * 0.42)
-    text_x = qr_size + margin * 2
-
-    # Scale fonts relative to the reference 40mm height
     scale = page_h / (40 * mm)
-    f_brand    = max(5.0, 7.0  * scale)
-    f_material = max(8.0, 15.0 * scale)
-    f_family   = max(5.0, 8.0  * scale)
-    f_id       = max(5.0, 7.0  * scale)
+    gap = 1.5 * mm * scale
 
-    url = f"{base_url.rstrip('/')}/spools/{spool['id']}"
-    c.drawImage(ImageReader(_make_qr_image(url)),
-                margin, page_h - qr_size - margin, qr_size, qr_size)
+    f_brand = max(6.0, 8.0 * scale)
+    f_code = max(6.0, 8.0 * scale)
+    f_material = max(10.0, 17.0 * scale)
+    f_family = max(5.0, 7.5 * scale)
+    f_color = max(8.0, 12.0 * scale)
+    f_loc = max(5.0, 7.5 * scale)
+    f_cap = max(4.5, 6.0 * scale)
 
-    y = page_h - margin
-    brand    = str(spool.get("brand",    ""))[:28]
-    material = str(spool.get("material", ""))[:16]
-    family   = str(spool.get("family",   ""))
-    sid      = str(spool["id"]).zfill(4)
+    brand = str(spool.get("brand", ""))
+    material = str(spool.get("material", ""))
+    family = str(spool.get("family", ""))
+    color_nm = str(spool.get("color_name", ""))
+    color_hex = str(spool.get("color_hex", "") or "")
+    code = _spool_code(spool)
+    logo_file = spool.get("logo_file")
 
+    left, right = margin, page_w - margin
+
+    # ── Banda superior: logo + marca (esq.), código (dir.) ──
+    logo_h = f_brand * 1.5
+    band_top = page_h - margin
+    baseline = band_top - logo_h + (logo_h - f_brand) / 2 + f_brand * 0.25
+
+    c.setFont("Helvetica-Bold", f_code)
+    code_w = c.stringWidth(code, "Helvetica-Bold", f_code)
+    c.drawRightString(right, baseline, code)
+
+    brand_x = left
+    if logo_file:
+        try:
+            limg = Image.open(logo_file).convert("RGBA")
+            logo_w = min(logo_h * (limg.width / max(1, limg.height)), page_w * 0.25)
+            c.drawImage(ImageReader(limg), left, band_top - logo_h,
+                        logo_w, logo_h, mask="auto")
+            brand_x = left + logo_w + gap
+        except Exception:
+            brand_x = left
+
+    brand_max = (right - code_w - gap) - brand_x
     c.setFont("Helvetica-Bold", f_brand)
-    y -= f_brand * 1.4
-    c.drawString(text_x, y, brand)
+    c.drawString(brand_x, baseline,
+                 _fit_pdf(c, brand, "Helvetica-Bold", f_brand, brand_max))
 
+    # ── Separador grosso ──
+    y_sep = band_top - logo_h - gap
+    c.setLineWidth(max(1.0, 1.4 * scale))
+    c.line(left, y_sep, right, y_sep)
+
+    # ── Área inferior: texto (esq.) | linha vertical fina | QR (dir.) ──
+    content_h = y_sep - margin
+    qr = min(content_h, page_w * 0.42)
+    qr_x = right - qr
+    qr_y = margin + (content_h - qr) / 2.0
+    url = f"{base_url.rstrip('/')}/spools/{spool['id']}"
+    c.drawImage(ImageReader(_make_qr_image(url)), qr_x, qr_y, qr, qr)
+
+    x_v = qr_x - gap
+    c.setLineWidth(max(0.3, 0.4 * scale))
+    c.line(x_v, margin, x_v, y_sep)
+
+    text_w = (x_v - gap) - left
+    location = str(spool.get("location", "") or "")
+    g_mat_fam = 6.5 * scale   # respiro Material -> Família
+    g_fam_cor = 5.0 * scale   # respiro Família  -> Cor
+
+    cy = y_sep - gap
+
+    # Material (grande, bold)
     c.setFont("Helvetica-Bold", f_material)
-    y -= f_material * 1.2
-    c.drawString(text_x, y, material)
+    cy -= f_material
+    c.drawString(left, cy, _fit_pdf(c, material, "Helvetica-Bold", f_material, text_w))
 
-    c.setFont("Helvetica", f_family)
-    y -= f_family * 1.4
-    max_chars = max(12, int(28 * scale))
-    if len(family) > max_chars:
-        c.drawString(text_x, y, family[:max_chars])
-        y -= f_family * 1.3
-        c.drawString(text_x, y, family[max_chars: max_chars * 2])
-    else:
-        c.drawString(text_x, y, family)
+    # Família (menor)
+    if family:
+        c.setFont("Helvetica", f_family)
+        cy -= f_family + g_mat_fam
+        c.drawString(left, cy, _fit_pdf(c, family, "Helvetica", f_family, text_w))
 
-    y -= 5 * scale
-    c.setLineWidth(0.3)
-    c.line(text_x, y, page_w - margin, y)
+    # Cor (média)
+    if color_nm:
+        c.setFont("Helvetica-Bold", f_color)
+        cy -= f_color + g_fam_cor
+        c.drawString(left, cy, _fit_pdf(c, color_nm, "Helvetica-Bold", f_color, text_w))
 
-    c.setFont("Helvetica", f_id)
-    y -= f_id * 1.4
-    c.drawString(text_x, y, f"ID: SP-{sid}")
+    # Localização: "Local:" + valor ancorados no rodapé (se cadastrada)
+    if location:
+        c.setFont("Helvetica", f_loc)
+        c.drawString(left, margin, _fit_pdf(c, location, "Helvetica", f_loc, text_w))
+        c.setFont("Helvetica", f_cap)
+        c.drawString(left, margin + f_loc + 1.5 * scale, "Local:")
 
 
 def generate_label_pdf(spool: dict, base_url: str,
@@ -93,9 +159,8 @@ def generate_multi_label_pdf(spools: list, base_url: str,
 
 
 # ── Render 1-bit PNG para impressão térmica direta (Niimbot via navegador) ────
-# Mesma hierarquia visual do PDF (QR à esquerda, texto à direita), mas rasterizado
-# em preto/branco puro no tamanho de pixels nativo da etiqueta. O navegador só
-# faz o threshold e envia via Web Bluetooth (ver static/niimbot.js).
+# Mesma hierarquia do PDF, rasterizada em preto/branco puro no tamanho nativo da
+# etiqueta. O navegador faz o threshold e envia via Web Bluetooth (static/niimbot.js).
 
 def _load_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
     """Carrega uma TTF (DejaVu no LXC, Arial no Windows dev) com fallback."""
@@ -121,30 +186,14 @@ def _text_h(draw: ImageDraw.ImageDraw, text: str, font) -> int:
     return bbox[3] - bbox[1]
 
 
-def _wrap_to_width(draw, text: str, font, max_w: int, max_lines: int = 2) -> list:
-    """Quebra `text` em até `max_lines` linhas que caibam em `max_w` pixels."""
-    words = (text or "").split()
-    lines, cur = [], ""
-    for w in words:
-        trial = (cur + " " + w).strip()
-        if draw.textlength(trial, font=font) <= max_w or not cur:
-            cur = trial
-        else:
-            lines.append(cur)
-            cur = w
-            if len(lines) == max_lines - 1:
-                break
-    if cur:
-        lines.append(cur)
-    # Trunca a última linha com reticências se ainda sobrou texto
-    last = lines[-1] if lines else ""
-    while lines and draw.textlength(last + "…", font=font) > max_w and len(last) > 1:
-        last = last[:-1]
-        lines[-1] = last
-    consumed = sum(len(l.split()) for l in lines)
-    if consumed < len(words):
-        lines[-1] = (lines[-1] + "…")
-    return lines[:max_lines]
+def _fit_png(draw, text: str, font, max_w: int) -> str:
+    """Trunca `text` com reticências para caber em `max_w` pixels."""
+    text = text or ""
+    if draw.textlength(text, font=font) <= max_w:
+        return text
+    while text and draw.textlength(text + "…", font=font) > max_w:
+        text = text[:-1]
+    return (text + "…") if text else ""
 
 
 def generate_label_png(spool: dict, base_url: str,
@@ -154,46 +203,109 @@ def generate_label_png(spool: dict, base_url: str,
     draw = ImageDraw.Draw(img)
 
     margin = max(4, round(h_px * 0.06))
-    # QR ocupa ~70% da altura, limitado a ~42% da largura (igual ao PDF)
-    qr_size = min(h_px - 2 * margin, round(w_px * 0.42))
+    left, right = margin, w_px - margin
 
-    url = f"{base_url.rstrip('/')}/spools/{spool['id']}"
-    qr = _make_qr_image(url).convert("1").resize((qr_size, qr_size), Image.NEAREST)
-    img.paste(qr, (margin, margin))
+    f_brand = _load_font(max(12, round(h_px * 0.075)), bold=True)
+    f_code = _load_font(max(12, round(h_px * 0.075)), bold=True)
+    f_material = _load_font(max(16, round(h_px * 0.15)), bold=True)
+    f_family = _load_font(max(10, round(h_px * 0.07)))
+    f_color = _load_font(max(12, round(h_px * 0.105)), bold=True)
+    f_loc = _load_font(max(9, round(h_px * 0.065)))
+    f_cap = _load_font(max(8, round(h_px * 0.05)))
 
-    text_x = margin + qr_size + margin
-    text_w = w_px - text_x - margin
-
-    # Fontes proporcionais à altura (ratios derivados dos pontos do PDF @40mm)
-    f_brand = _load_font(max(10, round(h_px * 0.065)), bold=True)
-    f_material = _load_font(max(14, round(h_px * 0.135)), bold=True)
-    f_family = _load_font(max(10, round(h_px * 0.075)))
-    f_id = _load_font(max(10, round(h_px * 0.065)))
-
-    brand = str(spool.get("brand", ""))[:28]
-    material = str(spool.get("material", ""))[:16]
+    brand = str(spool.get("brand", ""))
+    material = str(spool.get("material", ""))
     family = str(spool.get("family", ""))
-    sid = str(spool["id"]).zfill(4)
+    color_nm = str(spool.get("color_name", ""))
+    color_hex = str(spool.get("color_hex", "") or "")
+    code = _spool_code(spool)
+    logo_file = spool.get("logo_file")
 
-    gap = max(2, round(h_px * 0.02))
+    # ── Banda superior: logo + marca (esq.), código (dir.) ──
+    band_h = round(h_px * 0.16)
     y = margin
+    code_w = draw.textlength(code, font=f_code)
+    code_h = _text_h(draw, code, f_code)
+    draw.text((right - code_w, y + (band_h - code_h) // 2), code, font=f_code, fill=0)
 
-    draw.text((text_x, y), brand, font=f_brand, fill=0)
-    y += _text_h(draw, brand, f_brand) + gap
+    bx = left
+    if logo_file:
+        try:
+            limg = Image.open(logo_file)
+            # achata transparência sobre branco (favicons têm alpha -> viraria bloco preto)
+            if limg.mode in ("RGBA", "LA", "P"):
+                limg = limg.convert("RGBA")
+                bg = Image.new("RGBA", limg.size, (255, 255, 255, 255))
+                limg = Image.alpha_composite(bg, limg).convert("L")
+            else:
+                limg = limg.convert("L")
+            lw = min(round(band_h * (limg.width / max(1, limg.height))),
+                     round(w_px * 0.25))
+            limg = limg.resize((max(1, lw), band_h)).convert("1")  # dithering
+            img.paste(limg, (left, y))
+            bx = left + lw + max(4, round(w_px * 0.01))
+        except Exception:
+            bx = left
 
-    draw.text((text_x, y), material, font=f_material, fill=0)
-    y += _text_h(draw, material, f_material) + gap
+    brand_max = (right - code_w - max(6, round(w_px * 0.02))) - bx
+    brand_t = _fit_png(draw, brand, f_brand, brand_max)
+    brand_h = _text_h(draw, brand_t, f_brand)
+    draw.text((bx, y + (band_h - brand_h) // 2), brand_t, font=f_brand, fill=0)
 
-    for line in _wrap_to_width(draw, family, f_family, text_w, max_lines=2):
-        draw.text((text_x, y), line, font=f_family, fill=0)
-        y += _text_h(draw, line, f_family) + max(1, gap // 2)
+    # ── Separador grosso ──
+    y_sep = margin + band_h + max(2, round(h_px * 0.02))
+    lw_sep = max(3, round(h_px * 0.022))
+    draw.line([(left, y_sep), (right, y_sep)], fill=0, width=lw_sep)
 
-    y += gap
-    lw = max(3, round(h_px * 0.012))  # térmica engole linha fina — engrossa
-    draw.line([(text_x, y), (w_px - margin, y)], fill=0, width=lw)
-    y += lw + gap
+    # ── Área inferior: texto (esq.) | linha vertical fina | QR (dir.) ──
+    top = y_sep + lw_sep + max(3, round(h_px * 0.02))
+    avail_h = (h_px - margin) - top
+    qr = min(avail_h, round(w_px * 0.42))
+    qr_x = right - qr
+    qr_y = top + max(0, (avail_h - qr) // 2)
+    url = f"{base_url.rstrip('/')}/spools/{spool['id']}"
+    qimg = _make_qr_image(url).convert("1").resize((qr, qr), Image.NEAREST)
+    img.paste(qimg, (qr_x, qr_y))
 
-    draw.text((text_x, y), f"ID: SP-{sid}", font=f_id, fill=0)
+    gap = max(4, round(w_px * 0.015))
+    x_v = qr_x - gap
+    draw.line([(x_v, top), (x_v, h_px - margin)], fill=0,
+              width=max(2, round(w_px * 0.004)))
+
+    tx = left
+    tw = (x_v - gap) - left
+    cy = top
+    location = str(spool.get("location", "") or "")
+    g_mat_fam = round(h_px * 0.06)   # respiro Material -> Família
+    g_fam_cor = round(h_px * 0.045)  # respiro Família  -> Cor
+
+    # Material (grande)
+    mat = _fit_png(draw, material, f_material, tw)
+    draw.text((tx, cy), mat, font=f_material, fill=0)
+    cy += _text_h(draw, mat, f_material)
+
+    # Família (menor)
+    if family:
+        cy += g_mat_fam
+        fam = _fit_png(draw, family, f_family, tw)
+        draw.text((tx, cy), fam, font=f_family, fill=0)
+        cy += _text_h(draw, fam, f_family)
+
+    # Cor (média)
+    if color_nm:
+        cy += g_fam_cor
+        cnm = _fit_png(draw, color_nm, f_color, tw)
+        draw.text((tx, cy), cnm, font=f_color, fill=0)
+
+    # Localização: "Local:" + valor ancorados no rodapé (se cadastrada)
+    if location:
+        loc = _fit_png(draw, location, f_loc, tw)
+        loc_h = _text_h(draw, loc, f_loc)
+        cap_h = _text_h(draw, "Local:", f_cap)
+        ly = (h_px - margin) - loc_h
+        draw.text((tx, ly), loc, font=f_loc, fill=0)
+        draw.text((tx, ly - cap_h - max(2, round(h_px * 0.01))), "Local:",
+                  font=f_cap, fill=0)
 
     buf = io.BytesIO()
     img.convert("1").save(buf, format="PNG")

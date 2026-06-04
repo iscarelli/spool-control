@@ -152,12 +152,18 @@ def init_db():
         SELECT DISTINCT brand FROM filaments WHERE brand != '';
 
         INSERT OR IGNORE INTO settings (key, value) VALUES
-            ('app_base_url',         'http://localhost:5000'),
             ('low_stock_threshold_g','200'),
             ('low_stock_pct',        '20'),
             ('label_width_mm',       '60'),
             ('label_height_mm',      '40');
     """)
+    # app_base_url é semeado a partir do ambiente (APP_BASE_URL, definido na
+    # instalação) — cada usuário roda no próprio servidor, então o QR precisa
+    # apontar para a URL pública DELE, nunca para localhost.
+    db.execute(
+        "INSERT OR IGNORE INTO settings (key, value) VALUES ('app_base_url', ?)",
+        (os.environ.get("APP_BASE_URL", "").strip() or "http://localhost:5000",),
+    )
     db.commit()
     db.close()
 
@@ -478,6 +484,7 @@ def _spool_query_base():
     return """
         SELECT s.*,
                f.brand, f.material, f.family, f.color_hex, f.diameter_mm,
+               b.logo_path AS brand_logo,
                sm.name AS model_name,
                COALESCE(s.custom_tare_g, sm.tare_weight_g, 0) AS effective_tare_g,
                wr.net_weight_g AS current_net_g,
@@ -485,6 +492,7 @@ def _spool_query_base():
                wr.ts AS last_weighed_at
         FROM spools s
         JOIN filaments f ON f.id = s.filament_id
+        LEFT JOIN brands b ON b.name = f.brand
         LEFT JOIN spool_models sm ON sm.id = s.spool_model_id
         LEFT JOIN weight_readings wr ON wr.id = (
             SELECT MAX(id) FROM weight_readings WHERE spool_id = s.id

@@ -6,20 +6,30 @@
 # O repositório é PÚBLICO — clone anônimo, sem credenciais no servidor.
 #
 # Parametrizável por variáveis de ambiente (usado pelo proxmox-deploy.sh):
-#   DOMAIN              domínio público (default: spool.lojinharacer.com.br)
-#   APP_BASE_URL        URL base p/ QR/etiquetas (default: https://$DOMAIN)
-#   SECURE_COOKIES      1 atrás de HTTPS/proxy; 0 p/ acesso direto http (default 1)
+#   DOMAIN              SEU domínio público (sem default; vazio = acesso direto via IP)
+#   APP_BASE_URL        URL base p/ QR/etiquetas (default: https://$DOMAIN, ou http://IP:8001)
+#   SECURE_COOKIES      1 atrás de HTTPS/proxy; 0 p/ acesso direto http
 #   USE_BR_MIRROR       1 usa mirror Debian BR (UFPR); 0 mantém o padrão (default 1)
 #   ADMIN_DEFAULT_PASS  senha inicial do admin (default: gerada aleatoriamente)
+#
+# IMPORTANTE: o QR da etiqueta usa APP_BASE_URL. Cada instalação roda no SEU próprio
+# servidor — informe SEU domínio (ou deixe vazio para usar o IP do host). Nunca há
+# default para um domínio de terceiros.
 # =============================================================================
 set -euo pipefail
 
 APP_DIR=/opt/spool-control
 REPO="https://github.com/iscarelli/spool-control.git"
 REPO_DIR=/tmp/spool-repo
-DOMAIN="${DOMAIN:-spool.lojinharacer.com.br}"
-APP_BASE_URL="${APP_BASE_URL:-https://${DOMAIN}}"
-SECURE_COOKIES="${SECURE_COOKIES:-1}"
+DOMAIN="${DOMAIN:-}"
+if [ -n "$DOMAIN" ]; then
+    APP_BASE_URL="${APP_BASE_URL:-https://${DOMAIN}}"
+    SECURE_COOKIES="${SECURE_COOKIES:-1}"
+else
+    HOST_IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
+    APP_BASE_URL="${APP_BASE_URL:-http://${HOST_IP:-127.0.0.1}:8001}"
+    SECURE_COOKIES="${SECURE_COOKIES:-0}"
+fi
 USE_BR_MIRROR="${USE_BR_MIRROR:-1}"
 ADMIN_DEFAULT_PASS="${ADMIN_DEFAULT_PASS:-}"
 
@@ -96,11 +106,13 @@ info "Gerando spool.env..."
 ENV_FILE="${APP_DIR}/spool.env"
 SECRET_KEY=$(openssl rand -hex 32)
 ADMIN_PASS="${ADMIN_DEFAULT_PASS:-$(openssl rand -base64 12 | tr -d '/+=')}"
+SPOOL_API_KEY="${SPOOL_API_KEY:-$(openssl rand -hex 24)}"
 cat > "$ENV_FILE" << EOF
 SECRET_KEY=${SECRET_KEY}
 ADMIN_DEFAULT_PASS=${ADMIN_PASS}
 APP_BASE_URL=${APP_BASE_URL}
 SECURE_COOKIES=${SECURE_COOKIES}
+SPOOL_API_KEY=${SPOOL_API_KEY}
 EOF
 chmod 600 "$ENV_FILE"
 
@@ -140,3 +152,8 @@ echo -e "  Login:     admin / ${GREEN}${ADMIN_PASS}${NC}"
 echo -e "  Health:    http://$(hostname -I | awk '{print $1}'):8001/health → HTTP ${HTTP_CODE}"
 echo -e "  Updates:   bash ${APP_DIR}/deploy/update-lxc.sh"
 echo -e "${GREEN}=====================================================${NC}"
+if [ -z "$DOMAIN" ]; then
+    warn "Sem domínio público: usando o IP interno (${APP_BASE_URL})."
+    warn "REDE LOCAL APENAS — os QR das etiquetas (incl. pesagem automática) não abrem fora da LAN."
+    warn "Ajuste depois em Admin > Configurações > 'URL Base do Sistema' (passa a valer pra tudo)."
+fi

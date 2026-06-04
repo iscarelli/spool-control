@@ -676,16 +676,41 @@ def spools_deactivate(spool_id):
     return redirect(url_for("spools_list"))
 
 
+def public_base_url():
+    """URL pública base p/ QR/etiquetas. A setting do banco manda; se ausente ou
+    ainda no default localhost, cai no APP_BASE_URL do ambiente (definido na
+    instalação). Garante que cada instalação use a própria URL pública — o QR da
+    pesagem automática depende disso (ver docs/estudo_balanca_qrcode.md)."""
+    url = (db.get_setting("app_base_url", "") or "").strip()
+    if not url or url == "http://localhost:5000":
+        env = (os.environ.get("APP_BASE_URL", "") or "").strip()
+        if env:
+            return env
+    return url or "http://localhost:5000"
+
+
+def _label_spool(spool):
+    """Dict do spool enriquecido p/ a etiqueta: caminho do logo em disco + nome da
+    cor classificado do hexa (mantém labels.py sem depender de database/Flask)."""
+    d = dict(spool)
+    rel = d.get("brand_logo")
+    p = os.path.join(app.static_folder, rel) if rel else None
+    d["logo_file"] = p if (p and os.path.exists(p)) else None
+    cn = db.classify_color(d.get("color_hex"))
+    d["color_name"] = t(cn) if cn else ""   # traduz o nome da cor p/ o idioma da sessão
+    return d
+
+
 @app.route("/spools/<int:spool_id>/label.pdf")
 @login_required
 def spool_label_pdf(spool_id):
     spool = db.get_spool(spool_id)
     if not spool:
         abort(404)
-    base_url = db.get_setting("app_base_url", "http://localhost:5000")
+    base_url = public_base_url()
     w = float(db.get_setting("label_width_mm", "60"))
     h = float(db.get_setting("label_height_mm", "40"))
-    pdf_bytes = lbl.generate_label_pdf(dict(spool), base_url, w, h)
+    pdf_bytes = lbl.generate_label_pdf(_label_spool(spool), base_url, w, h)
     return Response(
         pdf_bytes,
         mimetype="application/pdf",
@@ -700,10 +725,10 @@ def spool_label_png(spool_id):
     spool = db.get_spool(spool_id)
     if not spool:
         abort(404)
-    base_url = db.get_setting("app_base_url", "http://localhost:5000")
+    base_url = public_base_url()
     size_key = request.args.get("size") or db.get_setting("niimbot_label_size", reg.DEFAULT_SIZE)
     size = reg.get_size(size_key)
-    png_bytes = lbl.generate_label_png(dict(spool), base_url, size["w_px"], size["h_px"])
+    png_bytes = lbl.generate_label_png(_label_spool(spool), base_url, size["w_px"], size["h_px"])
     return Response(png_bytes, mimetype="image/png")
 
 
@@ -715,7 +740,7 @@ def spool_qr_png(spool_id):
     spool = db.get_spool(spool_id)
     if not spool:
         abort(404)
-    base_url = db.get_setting("app_base_url", "http://localhost:5000")
+    base_url = public_base_url()
     url = f"{base_url.rstrip('/')}/spools/{spool_id}"
     buf = io.BytesIO()
     lbl._make_qr_image(url).save(buf, format="PNG")
@@ -765,6 +790,75 @@ def quick_weigh():
                 code=f"{spool_id:04d}", n=net, g=gross, t=tare), "success")
         return redirect(url_for("quick_weigh"))
     return render_template("spools/weigh_quick.html")
+
+
+# ── API da estação de pesagem (ESP32) ───────────────────────────────────────
+# Máquina-a-máquina: sem sessão/login, isenta de CSRF, autenticada por API key
+# (header X-API-Key == env SPOOL_API_KEY). Se SPOOL_API_KEY estiver vazio, abre
+# sem auth (facilita dev/LAN). Ver docs/estudo_balanca_qrcode.md.
+
+def _api_authorized():
+    key = os.environ.get("SPOOL_API_KEY", "").strip()
+    if not key:
+        return True
+    return request.headers.get("X-API-Key", "") == key
+
+
+def _spool_summary(spool):
+    return f"{spool['brand']} {spool['material']} {spool['family']}".strip()
+
+
+@app.route("/api/weigh", methods=["POST"])
+@csrf.exempt
+def api_weigh():
+    if not _api_authorized():
+        return jsonify(ok=False, error="API key inválida"), 401
+    data = request.get_json(silent=True) or {}
+    try:
+        spool_id = int(data.get("spool_id"))
+    except (TypeError, ValueError):
+        return jsonify(ok=False, error="spool_id inválido"), 400
+    try:
+        gross = float(data.get("gross_weight_g"))
+    except (TypeError, ValueError):
+        return jsonify(ok=False, error="gross_weight_g inválido"), 400
+    spool = db.get_spool(spool_id)
+    if not spool:
+        return jsonify(ok=False, error=f"Rolo SP-{spool_id:04d} não encontrado"), 404
+    tare = float(spool["effective_tare_g"] or 0)
+    if gross < tare:
+        return jsonify(ok=False,
+                       error=f"Peso bruto ({gross:.0f}g) menor que tara ({tare:.0f}g)"), 422
+    db.add_weight_reading(spool_id, gross, tare, recorded_by="estação")
+    net = gross - tare
+    nominal = float(spool["nominal_weight_g"] or 0)
+    pct = round(net / nominal * 100, 2) if nominal else 0
+    return jsonify(
+        ok=True, spool_id=spool_id, filament=_spool_summary(spool),
+        gross_weight_g=round(gross, 1), tare_g=round(tare, 1),
+        net_weight_g=round(net, 1), nominal_weight_g=nominal, remaining_pct=pct,
+    )
+
+
+@app.route("/api/spools/<int:spool_id>", methods=["GET"])
+@csrf.exempt
+def api_spool(spool_id):
+    """Leitura (read-only) p/ o OLED confirmar o rolo antes de gravar."""
+    if not _api_authorized():
+        return jsonify(ok=False, error="API key inválida"), 401
+    spool = db.get_spool(spool_id)
+    if not spool:
+        return jsonify(ok=False, error=f"Rolo SP-{spool_id:04d} não encontrado"), 404
+    net = spool["current_net_g"]
+    nominal = float(spool["nominal_weight_g"] or 0)
+    pct = round((net or 0) / nominal * 100, 2) if nominal else 0
+    return jsonify(
+        ok=True, spool_id=spool_id, filament=_spool_summary(spool),
+        tare_g=round(float(spool["effective_tare_g"] or 0), 1),
+        nominal_weight_g=nominal,
+        net_weight_g=round(net, 1) if net is not None else None,
+        remaining_pct=pct, last_weighed_at=spool["last_weighed_at"],
+    )
 
 
 # ── Search ─────────────────────────────────────────────────────────────────
@@ -826,10 +920,10 @@ def label_queue_print():
     if not items:
         flash(t("Fila vazia"), "warning")
         return redirect(url_for("label_queue"))
-    base_url = db.get_setting("app_base_url", "http://localhost:5000")
+    base_url = public_base_url()
     w = float(db.get_setting("label_width_mm", "60"))
     h = float(db.get_setting("label_height_mm", "40"))
-    pdf_bytes = lbl.generate_multi_label_pdf([dict(s) for s in items], base_url, w, h)
+    pdf_bytes = lbl.generate_multi_label_pdf([_label_spool(s) for s in items], base_url, w, h)
     return Response(
         pdf_bytes,
         mimetype="application/pdf",
@@ -1026,6 +1120,10 @@ def admin_settings():
         flash(t("Configurações salvas"), "success")
         return redirect(url_for("admin_settings"))
     settings = db.get_all_settings()
+    # Mostra a URL efetiva (env/IP da instalação) quando o banco ainda está
+    # vazio/localhost — o admin vê o que está em uso e salvar passa a valer pra tudo.
+    if not settings.get("app_base_url") or settings["app_base_url"] == "http://localhost:5000":
+        settings["app_base_url"] = public_base_url()
     return render_template(
         "admin/settings.html", settings=settings,
         niimbot_models=reg.PRINTER_MODELS, niimbot_sizes=reg.LABEL_SIZES,
