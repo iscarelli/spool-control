@@ -10,6 +10,11 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.13.1] — 2026-06-04
+
+### Corrigido
+- **Instalação limpa quebrada** (`setup-inside.sh`): o script copiava uma **lista fixa** de arquivos e o `niimbot_registry.py` não estava nela — uma instalação nova subia com `ModuleNotFoundError: No module named 'niimbot_registry'`. Agora copia a **árvore versionada inteira** via `git archive` (mesmo mecanismo do `update-lxc.sh`), sem lista para manter. (A produção via `update-lxc.sh` nunca foi afetada.) Detectado validando uma instalação limpa numa LXC temporária.
+
 ## [1.13.0] — 2026-06-04
 
 ### Adicionado

@@ -76,21 +76,12 @@ info "Clonando repositorio..."
 rm -rf "$REPO_DIR"
 git clone -q "$REPO" "$REPO_DIR"
 
-info "Copiando arquivos para $APP_DIR..."
-cp "$REPO_DIR/app.py"           "$APP_DIR/app.py"
-cp "$REPO_DIR/database.py"      "$APP_DIR/database.py"
-cp "$REPO_DIR/labels.py"        "$APP_DIR/labels.py"
-cp "$REPO_DIR/translations.py"  "$APP_DIR/translations.py"
-cp "$REPO_DIR/requirements.txt" "$APP_DIR/requirements.txt"
-cp "$REPO_DIR/VERSION"          "$APP_DIR/VERSION"
-cp "$REPO_DIR/CHANGELOG.md"     "$APP_DIR/CHANGELOG.md"
-cp -r "$REPO_DIR/templates"     "$APP_DIR/templates"
-cp -r "$REPO_DIR/static"        "$APP_DIR/static"
-cp "$REPO_DIR/deploy/update-lxc.sh"          "$APP_DIR/deploy/update-lxc.sh"
-cp "$REPO_DIR/deploy/spool-control.service"  "$APP_DIR/deploy/spool-control.service"
-cp "$REPO_DIR/deploy/spool-update.service"   "$APP_DIR/deploy/spool-update.service"
-cp "$REPO_DIR/deploy/sudoers-spool-update"   "$APP_DIR/deploy/sudoers-spool-update"
-cp "$REPO_DIR/deploy/seed_brands.py"         "$APP_DIR/deploy/seed_brands.py"
+# Copia a ÁRVORE VERSIONADA INTEIRA (git archive) — não há lista de arquivos para
+# manter; o que está no git vai para o servidor. Evita instalação quebrada quando um
+# módulo novo (ex.: niimbot_registry.py) não é adicionado a uma lista de cp. Mesmo
+# mecanismo do update-lxc.sh. Não toca em data/ (fora do git).
+info "Copiando arvore versionada para $APP_DIR..."
+git -C "$REPO_DIR" archive HEAD | tar -x -C "$APP_DIR"
 chmod +x "$APP_DIR/deploy/update-lxc.sh"
 
 rm -rf "$REPO_DIR"
