@@ -1,5 +1,6 @@
 import sqlite3
 import os
+import colorsys
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
 
@@ -786,6 +787,136 @@ def get_materials_in_use():
     rows = db.execute("SELECT DISTINCT material FROM filaments ORDER BY material").fetchall()
     db.close()
     return [r["material"] for r in rows]
+
+
+# Baldes de cor básicos (nome PT → hex representante da barra). O nome é a chave
+# de tradução usada no template (_()); EN/ES em translations.py.
+COLOR_BUCKETS = {
+    "Preto":    "#222222",
+    "Branco":   "#f5f5f5",
+    "Cinza":    "#9aa0a6",
+    "Vermelho": "#c0392b",
+    "Laranja":  "#e67e22",
+    "Amarelo":  "#f1c40f",
+    "Verde":    "#27ae60",
+    "Ciano":    "#1abc9c",
+    "Azul":     "#2e6fd6",
+    "Roxo":     "#8e44ad",
+    "Rosa":     "#e84393",
+    "Marrom":   "#8a5a2b",
+}
+
+
+def classify_color(hex_str):
+    """Mapeia um #RRGGBB para um balde de cor básico (junta todos os verdes,
+    vermelhos, etc.). Retorna None se o hex for inválido/ausente."""
+    s = (hex_str or "").strip().lstrip("#")
+    if len(s) == 3:
+        s = "".join(c * 2 for c in s)
+    if len(s) != 6:
+        return None
+    try:
+        r = int(s[0:2], 16) / 255.0
+        g = int(s[2:4], 16) / 255.0
+        b = int(s[4:6], 16) / 255.0
+    except ValueError:
+        return None
+    h, sat, val = colorsys.rgb_to_hsv(r, g, b)
+    hue = h * 360
+    if val < 0.18:
+        return "Preto"
+    if sat < 0.15:
+        return "Branco" if val > 0.75 else "Cinza"
+    if 10 <= hue < 45 and val < 0.6 and sat > 0.3:
+        return "Marrom"
+    if hue < 20 or hue >= 345:
+        return "Vermelho"
+    if hue < 45:
+        return "Laranja"
+    if hue < 66:
+        return "Amarelo"
+    if hue < 170:
+        return "Verde"
+    if hue < 200:
+        return "Ciano"
+    if hue < 255:
+        return "Azul"
+    if hue < 290:
+        return "Roxo"
+    return "Rosa"
+
+
+def stats_counts():
+    """Contagem de spools ATIVOS por marca, material e COR (classificada a partir
+    do color_hex). Cada lista vem ordenada por contagem desc."""
+    db = get_db()
+    brands = db.execute("""
+        SELECT f.brand AS name, COUNT(*) AS cnt
+        FROM spools s JOIN filaments f ON f.id = s.filament_id
+        WHERE s.active = 1
+        GROUP BY f.brand ORDER BY cnt DESC, f.brand
+    """).fetchall()
+    materials = db.execute("""
+        SELECT f.material AS name, COUNT(*) AS cnt
+        FROM spools s JOIN filaments f ON f.id = s.filament_id
+        WHERE s.active = 1
+        GROUP BY f.material ORDER BY cnt DESC, f.material
+    """).fetchall()
+    color_rows = db.execute("""
+        SELECT f.color_hex AS hex
+        FROM spools s JOIN filaments f ON f.id = s.filament_id
+        WHERE s.active = 1
+    """).fetchall()
+    db.close()
+    # Agrupa por balde de cor derivado do hexa.
+    buckets = {}
+    for r in color_rows:
+        name = classify_color(r["hex"])
+        if not name:
+            continue
+        buckets[name] = buckets.get(name, 0) + 1
+    colors = sorted(
+        ({"name": n, "cnt": c, "color": COLOR_BUCKETS[n]} for n, c in buckets.items()),
+        key=lambda d: (-d["cnt"], d["name"]),
+    )
+    return {
+        "brands":    [dict(r) for r in brands],
+        "materials": [dict(r) for r in materials],
+        "colors":    colors,
+    }
+
+
+def list_inventory(q=None):
+    """Spools ATIVOS para o grid de inventário — um item por spool físico
+    ('repete' filamentos). Inclui o logo da marca p/ o modal de detalhe."""
+    db = get_db()
+    sql = """
+        SELECT s.id, s.location, s.notes, s.nominal_weight_g, s.purchase_date,
+               f.brand, f.material, f.family, f.color_hex, f.diameter_mm,
+               b.logo_path AS brand_logo,
+               COALESCE(s.custom_tare_g, sm.tare_weight_g, 0) AS effective_tare_g,
+               sm.name AS model_name,
+               wr.net_weight_g AS current_net_g,
+               wr.ts AS last_weighed_at
+        FROM spools s
+        JOIN filaments f ON f.id = s.filament_id
+        LEFT JOIN spool_models sm ON sm.id = s.spool_model_id
+        LEFT JOIN brands b ON b.name = f.brand
+        LEFT JOIN weight_readings wr ON wr.id = (
+            SELECT MAX(id) FROM weight_readings WHERE spool_id = s.id
+        )
+        WHERE s.active = 1
+    """
+    params = []
+    if q:
+        p = f"%{q}%"
+        sql += (" AND (f.brand LIKE ? OR f.material LIKE ? OR f.family LIKE ?"
+                " OR s.location LIKE ? OR printf('SP-%04d', s.id) LIKE ?)")
+        params = [p, p, p, p, p]
+    sql += " ORDER BY f.material, f.brand, f.family, s.id"
+    rows = db.execute(sql, params).fetchall()
+    db.close()
+    return rows
 
 
 def dashboard_stats():

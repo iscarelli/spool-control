@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ 'Editar' if filament else 'Novo' }} Filamento — Spool Control{% endblock %}
+{% block title %}{{ _('Editar Filamento') if filament else _('Novo Filamento') }} — Spool Control{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-md-7 col-lg-6">
@@ -32,7 +32,7 @@
             </div>
             <div class="col-12">
               <label class="form-label fw-semibold">{{ _('Família') }} <span class="text-danger">*</span></label>
-              <input type="text" name="family" class="form-control" value="{{ filament.family if filament else '' }}" required placeholder="ex: Basic, Matte, Rapid, HS">
+              <input type="text" name="family" class="form-control" value="{{ filament.family if filament else '' }}" required placeholder="{{ _('ex: Basic, Matte, Rapid, HS') }}">
             </div>
             <div class="col-6">
               <label class="form-label fw-semibold">{{ _('Cor (hex)') }}</label>

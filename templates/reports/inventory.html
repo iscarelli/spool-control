@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Inventário') }} — Spool Control{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0 fw-bold">{{ _('Inventário') }} <span class="text-muted fs-6">({{ items | length }})</span></h4>
+</div>
+
+<input class="form-control form-control-sm mb-3" type="search" id="invFilter"
+       placeholder="{{ _('Buscar...') }}" autocomplete="off" style="max-width:340px">
+
+<div class="d-flex flex-wrap gap-2" id="invGrid">
+  {% for s in items %}
+  {% if s.current_net_g is not none and s.nominal_weight_g > 0 %}
+    {% set pct = [(s.current_net_g / s.nominal_weight_g * 100) | round(1), 100] | min %}
+  {% else %}
+    {% set pct = 100 %}
+  {% endif %}
+  {% set fill = s.color_hex if s.color_hex else '#6c757d' %}
+  <div class="sc-inv-tile text-center" role="button" tabindex="0"
+       data-name="SP-{{ '%04d'|format(s.id) }} {{ s.brand }} {{ s.material }} {{ s.family }} {{ s.location }}"
+       data-id="SP-{{ '%04d'|format(s.id) }}"
+       data-brand="{{ s.brand }}"
+       data-material="{{ s.material }}"
+       data-family="{{ s.family }}"
+       data-hex="{{ s.color_hex }}"
+       data-fill="{{ fill }}"
+       data-pct="{{ pct }}"
+       data-remaining="{% if s.current_net_g is not none %}{{ s.current_net_g|int }} g / {{ s.nominal_weight_g|int }} g ({{ pct|int }}%){% else %}—{% endif %}"
+       data-diameter="{{ s.diameter_mm }} mm"
+       data-location="{{ s.location or '—' }}"
+       data-notes="{{ s.notes }}"
+       data-logo="{% if s.brand_logo %}{{ url_for('static', filename=s.brand_logo) }}{% endif %}"
+       data-qr="{{ url_for('spool_qr_png', spool_id=s.id) }}"
+       data-link="{{ url_for('spools_detail', spool_id=s.id) }}">
+    <svg width="46" height="46" viewBox="0 0 50 50" class="d-block mx-auto">
+      <circle cx="25" cy="25" r="15.9155" fill="none" class="donut-track" stroke-width="15"/>
+      <circle cx="25" cy="25" r="15.9155" fill="none" stroke="{{ fill }}" stroke-width="15"
+              stroke-dasharray="{{ pct }} {{ 100 - pct }}" transform="rotate(-90 25 25)" class="donut-arc"/>
+    </svg>
+    <div class="small fw-semibold text-truncate sc-inv-name">{{ s.brand }}</div>
+    <div class="text-muted text-truncate sc-inv-sub">{{ s.material }}</div>
+    <div class="text-muted text-truncate sc-inv-sub">{{ s.family }}</div>
+  </div>
+  {% else %}
+  <div class="text-muted py-4">{{ _('Nenhum spool encontrado') }}</div>
+  {% endfor %}
+</div>
+
+{# Modal de detalhe do rolo #}
+<div class="modal fade" id="invModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ _('Detalhe do Spool') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="d-flex justify-content-between align-items-start gap-3">
+          <div class="flex-grow-1">
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <img id="invLogo" alt="" style="height:20px;width:auto;display:none">
+              <span id="invBrand" class="fw-bold"></span>
+            </div>
+            <div class="mb-1"><span class="badge bg-secondary" id="invMaterial"></span>
+              <span id="invFamily" class="text-muted ms-1"></span></div>
+            <div class="small mb-2" id="invHexWrap">
+              <span id="invDot" class="d-inline-block rounded me-1" style="width:12px;height:12px;border:1px solid #ccc;vertical-align:middle"></span>
+              <span id="invHex" class="font-monospace text-uppercase"></span>
+            </div>
+            <div><span class="text-muted small">{{ _('Restante') }}:</span> <strong id="invRemaining"></strong></div>
+            <div><span class="text-muted small">{{ _('Diâmetro') }}:</span> <span id="invDiameter"></span></div>
+            <div><span class="text-muted small">{{ _('Local') }}:</span> <span id="invLocation"></span></div>
+            <div class="small mt-1 text-muted" id="invNotesWrap"><span id="invNotes"></span></div>
+          </div>
+          <div class="text-center">
+            <svg width="64" height="64" viewBox="0 0 50 50" class="d-block mx-auto">
+              <circle cx="25" cy="25" r="15.9155" fill="none" class="donut-track" stroke-width="15"/>
+              <circle id="invArc" cx="25" cy="25" r="15.9155" fill="none" stroke-width="15"
+                      transform="rotate(-90 25 25)" class="donut-arc"/>
+            </svg>
+            <img id="invQr" alt="QR" class="mt-2 bg-white p-1 rounded" style="width:96px;height:96px">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer justify-content-between">
+        <span class="fw-bold" id="invId"></span>
+        <a id="invLink" class="btn btn-sm btn-dark" href="#">{{ _('Ver') }}</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* ── Filtro instantâneo dos tiles ──────────────────────────────────────────── */
+document.getElementById('invFilter').addEventListener('input', function () {
+  const q = this.value.toLowerCase();
+  document.querySelectorAll('#invGrid .sc-inv-tile').forEach(t => {
+    t.style.display = t.dataset.name.toLowerCase().includes(q) ? '' : 'none';
+  });
+});
+
+/* ── Modal de detalhe ──────────────────────────────────────────────────────── */
+const invModal = new bootstrap.Modal(document.getElementById('invModal'));
+function openInv(t) {
+  const d = t.dataset;
+  document.getElementById('invBrand').textContent    = d.brand;
+  document.getElementById('invMaterial').textContent = d.material;
+  document.getElementById('invFamily').textContent   = d.family;
+  document.getElementById('invRemaining').textContent= d.remaining;
+  document.getElementById('invDiameter').textContent = d.diameter;
+  document.getElementById('invLocation').textContent = d.location;
+  document.getElementById('invId').textContent       = d.id;
+  document.getElementById('invLink').href            = d.link;
+
+  const hexWrap = document.getElementById('invHexWrap');
+  if (d.hex) {
+    hexWrap.style.display = '';
+    document.getElementById('invDot').style.background = d.hex;
+    document.getElementById('invHex').textContent = d.hex;
+  } else { hexWrap.style.display = 'none'; }
+
+  const notesWrap = document.getElementById('invNotesWrap');
+  if (d.notes && d.notes.trim()) {
+    notesWrap.style.display = '';
+    document.getElementById('invNotes').textContent = d.notes;
+  } else { notesWrap.style.display = 'none'; }
+
+  const logo = document.getElementById('invLogo');
+  if (d.logo) { logo.src = d.logo; logo.style.display = ''; } else { logo.style.display = 'none'; }
+
+  const arc = document.getElementById('invArc');
+  arc.setAttribute('stroke', d.fill);
+  arc.setAttribute('stroke-dasharray', `${d.pct} ${100 - d.pct}`);
+
+  document.getElementById('invQr').src = d.qr;
+  invModal.show();
+}
+document.querySelectorAll('#invGrid .sc-inv-tile').forEach(t => {
+  t.addEventListener('click', () => openInv(t));
+  t.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openInv(t); } });
+});
+</script>
+{% endblock %}

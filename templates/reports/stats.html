@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Estatísticas') }} — Spool Control{% endblock %}
+{% block content %}
+<h4 class="fw-bold mb-4">{{ _('Estatísticas') }}</h4>
+
+{% macro barblock(title, rows, colored=False, translate=False, link_kind='q') %}
+{% set maxc = (rows | map(attribute='cnt') | max) if rows else 1 %}
+<div class="card mb-4 sc-stat-card">
+  <div class="card-body">
+    <h5 class="fw-bold mb-3">{{ title }} ({{ rows | length }})</h5>
+    {% for r in rows %}
+    {% set label = _(r.name) if translate else r.name %}
+    {% set href = url_for('spools_list', color=r.name) if link_kind == 'color' else url_for('spools_list', q=r.name) %}
+    <a href="{{ href }}" class="d-flex align-items-center mb-2 text-decoration-none text-reset sc-stat-link"
+       title="{{ label }}">
+      <div class="text-truncate me-2 small fw-semibold" style="width:120px">{{ label or '—' }}</div>
+      <div class="flex-grow-1 me-2">
+        <div class="sc-bar" style="width:{{ (r.cnt / maxc * 100) if maxc else 0 }}%;
+             background:{{ r.color if (colored and r.color) else 'var(--bs-primary)' }}"></div>
+      </div>
+      <div class="fw-semibold text-end" style="width:36px">{{ r.cnt }}</div>
+    </a>
+    {% else %}
+    <div class="text-muted">{{ _('Sem dados') }}</div>
+    {% endfor %}
+  </div>
+</div>
+{% endmacro %}
+
+{{ barblock(_('Marcas'), stats.brands, link_kind='q') }}
+{{ barblock(_('Materiais'), stats.materials, link_kind='q') }}
+{{ barblock(_('Famílias de cor'), stats.colors, colored=True, translate=True, link_kind='color') }}
+{% endblock %}

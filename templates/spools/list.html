@@ -7,6 +7,7 @@
   <h4 class="mb-0 fw-bold">
     {{ _('Spools') }}
     {% if not active_only %}<span class="badge bg-secondary fs-6 ms-1">{{ _('todos') }}</span>{% endif %}
+    {% if color is defined and color %}<span class="badge bg-secondary fs-6 ms-1">{{ _(color) }}</span>{% endif %}
   </h4>
   <div class="d-flex gap-2 align-items-center">
     <input class="form-control form-control-sm" type="search" id="filterInput"
@@ -20,6 +21,12 @@
     <button class="btn btn-sm btn-outline-warning text-nowrap d-inline-flex align-items-center" id="markAllBtn" style="height:2rem">
       <i class="bi bi-printer-fill me-1"></i>{{ _('Todos') }}
     </button>
+    {% if label_queue_count > 0 %}
+    <a href="{{ url_for('label_queue') }}" class="btn btn-sm btn-primary text-nowrap d-inline-flex align-items-center" style="height:2rem"
+       title="{{ _('Fila de Etiquetas') }}">
+      <i class="bi bi-printer me-1"></i>{{ _('Imprimir') }} ({{ label_queue_count }})
+    </a>
+    {% endif %}
     <a href="{{ url_for('spools_new') }}" class="btn btn-primary btn-sm rounded-pill px-3 d-inline-flex flex-column align-items-center justify-content-center" style="height:2rem;padding-top:0;padding-bottom:0;gap:1px">
       <i class="bi bi-plus-circle-fill" style="font-size:.75rem;line-height:1"></i>
       <span style="font-size:.75rem;font-weight:600;letter-spacing:.02em;line-height:1">{{ _('Spool') }}</span>

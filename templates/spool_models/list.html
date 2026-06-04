@@ -1,16 +1,16 @@
 {% extends "base.html" %}
-{% block title %}Carretéis Vazios — Spool Control{% endblock %}
+{% block title %}{{ _('Carretéis Vazios') }} — Spool Control{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <h4 class="mb-0 fw-bold">Carretéis Vazios</h4>
-  <a href="{{ url_for('spool_models_new') }}" class="btn btn-dark btn-sm">+ Novo Modelo</a>
+  <h4 class="mb-0 fw-bold">{{ _('Carretéis Vazios') }}</h4>
+  <a href="{{ url_for('spool_models_new') }}" class="btn btn-dark btn-sm">{{ _('+ Novo Modelo') }}</a>
 </div>
-<p class="text-muted small">Cadastre os modelos de carretel vazio para que o sistema possa calcular o peso real de filamento disponível.</p>
+<p class="text-muted small">{{ _('Cadastre os modelos de carretel vazio para que o sistema possa calcular o peso real de filamento disponível.') }}</p>
 <div class="card">
   <div class="table-responsive">
     <table class="table table-hover mb-0">
       <thead class="table-dark">
-        <tr><th>Nome</th><th>Tara (g)</th><th>Notas</th><th></th></tr>
+        <tr><th>{{ _('Nome') }}</th><th>{{ _('Tara (g)') }}</th><th>{{ _('Notas') }}</th><th></th></tr>
       </thead>
       <tbody>
         {% for m in models %}
@@ -19,15 +19,15 @@
           <td>{{ m.tare_weight_g|int }}g</td>
           <td class="text-muted small">{{ m.notes or '—' }}</td>
           <td>
-            <a href="{{ url_for('spool_models_edit', model_id=m.id) }}" class="btn btn-sm btn-outline-secondary">Editar</a>
+            <a href="{{ url_for('spool_models_edit', model_id=m.id) }}" class="btn btn-sm btn-outline-secondary">{{ _('Editar') }}</a>
             <form method="post" action="{{ url_for('spool_models_delete', model_id=m.id) }}" class="d-inline"
-                  onsubmit="return confirm('Remover {{ m.name }}?')">
-              <button class="btn btn-sm btn-outline-danger">Remover</button>
+                  onsubmit="return confirm('{{ _('Remover') }} {{ m.name }}?')">
+              <button class="btn btn-sm btn-outline-danger">{{ _('Remover') }}</button>
             </form>
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="4" class="text-center text-muted py-4">Nenhum modelo cadastrado</td></tr>
+        <tr><td colspan="4" class="text-center text-muted py-4">{{ _('Nenhum modelo cadastrado') }}</td></tr>
         {% endfor %}
       </tbody>
     </table>

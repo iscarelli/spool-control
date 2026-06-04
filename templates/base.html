@@ -61,11 +61,14 @@
           </a>
         </li>
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle {% if ep in ('report_by_material','report_by_location','report_low_stock','report_weight_history','label_queue') %}sc-active{% endif %}"
+          <a class="nav-link dropdown-toggle {% if ep in ('report_by_material','report_by_location','report_low_stock','report_weight_history','report_stats','report_inventory','label_queue') %}sc-active{% endif %}"
              href="#" data-bs-toggle="dropdown">
             <i class="bi bi-bar-chart-fill me-1"></i>{{ _('Relatórios') }}
           </a>
           <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="{{ url_for('report_inventory') }}">{{ _('Inventário') }}</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('report_stats') }}">{{ _('Estatísticas') }}</a></li>
+            <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" href="{{ url_for('report_by_material') }}">{{ _('Por Material') }}</a></li>
             <li><a class="dropdown-item" href="{{ url_for('report_by_location') }}">{{ _('Por Local') }}</a></li>
             <li><a class="dropdown-item" href="{{ url_for('report_low_stock') }}">{{ _('Estoque Baixo') }}</a></li>
@@ -120,15 +123,17 @@
         <i class="bi" id="themeIcon"></i>
       </button>
 
-      {# Language switcher #}
+      {# Language switcher — bandeiras em SVG (emoji de bandeira não renderiza no Windows) #}
+      {% set _flag = {'pt': 'br', 'en': 'us', 'es': 'es'} %}
       <div class="dropdown me-2">
         <button class="btn btn-outline-secondary btn-sm dropdown-toggle d-inline-flex align-items-center justify-content-center" data-bs-toggle="dropdown"
                 style="height:2rem;font-size:0.8rem;letter-spacing:0.03em;gap:.3rem">
-          <span style="font-size:1.05rem;line-height:1">{% if lang == 'pt' %}🇧🇷{% else %}🇺🇸{% endif %}</span>{{ lang.upper() }}
+          <img src="{{ url_for('static', filename='flags/' + _flag.get(lang, 'br') + '.svg') }}" alt="" class="sc-flag">{{ lang.upper() }}
         </button>
         <ul class="dropdown-menu dropdown-menu-end" style="min-width:0">
-          <li><a class="dropdown-item d-flex align-items-center gap-2" href="{{ url_for('set_lang', code='pt') }}"><span style="font-size:1.05rem">🇧🇷</span>PT</a></li>
-          <li><a class="dropdown-item d-flex align-items-center gap-2" href="{{ url_for('set_lang', code='en') }}"><span style="font-size:1.05rem">🇺🇸</span>EN</a></li>
+          <li><a class="dropdown-item d-flex align-items-center gap-2" href="{{ url_for('set_lang', code='pt') }}"><img src="{{ url_for('static', filename='flags/br.svg') }}" alt="" class="sc-flag">PT</a></li>
+          <li><a class="dropdown-item d-flex align-items-center gap-2" href="{{ url_for('set_lang', code='en') }}"><img src="{{ url_for('static', filename='flags/us.svg') }}" alt="" class="sc-flag">EN</a></li>
+          <li><a class="dropdown-item d-flex align-items-center gap-2" href="{{ url_for('set_lang', code='es') }}"><img src="{{ url_for('static', filename='flags/es.svg') }}" alt="" class="sc-flag">ES</a></li>
         </ul>
       </div>
 

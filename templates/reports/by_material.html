@@ -2,14 +2,14 @@
 {% block title %}Relatório por Material — Spool Control{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <h4 class="mb-0 fw-bold">Estoque por Material</h4>
-  <button class="btn btn-sm btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i>Imprimir</button>
+  <h4 class="mb-0 fw-bold">{{ _('Estoque por Material') }}</h4>
+  <button class="btn btn-sm btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i>{{ _('Imprimir') }}</button>
 </div>
 <div class="card">
   <div class="table-responsive">
     <table class="table mb-0">
       <thead class="table-dark">
-        <tr><th>Material</th><th>Spools Ativos</th><th>Total Net (kg)</th><th>Nominal (kg)</th><th>Distribuição</th></tr>
+        <tr><th>{{ _('Material') }}</th><th>{{ _('Spools Ativos') }}</th><th>{{ _('Total Net (kg)') }}</th><th>{{ _('Nominal (kg)') }}</th><th>{{ _('Distribuição') }}</th></tr>
       </thead>
       <tbody>
         {% set grand_total = rows|sum(attribute='total_net_g') %}
@@ -29,13 +29,13 @@
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="5" class="text-center text-muted py-4">Sem dados</td></tr>
+        <tr><td colspan="5" class="text-center text-muted py-4">{{ _('Sem dados') }}</td></tr>
         {% endfor %}
       </tbody>
       {% if rows %}
       <tfoot class="table-light fw-bold">
         <tr>
-          <td>Total</td>
+          <td>{{ _('Total') }}</td>
           <td>{{ rows|sum(attribute='spool_count') }}</td>
           <td>{{ "%.2f"|format(grand_total / 1000) }} kg</td>
           <td class="text-muted">{{ "%.2f"|format(rows|sum(attribute='total_nominal_g') / 1000) }} kg</td>

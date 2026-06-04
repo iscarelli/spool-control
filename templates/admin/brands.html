@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% block title %}Marcas — Spool Control{% endblock %}
+{% block title %}{{ _('Marcas') }} — Spool Control{% endblock %}
 {% block content %}
-<h4 class="fw-bold mb-4">Marcas / Logos</h4>
+<h4 class="fw-bold mb-4">{{ _('Marcas / Logos') }}</h4>
 <p class="text-muted small mb-4">
-  Informe o domínio da marca para buscar o logo automaticamente via
-  <a href="https://clearbit.com" target="_blank">Clearbit</a> e salvar localmente.
-  Ou faça upload manual de um arquivo PNG/JPG/SVG.
+  {{ _('Informe o domínio da marca para buscar o logo automaticamente via') }}
+  <a href="https://clearbit.com" target="_blank">Clearbit</a>
+  {{ _('e salvar localmente. Ou faça upload manual de um arquivo PNG/JPG/SVG.') }}
 </p>
 
 <div class="row g-3">
@@ -25,7 +25,7 @@
           {% endif %}
           <div>
             <div class="fw-semibold">{{ b.name }}</div>
-            <div class="text-muted small">{{ b.filament_count }} filamento(s)</div>
+            <div class="text-muted small">{{ b.filament_count }} {{ _('filamento(s)') }}</div>
           </div>
         </div>
 
@@ -33,7 +33,7 @@
           <input type="hidden" name="brand_name" value="{{ b.name }}">
           <div class="input-group input-group-sm">
             <input type="text" name="domain" class="form-control"
-                   placeholder="ex: bambulab.com" value="{{ b.domain or '' }}">
+                   placeholder="{{ _('ex: bambulab.com') }}" value="{{ b.domain or '' }}">
             <button class="btn btn-outline-dark" type="submit">
               <i class="bi bi-cloud-download me-1"></i>Clearbit
             </button>
@@ -46,7 +46,7 @@
           <div class="input-group input-group-sm">
             <input type="file" name="logo" class="form-control" accept=".png,.jpg,.jpeg,.svg,.webp">
             <button class="btn btn-outline-secondary" type="submit">
-              <i class="bi bi-upload me-1"></i>Upload
+              <i class="bi bi-upload me-1"></i>{{ _('Upload') }}
             </button>
           </div>
         </form>
@@ -55,7 +55,7 @@
   </div>
   {% else %}
   <div class="col-12 text-muted text-center py-5">
-    Nenhuma marca cadastrada. Adicione filamentos primeiro.
+    {{ _('Nenhuma marca cadastrada. Adicione filamentos primeiro.') }}
   </div>
   {% endfor %}
 </div>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Login — Spool Control</title>
+  <title>{{ _('Login') }} — Spool Control</title>
   <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='spool-icon.svg') }}">
   <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='icons/favicon-32x32.png') }}">
   <link rel="shortcut icon" href="{{ url_for('static', filename='icons/favicon.ico') }}">
@@ -26,14 +26,14 @@
       <form method="post">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="mb-3">
-          <label class="form-label">Usuário</label>
+          <label class="form-label">{{ _('Usuário') }}</label>
           <input type="text" name="username" class="form-control" autofocus required>
         </div>
         <div class="mb-3">
-          <label class="form-label">Senha</label>
+          <label class="form-label">{{ _('Senha') }}</label>
           <input type="password" name="password" class="form-control" required>
         </div>
-        <button class="btn btn-dark w-100" type="submit">Entrar</button>
+        <button class="btn btn-dark w-100" type="submit">{{ _('Entrar') }}</button>
       </form>
     </div>
   </div>

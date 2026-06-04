@@ -364,6 +364,41 @@ h1, h2, h3, h4, h5, h6 { letter-spacing: -0.02em; }
 /* ── Donuts ─────────────────────────────────────────────────────────────── */
 .donut-track { stroke: var(--sc-border); }
 
+/* ── Bandeiras do seletor de idioma (SVG — emoji não renderiza no Windows) ── */
+.sc-flag {
+  width: 1.15rem;
+  height: auto;
+  border-radius: 2px;
+  display: inline-block;
+  vertical-align: middle;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.15);
+}
+
+/* ── Stats (barras horizontais) ─────────────────────────────────────────── */
+.sc-bar {
+  height: 22px;
+  min-width: 6px;
+  border-radius: 6px;
+  border: 1px solid var(--sc-border);
+  transition: width .3s ease;
+}
+.sc-stat-link { cursor: pointer; }
+.sc-stat-link:hover .sc-bar { filter: brightness(1.12); }
+.sc-stat-link:hover { opacity: .92; }
+
+/* ── Inventário (grid de tiles) ─────────────────────────────────────────── */
+.sc-inv-tile {
+  width: 88px;
+  padding: 8px 4px;
+  border: 1px solid var(--sc-border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background .15s ease, transform .1s ease;
+}
+.sc-inv-tile:hover { background: var(--sc-accent-glow); transform: translateY(-1px); }
+.sc-inv-name { max-width: 80px; margin: 4px auto 0; font-size: .72rem; line-height: 1.1; }
+.sc-inv-sub  { max-width: 80px; margin: 0 auto; font-size: .66rem; line-height: 1.15; }
+
 /* ── Brand logo (inline SVG, inherits theme color via currentColor) ─────── */
 .sc-logo { display: block; }
 

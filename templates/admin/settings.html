@@ -1,49 +1,49 @@
 {% extends "base.html" %}
-{% block title %}Configurações — Spool Control{% endblock %}
+{% block title %}{{ _('Configurações') }} — Spool Control{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-md-7 col-lg-6">
-    <h4 class="fw-bold mb-4">Configurações do Sistema</h4>
+    <h4 class="fw-bold mb-4">{{ _('Configurações do Sistema') }}</h4>
     <div class="card">
       <div class="card-body">
         <form method="post">
 
-          <h6 class="text-muted text-uppercase fw-semibold mb-3" style="font-size:.75rem">Geral</h6>
+          <h6 class="text-muted text-uppercase fw-semibold mb-3" style="font-size:.75rem">{{ _('Geral') }}</h6>
           <div class="mb-4">
-            <label class="form-label fw-semibold">URL Base do Sistema</label>
+            <label class="form-label fw-semibold">{{ _('URL Base do Sistema') }}</label>
             <input type="url" name="app_base_url" class="form-control"
                    value="{{ settings.app_base_url }}" placeholder="https://spool.exemplo.com.br">
-            <div class="form-text">Usada para gerar o QR code nas etiquetas. Deve ser acessível pelo celular.</div>
+            <div class="form-text">{{ _('Usada para gerar o QR code nas etiquetas. Deve ser acessível pelo celular.') }}</div>
           </div>
 
           <hr class="my-4">
-          <h6 class="text-muted text-uppercase fw-semibold mb-3" style="font-size:.75rem">Estoque Baixo</h6>
+          <h6 class="text-muted text-uppercase fw-semibold mb-3" style="font-size:.75rem">{{ _('Estoque Baixo') }}</h6>
           <div class="row g-3 mb-4">
             <div class="col-6">
-              <label class="form-label fw-semibold">Threshold (g)</label>
+              <label class="form-label fw-semibold">{{ _('Threshold (g)') }}</label>
               <div class="input-group">
                 <input type="number" name="low_stock_threshold_g" class="form-control" min="0"
                        value="{{ settings.low_stock_threshold_g }}">
                 <span class="input-group-text">g</span>
               </div>
-              <div class="form-text">Peso mínimo antes de sinalizar.</div>
+              <div class="form-text">{{ _('Peso mínimo antes de sinalizar.') }}</div>
             </div>
             <div class="col-6">
-              <label class="form-label fw-semibold">Threshold (%)</label>
+              <label class="form-label fw-semibold">{{ _('Threshold (%)') }}</label>
               <div class="input-group">
                 <input type="number" name="low_stock_pct" class="form-control" min="0" max="100"
                        value="{{ settings.low_stock_pct }}">
                 <span class="input-group-text">%</span>
               </div>
-              <div class="form-text">Porcentagem mínima do nominal.</div>
+              <div class="form-text">{{ _('Porcentagem mínima do nominal.') }}</div>
             </div>
           </div>
 
           <hr class="my-4">
-          <h6 class="text-muted text-uppercase fw-semibold mb-3" style="font-size:.75rem">Etiquetas</h6>
+          <h6 class="text-muted text-uppercase fw-semibold mb-3" style="font-size:.75rem">{{ _('Etiquetas') }}</h6>
           <div class="row g-3 mb-4">
             <div class="col-6">
-              <label class="form-label fw-semibold">Largura</label>
+              <label class="form-label fw-semibold">{{ _('Largura') }}</label>
               <div class="input-group">
                 <input type="number" name="label_width_mm" class="form-control" min="20" max="200" step="0.5"
                        value="{{ settings.label_width_mm or '60' }}">
@@ -51,7 +51,7 @@
               </div>
             </div>
             <div class="col-6">
-              <label class="form-label fw-semibold">Altura</label>
+              <label class="form-label fw-semibold">{{ _('Altura') }}</label>
               <div class="input-group">
                 <input type="number" name="label_height_mm" class="form-control" min="15" max="200" step="0.5"
                        value="{{ settings.label_height_mm or '40' }}">
@@ -60,17 +60,17 @@
             </div>
             <div class="col-12">
               <div class="form-text">
-                Tamanho do PDF gerado para impressão térmica. Padrão: <strong>60 × 40 mm</strong>.
-                Fontes e QR code escalam automaticamente.
+                {{ _('Tamanho do PDF gerado para impressão térmica. Padrão:') }} <strong>60 × 40 mm</strong>.
+                {{ _('Fontes e QR code escalam automaticamente.') }}
               </div>
             </div>
           </div>
 
           <hr class="my-4">
-          <h6 class="text-muted text-uppercase fw-semibold mb-3" style="font-size:.75rem">Impressão Direta (Niimbot)</h6>
+          <h6 class="text-muted text-uppercase fw-semibold mb-3" style="font-size:.75rem">{{ _('Impressão Direta (Niimbot)') }}</h6>
           <div class="row g-3 mb-4">
             <div class="col-6">
-              <label class="form-label fw-semibold">Modelo da impressora</label>
+              <label class="form-label fw-semibold">{{ _('Modelo da impressora') }}</label>
               <select name="niimbot_model" class="form-select">
                 {% for key, m in niimbot_models.items() %}
                 <option value="{{ key }}" {% if key == niimbot_model %}selected{% endif %}>{{ m.label }}</option>
@@ -78,7 +78,7 @@
               </select>
             </div>
             <div class="col-6">
-              <label class="form-label fw-semibold">Tamanho da etiqueta</label>
+              <label class="form-label fw-semibold">{{ _('Tamanho da etiqueta') }}</label>
               <select name="niimbot_label_size" class="form-select">
                 {% for key, s in niimbot_sizes.items() %}
                 <option value="{{ key }}" {% if key == niimbot_label_size %}selected{% endif %}>{{ s.label }}</option>
@@ -87,13 +87,12 @@
             </div>
             <div class="col-12">
               <div class="form-text">
-                Usado pelo botão <strong>Imprimir Niimbot</strong> (Web Bluetooth, direto do navegador).
-                Requer Chrome/Edge em HTTPS. Não afeta o PDF acima.
+                {{ _('Usado pelo botão') }} <strong>{{ _('Imprimir Niimbot') }}</strong> {{ _('(Web Bluetooth, direto do navegador). Requer Chrome/Edge em HTTPS. Não afeta o PDF acima.') }}
               </div>
             </div>
           </div>
 
-          <button type="submit" class="btn btn-dark">Salvar Configurações</button>
+          <button type="submit" class="btn btn-dark">{{ _('Salvar Configurações') }}</button>
         </form>
       </div>
     </div>

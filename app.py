@@ -114,7 +114,7 @@ def set_security_headers(resp):
 def handle_csrf_error(e):
     if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
         return jsonify(error="CSRF token inválido ou ausente"), 400
-    flash("Sessão expirada ou token inválido. Tente novamente.", "danger")
+    flash(t("Sessão expirada ou token inválido. Tente novamente."), "danger")
     return redirect(request.referrer or url_for("login")), 400
 
 
@@ -229,6 +229,12 @@ def _parse_price(s):
         return None
 
 
+def t(s):
+    """Traduz uma string conforme o idioma da sessão — para mensagens flash e de
+    erro geradas no servidor (fora do template)."""
+    return i18n.get_translator(session.get("lang", "pt"))(s)
+
+
 @app.context_processor
 def inject_globals():
     count = db.queue_count() if "user_id" in session else 0
@@ -315,7 +321,7 @@ def login():
         ip = request.remote_addr or ""
         if db.count_recent_login_failures(ip, LOGIN_WINDOW_MIN) >= LOGIN_MAX_FAILURES:
             flash(
-                f"Muitas tentativas. Aguarde {LOGIN_WINDOW_MIN} minutos e tente novamente.",
+                t("Muitas tentativas. Aguarde {min} minutos e tente novamente.").format(min=LOGIN_WINDOW_MIN),
                 "danger",
             )
             return render_template("login.html"), 429
@@ -335,7 +341,7 @@ def login():
                 nxt = url_for("dashboard")
             return redirect(nxt)
         db.record_login_failure(ip, username)
-        flash("Usuário ou senha incorretos", "danger")
+        flash(t("Usuário ou senha incorretos"), "danger")
     return render_template("login.html")
 
 
@@ -394,10 +400,10 @@ def filaments_new():
                 diameter_mm=float(request.form.get("diameter_mm") or 1.75),
                 notes=request.form.get("notes", "").strip(),
             )
-            flash("Filamento cadastrado com sucesso", "success")
+            flash(t("Filamento cadastrado com sucesso"), "success")
             return redirect(url_for("filaments_detail", filament_id=fid))
         except Exception as e:
-            flash(f"Erro: {e}", "danger")
+            flash(f"{t('Erro')}: {e}", "danger")
     return render_template("filaments/form.html", filament=None,
                            materials=get_ordered_materials(), brands=db.list_brands_ordered())
 
@@ -430,10 +436,10 @@ def filaments_edit(filament_id):
                 diameter_mm=float(request.form.get("diameter_mm") or 1.75),
                 notes=request.form.get("notes", "").strip(),
             )
-            flash("Filamento atualizado", "success")
+            flash(t("Filamento atualizado"), "success")
             return redirect(next_url or url_for("filaments_detail", filament_id=filament_id))
         except Exception as e:
-            flash(f"Erro: {e}", "danger")
+            flash(f"{t('Erro')}: {e}", "danger")
     return render_template("filaments/form.html", filament=filament,
                            materials=get_ordered_materials(), brands=db.list_brands_ordered(),
                            next_url=next_url)
@@ -453,7 +459,7 @@ def filaments_duplicate(filament_id):
         diameter_mm=src["diameter_mm"],
         notes=src["notes"],
     )
-    flash(f"Filamento duplicado — editando cópia", "success")
+    flash(t("Filamento duplicado — editando cópia"), "success")
     return redirect(url_for("filaments_edit", filament_id=new_id))
 
 
@@ -462,10 +468,10 @@ def filaments_duplicate(filament_id):
 def filaments_delete(filament_id):
     try:
         db.delete_filament(filament_id)
-        flash("Filamento removido", "success")
+        flash(t("Filamento removido"), "success")
         return redirect(url_for("filaments_list"))
     except ValueError as e:
-        flash(str(e), "danger")
+        flash(t(str(e)), "danger")
         return redirect(url_for("filaments_detail", filament_id=filament_id))
 
 
@@ -488,10 +494,10 @@ def spool_models_new():
                 tare_weight_g=float(request.form["tare_weight_g"]),
                 notes=request.form.get("notes", "").strip(),
             )
-            flash("Modelo de carretel cadastrado", "success")
+            flash(t("Modelo de carretel cadastrado"), "success")
             return redirect(url_for("spool_models_list"))
         except Exception as e:
-            flash(f"Erro: {e}", "danger")
+            flash(f"{t('Erro')}: {e}", "danger")
     return render_template("spool_models/form.html", model=None)
 
 
@@ -509,10 +515,10 @@ def spool_models_edit(model_id):
                 tare_weight_g=float(request.form["tare_weight_g"]),
                 notes=request.form.get("notes", "").strip(),
             )
-            flash("Modelo atualizado", "success")
+            flash(t("Modelo atualizado"), "success")
             return redirect(url_for("spool_models_list"))
         except Exception as e:
-            flash(f"Erro: {e}", "danger")
+            flash(f"{t('Erro')}: {e}", "danger")
     return render_template("spool_models/form.html", model=model)
 
 
@@ -521,9 +527,9 @@ def spool_models_edit(model_id):
 def spool_models_delete(model_id):
     try:
         db.delete_spool_model(model_id)
-        flash("Modelo removido", "success")
+        flash(t("Modelo removido"), "success")
     except ValueError as e:
-        flash(str(e), "danger")
+        flash(t(str(e)), "danger")
     return redirect(url_for("spool_models_list"))
 
 
@@ -534,13 +540,19 @@ def spool_models_delete(model_id):
 def spools_list():
     active_only = request.args.get("all") != "1"
     q = request.args.get("q", "").strip()
+    color = request.args.get("color", "").strip()
     if q:
         spools = db.search_spools(q)
+        active_only = True
+    elif color:
+        # Filtro vindo do /stats: agrupa pelo balde de cor derivado do hexa.
+        spools = [s for s in db.list_spools(active_only=True)
+                  if db.classify_color(s["color_hex"]) == color]
         active_only = True
     else:
         spools = db.list_spools(active_only=active_only)
     return render_template("spools/list.html", spools=spools, active_only=active_only,
-                           q=q, queue_ids=db.queue_ids())
+                           q=q, color=color, queue_ids=db.queue_ids())
 
 
 @app.route("/spools/new", methods=["GET", "POST"])
@@ -559,10 +571,10 @@ def spools_new():
                 purchase_price=_parse_price(request.form.get("purchase_price", "")),
                 notes=request.form.get("notes", "").strip(),
             )
-            flash("Spool cadastrado com sucesso", "success")
+            flash(t("Rolo cadastrado com sucesso"), "success")
             return redirect(url_for("spools_detail", spool_id=spool_id, queue_prompt="1"))
         except Exception as e:
-            flash(f"Erro: {e}", "danger")
+            flash(f"{t('Erro')}: {e}", "danger")
     filaments = db.list_filaments()
     spool_models = db.list_spool_models()
     return render_template("spools/form.html", spool=None,
@@ -605,12 +617,12 @@ def spools_edit(spool_id):
                 purchase_price=_parse_price(request.form.get("purchase_price", "")),
                 notes=request.form.get("notes", "").strip(),
             )
-            flash("Spool atualizado", "success")
+            flash(t("Rolo atualizado"), "success")
             if old_location != new_location:
                 return redirect(url_for("spools_detail", spool_id=spool_id, queue_prompt="1"))
             return redirect(url_for("spools_detail", spool_id=spool_id))
         except Exception as e:
-            flash(f"Erro: {e}", "danger")
+            flash(f"{t('Erro')}: {e}", "danger")
     filaments = db.list_filaments()
     spool_models = db.list_spool_models()
     return render_template("spools/form.html", spool=spool,
@@ -630,7 +642,7 @@ def spools_weigh(spool_id):
             gross = float(request.form["gross_weight_g"])
             tare = float(spool["effective_tare_g"])
             if gross < tare:
-                msg = f"Peso bruto ({gross}g) menor que tara ({tare}g). Verifique."
+                msg = t("Peso bruto ({g:.0f}g) menor que tara ({t:.0f}g). Verifique.").format(g=gross, t=tare)
                 if ajax:
                     return {"ok": False, "error": msg}
                 flash(msg, "warning")
@@ -647,12 +659,12 @@ def spools_weigh(spool_id):
                     nominal = float(spool["nominal_weight_g"] or 1000)
                     pct = min(100, round(net / nominal * 100, 1)) if nominal else 0
                     return {"ok": True, "net_g": round(net), "pct": pct}
-                flash(f"Peso registrado: {net:.0f}g de filamento", "success")
+                flash(t("Peso registrado: {n:.0f}g de filamento").format(n=net), "success")
                 return redirect(url_for("spools_detail", spool_id=spool_id))
         except ValueError as e:
             if ajax:
                 return {"ok": False, "error": str(e)}
-            flash(f"Valor inválido: {e}", "danger")
+            flash(f"{t('Valor inválido')}: {e}", "danger")
     return render_template("spools/weigh.html", spool=spool)
 
 
@@ -660,7 +672,7 @@ def spools_weigh(spool_id):
 @login_required
 def spools_deactivate(spool_id):
     db.deactivate_spool(spool_id)
-    flash("Spool marcado como finalizado", "success")
+    flash(t("Rolo marcado como finalizado"), "success")
     return redirect(url_for("spools_list"))
 
 
@@ -695,6 +707,21 @@ def spool_label_png(spool_id):
     return Response(png_bytes, mimetype="image/png")
 
 
+@app.route("/spools/<int:spool_id>/qr.png")
+@login_required
+def spool_qr_png(spool_id):
+    """QR isolado (PNG) apontando para a página do spool — usado no modal do
+    inventário. Mesma URL codificada na etiqueta."""
+    spool = db.get_spool(spool_id)
+    if not spool:
+        abort(404)
+    base_url = db.get_setting("app_base_url", "http://localhost:5000")
+    url = f"{base_url.rstrip('/')}/spools/{spool_id}"
+    buf = io.BytesIO()
+    lbl._make_qr_image(url).save(buf, format="PNG")
+    return Response(buf.getvalue(), mimetype="image/png")
+
+
 @app.route("/api/niimbot/registry")
 @login_required
 def niimbot_registry():
@@ -716,25 +743,26 @@ def quick_weigh():
         code = request.form.get("spool_code", "").strip()
         m = re.search(r'\d+', code)
         if not m:
-            flash("Código de spool inválido", "danger")
+            flash(t("Código de rolo inválido"), "danger")
             return render_template("spools/weigh_quick.html")
         spool_id = int(m.group())
         spool = db.get_spool(spool_id)
         if not spool:
-            flash(f"Spool SP-{spool_id:04d} não encontrado", "danger")
+            flash(t("Rolo SP-{code} não encontrado").format(code=f"{spool_id:04d}"), "danger")
             return render_template("spools/weigh_quick.html")
         try:
             gross = float(request.form.get("gross_weight_g", "").replace(",", "."))
         except ValueError:
-            flash("Peso bruto inválido", "danger")
+            flash(t("Peso bruto inválido"), "danger")
             return render_template("spools/weigh_quick.html")
         tare = float(spool["effective_tare_g"])
         if gross < tare:
-            flash(f"Peso bruto ({gross:.0f}g) menor que tara ({tare:.0f}g). Verifique.", "warning")
+            flash(t("Peso bruto ({g:.0f}g) menor que tara ({t:.0f}g). Verifique.").format(g=gross, t=tare), "warning")
         else:
             db.add_weight_reading(spool_id, gross, tare, recorded_by=session.get("username", ""))
             net = gross - tare
-            flash(f"SP-{spool_id:04d} — {net:.0f}g de filamento (bruto {gross:.0f}g − tara {tare:.0f}g)", "success")
+            flash(t("SP-{code} — {n:.0f}g de filamento (bruto {g:.0f}g − tara {t:.0f}g)").format(
+                code=f"{spool_id:04d}", n=net, g=gross, t=tare), "success")
         return redirect(url_for("quick_weigh"))
     return render_template("spools/weigh_quick.html")
 
@@ -763,7 +791,7 @@ def label_queue():
 @login_required
 def label_queue_add(spool_id):
     db.queue_add(spool_id)
-    flash("Adicionado à fila de impressão", "success")
+    flash(t("Adicionado à fila de impressão"), "success")
     next_url = request.form.get("next") or url_for("spools_detail", spool_id=spool_id)
     return redirect(next_url)
 
@@ -779,9 +807,7 @@ def label_queue_add_all():
             added += 1
         except Exception:
             pass
-    noun = "spool" if added == 1 else "spools"
-    verb = "adicionado" if added == 1 else "adicionados"
-    flash(f"{added} {noun} {verb} à fila de impressão", "success")
+    flash(t("{n} rolo(s) adicionado(s) à fila de impressão").format(n=added), "success")
     return redirect(request.form.get("next") or url_for("spools_list"))
 
 
@@ -798,7 +824,7 @@ def label_queue_remove(spool_id):
 def label_queue_print():
     items = db.queue_list()
     if not items:
-        flash("Fila vazia", "warning")
+        flash(t("Fila vazia"), "warning")
         return redirect(url_for("label_queue"))
     base_url = db.get_setting("app_base_url", "http://localhost:5000")
     w = float(db.get_setting("label_width_mm", "60"))
@@ -822,9 +848,7 @@ def label_queue_remove_all():
             removed += 1
         except Exception:
             pass
-    noun = "spool" if removed == 1 else "spools"
-    verb = "removido" if removed == 1 else "removidos"
-    flash(f"{removed} {noun} {verb} da fila", "success")
+    flash(t("{n} rolo(s) removido(s) da fila").format(n=removed), "success")
     return redirect(request.form.get("next") or url_for("spools_list"))
 
 
@@ -832,11 +856,25 @@ def label_queue_remove_all():
 @login_required
 def label_queue_clear():
     db.queue_clear()
-    flash("Fila limpa", "success")
+    flash(t("Fila limpa"), "success")
     return redirect(url_for("label_queue"))
 
 
 # ── Reports ────────────────────────────────────────────────────────────────
+
+@app.route("/reports/stats")
+@login_required
+def report_stats():
+    return render_template("reports/stats.html", stats=db.stats_counts())
+
+
+@app.route("/reports/inventory")
+@login_required
+def report_inventory():
+    q = request.args.get("q", "").strip()
+    items = db.list_inventory(q or None)
+    return render_template("reports/inventory.html", items=items, q=q)
+
 
 @app.route("/reports/by-material")
 @login_required
@@ -891,12 +929,12 @@ def admin_users_new():
     password = request.form.get("password", "")
     role = request.form.get("role", "viewer")
     if not username or not password:
-        flash("Usuário e senha são obrigatórios", "danger")
+        flash(t("Usuário e senha são obrigatórios"), "danger")
     elif db.get_user_by_username(username):
-        flash("Usuário já existe", "danger")
+        flash(t("Usuário já existe"), "danger")
     else:
         db.create_user(username, generate_password_hash(password), role)
-        flash(f"Usuário {username} criado", "success")
+        flash(t("Usuário {u} criado").format(u=username), "success")
     return redirect(url_for("admin_users"))
 
 
@@ -905,10 +943,10 @@ def admin_users_new():
 def admin_users_password(user_id):
     password = request.form.get("password", "")
     if not password:
-        flash("Senha não pode ser vazia", "danger")
+        flash(t("Senha não pode ser vazia"), "danger")
     else:
         db.update_user_password(user_id, generate_password_hash(password))
-        flash("Senha atualizada", "success")
+        flash(t("Senha atualizada"), "success")
     return redirect(url_for("admin_users"))
 
 
@@ -916,10 +954,10 @@ def admin_users_password(user_id):
 @admin_required
 def admin_users_delete(user_id):
     if user_id == session["user_id"]:
-        flash("Você não pode deletar seu próprio usuário", "danger")
+        flash(t("Você não pode deletar seu próprio usuário"), "danger")
     else:
         db.delete_user(user_id)
-        flash("Usuário removido", "success")
+        flash(t("Usuário removido"), "success")
     return redirect(url_for("admin_users"))
 
 
@@ -936,13 +974,13 @@ def admin_brand_fetch():
     brand_name = request.form.get("brand_name", "").strip()
     domain = request.form.get("domain", "").strip()
     if not brand_name or not domain:
-        flash("Marca e domínio são obrigatórios", "danger")
+        flash(t("Marca e domínio são obrigatórios"), "danger")
         return redirect(url_for("admin_brands"))
     db.update_brand_domain(brand_name, domain)
     if _fetch_brand_logo(brand_name, domain):
-        flash(f"Logo de '{brand_name}' baixado com sucesso", "success")
+        flash(t("Logo de '{brand}' baixado com sucesso").format(brand=brand_name), "success")
     else:
-        flash(f"Não foi possível baixar o logo via Clearbit para '{domain}'", "warning")
+        flash(t("Não foi possível baixar o logo via Clearbit para '{domain}'").format(domain=domain), "warning")
     return redirect(url_for("admin_brands"))
 
 
@@ -951,24 +989,24 @@ def admin_brand_fetch():
 def admin_brand_upload():
     brand_name = request.form.get("brand_name", "").strip()
     if not brand_name or "logo" not in request.files:
-        flash("Selecione um arquivo", "danger")
+        flash(t("Selecione um arquivo"), "danger")
         return redirect(url_for("admin_brands"))
     f = request.files["logo"]
     if not f.filename:
-        flash("Arquivo inválido", "danger")
+        flash(t("Arquivo inválido"), "danger")
         return redirect(url_for("admin_brands"))
     ext = Path(f.filename).suffix.lower()
     # SVG omitido de propósito: pode embutir <script> e virar XSS armazenado
     # quando servido same-origin a partir de /static/brands/.
     if ext not in ('.png', '.jpg', '.jpeg', '.webp'):
-        flash("Formato não suportado (PNG, JPG ou WEBP)", "danger")
+        flash(t("Formato não suportado (PNG, JPG ou WEBP)"), "danger")
         return redirect(url_for("admin_brands"))
     BRANDS_DIR.mkdir(exist_ok=True)
     slug = re.sub(r'[^a-z0-9]+', '-', brand_name.lower()).strip('-')
     logo_path = f"brands/{slug}{ext}"
     f.save(str(BRANDS_DIR / f"{slug}{ext}"))
     db.update_brand_logo_path(brand_name, logo_path)
-    flash(f"Logo de '{brand_name}' salvo", "success")
+    flash(t("Logo de '{brand}' salvo").format(brand=brand_name), "success")
     return redirect(url_for("admin_brands"))
 
 
@@ -985,7 +1023,7 @@ def admin_settings():
         db.set_setting("niimbot_model", model if model in reg.PRINTER_MODELS else reg.DEFAULT_MODEL)
         size = request.form.get("niimbot_label_size", reg.DEFAULT_SIZE).strip()
         db.set_setting("niimbot_label_size", size if size in reg.LABEL_SIZES else reg.DEFAULT_SIZE)
-        flash("Configurações salvas", "success")
+        flash(t("Configurações salvas"), "success")
         return redirect(url_for("admin_settings"))
     settings = db.get_all_settings()
     return render_template(
@@ -1087,17 +1125,17 @@ def admin_backup_download():
 def admin_backup_restore():
     f = request.files.get("backup")
     if not f or not f.filename:
-        flash("Selecione um arquivo de backup (.zip)", "danger")
+        flash(t("Selecione um arquivo de backup (.zip)"), "danger")
         return redirect(url_for("admin_backup"))
     try:
         zf = zipfile.ZipFile(io.BytesIO(f.read()))
     except Exception:
-        flash("Arquivo inválido — não é um .zip de backup", "danger")
+        flash(t("Arquivo inválido — não é um .zip de backup"), "danger")
         return redirect(url_for("admin_backup"))
 
     names = zf.namelist()
     if "spool.db" not in names:
-        flash("Backup inválido: spool.db ausente no arquivo", "danger")
+        flash(t("Backup inválido: spool.db ausente no arquivo"), "danger")
         return redirect(url_for("admin_backup"))
 
     # Grava o DB do backup num temp e valida antes de tocar no banco ativo.
@@ -1106,7 +1144,7 @@ def admin_backup_restore():
         tmp.write(zf.read("spool.db"))
         tmp.close()
         if not db.is_valid_backup_db(tmp.name):
-            flash("Backup inválido: o banco não tem a estrutura do Spool Control", "danger")
+            flash(t("Backup inválido: o banco não tem a estrutura do Spool Control"), "danger")
             return redirect(url_for("admin_backup"))
         db.restore_from(tmp.name)
     finally:
@@ -1124,8 +1162,7 @@ def admin_backup_restore():
         (BRANDS_DIR / base).write_bytes(zf.read(name))
         restored_logos += 1
 
-    flash(f"Backup restaurado com sucesso ({restored_logos} logo(s)). "
-          "Recomendado sair e entrar novamente.", "success")
+    flash(t("Backup restaurado com sucesso ({n} logo(s)). Recomendado sair e entrar novamente.").format(n=restored_logos), "success")
     return redirect(url_for("admin_backup"))
 
 
@@ -1140,12 +1177,12 @@ def health():
 
 @app.errorhandler(403)
 def err_403(e):
-    return render_template("error.html", code=403, message="Acesso negado"), 403
+    return render_template("error.html", code=403, message=t("Acesso negado")), 403
 
 
 @app.errorhandler(404)
 def err_404(e):
-    return render_template("error.html", code=404, message="Página não encontrada"), 404
+    return render_template("error.html", code=404, message=t("Página não encontrada")), 404
 
 
 if __name__ == "__main__":

@@ -1,19 +1,19 @@
 {% extends "base.html" %}
-{% block title %}{{ 'Editar' if spool else 'Novo' }} Spool — Spool Control{% endblock %}
+{% block title %}{{ _('Editar Spool') if spool else _('Novo Spool') }} — Spool Control{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-md-8 col-lg-7">
     <div class="d-flex align-items-center mb-3">
       <a href="{{ url_for('spools_list') }}" class="btn btn-sm btn-outline-secondary me-2"><i class="bi bi-arrow-left"></i></a>
-      <h4 class="mb-0 fw-bold">{% if spool %}Editar SP-{{ '%04d'|format(spool.id) }}{% else %}Novo Spool{% endif %}</h4>
+      <h4 class="mb-0 fw-bold">{% if spool %}{{ _('Editar') }} SP-{{ '%04d'|format(spool.id) }}{% else %}{{ _('Novo Spool') }}{% endif %}</h4>
     </div>
     <div class="card">
       <div class="card-body">
         <form method="post" id="spoolForm">
           <div class="mb-3">
-            <label class="form-label fw-semibold">Filamento <span class="text-danger">*</span></label>
+            <label class="form-label fw-semibold">{{ _('Filamento') }} <span class="text-danger">*</span></label>
             <select name="filament_id" id="filamentSel" class="form-select" required>
-              <option value="">Selecione um filamento...</option>
+              <option value="">{{ _('Selecione um filamento...') }}</option>
               {% for f in filaments %}
               <option value="{{ f.id }}"
                       data-color="{{ f.color_hex or '' }}"
@@ -27,16 +27,16 @@
               <span id="filColorSwatch" style="width:20px;height:20px;border-radius:4px;border:1px solid #ccc;flex-shrink:0"></span>
               <span id="filColorHex" class="text-muted small font-monospace"></span>
               <a id="filEditLink" href="#" target="_blank" class="btn btn-sm btn-outline-secondary ms-auto">
-                <i class="bi bi-pencil me-1"></i>Editar cor / filamento
+                <i class="bi bi-pencil me-1"></i>{{ _('Editar cor / filamento') }}
               </a>
             </div>
           </div>
 
           <div class="row g-3">
             <div class="col-md-6">
-              <label class="form-label fw-semibold">Modelo de Carretel Vazio</label>
+              <label class="form-label fw-semibold">{{ _('Modelo de Carretel Vazio') }}</label>
               <select name="spool_model_id" class="form-select" id="spoolModelSelect">
-                <option value="">Tara personalizada / desconhecida</option>
+                <option value="">{{ _('Tara personalizada / desconhecida') }}</option>
                 {% for m in spool_models %}
                 <option value="{{ m.id }}" data-tare="{{ m.tare_weight_g }}"
                   {% if spool and spool.spool_model_id == m.id %}selected{% endif %}>
@@ -46,30 +46,30 @@
               </select>
             </div>
             <div class="col-md-6">
-              <label class="form-label fw-semibold">Tara Personalizada (g)</label>
+              <label class="form-label fw-semibold">{{ _('Tara Personalizada (g)') }}</label>
               <input type="number" name="custom_tare_g" id="customTare" class="form-control" step="0.1" min="0"
                      value="{{ spool.custom_tare_g if spool and spool.custom_tare_g else '' }}"
-                     placeholder="Deixe em branco se usar o modelo acima">
+                     placeholder="{{ _('Deixe em branco se usar o modelo acima') }}">
               <div class="form-text" id="tareHint"></div>
             </div>
             <div class="col-md-6">
-              <label class="form-label fw-semibold">Peso Nominal do Filamento (g)</label>
+              <label class="form-label fw-semibold">{{ _('Peso Nominal do Filamento (g)') }}</label>
               <input type="number" name="nominal_weight_g" class="form-control" step="1" min="1"
                      value="{{ spool.nominal_weight_g|int if spool else 1000 }}" required>
-              <div class="form-text">Peso declarado na embalagem (ex: 1000g).</div>
+              <div class="form-text">{{ _('Peso declarado na embalagem (ex: 1000g).') }}</div>
             </div>
             <div class="col-md-6">
-              <label class="form-label fw-semibold">Local de Armazenamento</label>
+              <label class="form-label fw-semibold">{{ _('Local de Armazenamento') }}</label>
               <input type="text" name="location" class="form-control"
-                     value="{{ spool.location if spool else '' }}" placeholder="ex: Gaveta A3, Prateleira 2">
+                     value="{{ spool.location if spool else '' }}" placeholder="{{ _('ex: Gaveta A3, Prateleira 2') }}">
             </div>
             <div class="col-md-6">
-              <label class="form-label fw-semibold">Data de Compra</label>
+              <label class="form-label fw-semibold">{{ _('Data de Compra') }}</label>
               <input type="date" name="purchase_date" class="form-control"
                      value="{{ spool.purchase_date if spool else '' }}">
             </div>
             <div class="col-md-6">
-              <label class="form-label fw-semibold">Preço</label>
+              <label class="form-label fw-semibold">{{ _('Preço') }}</label>
               <div class="input-group">
                 <span class="input-group-text">R$</span>
                 <input type="text" name="purchase_price" id="priceInput" class="form-control"
@@ -78,18 +78,18 @@
               </div>
             </div>
             <div class="col-12">
-              <label class="form-label fw-semibold">Notas</label>
+              <label class="form-label fw-semibold">{{ _('Notas') }}</label>
               <textarea name="notes" class="form-control" rows="2">{{ spool.notes if spool else '' }}</textarea>
             </div>
           </div>
 
           <div class="mt-4 d-flex gap-2 align-items-center">
-            <button type="submit" class="btn btn-dark">Salvar</button>
-            <a href="{{ url_for('spools_detail', spool_id=spool.id) if spool else url_for('spools_list') }}" class="btn btn-outline-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-dark">{{ _('Salvar') }}</button>
+            <a href="{{ url_for('spools_detail', spool_id=spool.id) if spool else url_for('spools_list') }}" class="btn btn-outline-secondary">{{ _('Cancelar') }}</a>
             {% if spool and spool.active %}
             <form method="post" action="{{ url_for('spools_deactivate', spool_id=spool.id) }}" class="ms-auto"
-                  onsubmit="return confirm('Marcar spool como finalizado?')">
-              <button type="submit" class="btn btn-outline-danger btn-sm">Finalizar Spool</button>
+                  onsubmit="return confirm('{{ _('Marcar spool como finalizado?') }}')">
+              <button type="submit" class="btn btn-outline-danger btn-sm">{{ _('Finalizar Spool') }}</button>
             </form>
             {% endif %}
           </div>
@@ -113,7 +113,7 @@ function updateFilamentPreview() {
   filMeta.style.removeProperty('display');
   const color = opt.dataset.color;
   filSwatch.style.background = color || '#e0e0e0';
-  filHex.textContent = color || '(sem cor)';
+  filHex.textContent = color || "{{ _('(sem cor)') }}";
   filEdit.href = opt.dataset.editUrl || '#';
 }
 filamentSel.addEventListener('change', updateFilamentPreview);
@@ -125,7 +125,7 @@ const hint = document.getElementById('tareHint');
 function updateTareHint() {
   const opt = sel.options[sel.selectedIndex];
   const tare = opt.dataset.tare;
-  hint.textContent = tare ? `Tara do modelo: ${parseFloat(tare).toFixed(0)}g` : '';
+  hint.textContent = tare ? "{{ _('Tara do modelo') }}: " + parseFloat(tare).toFixed(0) + 'g' : '';
 }
 sel.addEventListener('change', updateTareHint);
 updateTareHint();

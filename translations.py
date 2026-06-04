@@ -1,7 +1,7 @@
-SUPPORTED = ("pt", "en")
+SUPPORTED = ("pt", "en", "es")
 
 _EN = {
-    # Nav
+    # ── Nav ──────────────────────────────────────────────────────────────────
     "Filamentos":         "Filaments",
     "Spools":             "Spools",
     "Carretéis":          "Empty Spools",
@@ -13,6 +13,8 @@ _EN = {
     "Estoque Baixo":      "Low Stock",
     "Histórico de Peso":  "Weight History",
     "Fila de Etiquetas":  "Label Queue",
+    "Estatísticas":       "Statistics",
+    "Inventário":         "Inventory",
     "Admin":              "Admin",
     "Usuários":           "Users",
     "Marcas / Logos":     "Brands / Logos",
@@ -20,8 +22,10 @@ _EN = {
     "Buscar...":          "Search...",
     "Sair":               "Logout",
     "Tema":               "Theme",
+    "Login":              "Login",
+    "Entrar":             "Sign in",
 
-    # Updates
+    # ── Updates ──────────────────────────────────────────────────────────────
     "Atualizações":         "Updates",
     "Nova":                 "New",
     "Versão atual":         "Current version",
@@ -40,7 +44,7 @@ _EN = {
     "Concluído! Recarregando…": "Done! Reloading…",
     "Falha ao iniciar a atualização": "Failed to start the update",
 
-    # Backup / restore
+    # ── Backup / restore ─────────────────────────────────────────────────────
     "Backup":               "Backup",
     "Backup e restauração": "Backup & restore",
     "Fazer backup":         "Create backup",
@@ -57,28 +61,54 @@ _EN = {
     "Após reinstalar o sistema, restaure aqui o último backup para recuperar tudo.":
         "After reinstalling the system, restore your latest backup here to recover everything.",
 
-    # Lists — headers
+    # ── Headers / common ─────────────────────────────────────────────────────
     "Material":           "Material",
     "Marca":              "Brand",
+    "Marcas":             "Brands",
+    "Materiais":          "Materials",
+    "Famílias de cor":    "Color families",
     "Família":            "Family",
     "Spools Ativos":      "Active Spools",
     "Total":              "Total",
     "Local":              "Location",
+    "Peso":               "Weight",
     "Peso Atual":         "Current Weight",
     "Status":             "Status",
     "Nominal":            "Nominal",
     "Marca / Família":    "Brand / Family",
+    "Nome":               "Name",
+    "Data/Hora":          "Date/Time",
+    "Bruto (g)":          "Gross (g)",
+    "Tara (g)":           "Tare (g)",
+    "Net (g)":            "Net (g)",
+    "Sem dados":          "No data",
+    "ativos":             "active",
+    "total":              "total",
 
-    # Filaments list
+    # ── Filaments ────────────────────────────────────────────────────────────
     "Filtrar...":                    "Filter...",
     "+ Novo Filamento":              "+ New Filament",
     "Novo Filamento":                "New Filament",
+    "Editar Filamento":              "Edit Filament",
     "Filamento":                     "Filament",
     "Nenhum filamento cadastrado":   "No filaments registered",
     "Duplicar filamento":            "Duplicate filament",
     "Remover filamento":             "Delete filament",
+    "Remover o filamento":           "Delete filament",
+    "spool(s) vinculado(s) — remova-os antes de excluir":
+        "linked spool(s) — remove them before deleting",
+    "ex: Basic, Matte, Rapid, HS":   "e.g.: Basic, Matte, Rapid, HS",
+    "Cor (hex)":                     "Color (hex)",
+    "Diâmetro (mm)":                 "Diameter (mm)",
+    "Pesquise ou digite...":         "Search or type...",
+    "Remover este filamento?":       "Remove this filament?",
+    "Diâmetro":                      "Diameter",
+    "Notas":                         "Notes",
+    "Carretel Vazio":                "Empty Spool",
+    "Ativo":                         "Active",
+    "Finalizado":                    "Finished",
 
-    # Spools list
+    # ── Spools ───────────────────────────────────────────────────────────────
     "todos":                "all",
     "Ver finalizados":      "View finished",
     "Só ativos":            "Active only",
@@ -86,58 +116,641 @@ _EN = {
     "Todos":                "All",
     "+ Novo Spool":         "+ New Spool",
     "Novo Spool":           "New Spool",
+    "Editar Spool":         "Edit Spool",
+    "Finalizar Spool":      "Finish Spool",
+    "Marcar spool como finalizado?": "Mark spool as finished?",
     "Nenhum spool encontrado": "No spools found",
-
-    # Filament detail
-    "Diâmetro":                  "Diameter",
-    "Notas":                     "Notes",
-    "Carretel Vazio":            "Empty Spool",
     "Nenhum spool cadastrado":   "No spools registered",
-    "Ativo":                     "Active",
-    "Finalizado":                "Finished",
+    "Filtrar por Spool":    "Filter by Spool",
+    "Todos os spools":      "All spools",
+    "Spool":                "Spool",
+    "Código do Spool":      "Spool Code",
+    "Ver todos os spools":  "View all spools",
+    "Nenhum spool abaixo do threshold configurado.": "No spool below the configured threshold.",
+    "Adicione spools pela página de detalhe ou ao cadastrar um novo.":
+        "Add spools from the detail page or when registering a new one.",
+    "Use a barra de busca no topo para pesquisar spools e filamentos.":
+        "Use the search bar at the top to look up spools and filaments.",
+    "Detalhe do Spool":     "Spool detail",
+    # Spool form
+    "Selecione um filamento...":   "Select a filament...",
+    "Editar cor / filamento":      "Edit color / filament",
+    "Modelo de Carretel Vazio":    "Empty Spool Model",
+    "Tara personalizada / desconhecida": "Custom / unknown tare",
+    "Tara Personalizada (g)":      "Custom Tare (g)",
+    "Deixe em branco se usar o modelo acima": "Leave blank if using the model above",
+    "Peso Nominal do Filamento (g)": "Nominal Filament Weight (g)",
+    "Peso declarado na embalagem (ex: 1000g).": "Weight stated on the package (e.g.: 1000g).",
+    "Local de Armazenamento":      "Storage Location",
+    "ex: Gaveta A3, Prateleira 2": "e.g.: Drawer A3, Shelf 2",
+    "Data de Compra":              "Purchase Date",
+    "Preço":                       "Price",
+    "(sem cor)":                   "(no color)",
+    "Tara do modelo":              "Model tare",
 
-    # Dashboard
+    # ── Weigh ────────────────────────────────────────────────────────────────
+    "Registrar Peso":              "Record Weight",
+    "Tara do carretel":            "Spool tare",
+    "Último peso registrado":      "Last recorded weight",
+    "Peso Bruto na Balança (g)":   "Gross Weight on Scale (g)",
+    "ex: 1182":                    "e.g.: 1182",
+    "Peso do rolo completo (filamento + carretel vazio).": "Weight of the full roll (filament + empty spool).",
+    "de filamento disponível":     "of filament available",
+    "Notas (opcional)":            "Notes (optional)",
+    "ex: pré-impressão longa":     "e.g.: long pre-print",
+    "Salvar Pesagem":              "Save Weighing",
+    "de tara":                     "of tare",
+    "Pesagem Rápida":              "Quick Weigh",
+    "Aceita SP-0001, SP0001 ou somente o número.": "Accepts SP-0001, SP0001 or just the number.",
+    "Peso Bruto (g)":              "Gross Weight (g)",
+    "Peso total com o carretel. A tara é subtraída automaticamente.":
+        "Total weight with the spool. Tare is subtracted automatically.",
+
+    # ── Weigh modal ──────────────────────────────────────────────────────────
+    "Peso bruto (g)":               "Gross weight (g)",
+    "Erro de rede. Tente novamente.": "Network error. Please try again.",
+    "% disponível":                 "% available",
+    "% de estoque disponível":      "% stock available",
+    "Registrar":                    "Register",
+
+    # ── Label queue / printing ───────────────────────────────────────────────
+    "Imprimir":             "Print",
+    "Imprimir PDF":         "Print PDF",
+    "Imprimir Niimbot":     "Print Niimbot",
+    "Imprimir Tudo":        "Print All",
+    "Limpar Fila":          "Clear Queue",
+    "Nenhuma etiqueta na fila.": "No labels in the queue.",
+    "Após imprimir, você pode limpar a fila clicando em \"Limpar Fila\".":
+        "After printing, you can clear the queue by clicking \"Clear Queue\".",
+
+    # ── Dashboard ────────────────────────────────────────────────────────────
     "Dashboard":          "Dashboard",
     "Restante":           "Remaining",
     "Pesagens Recentes":  "Recent Weighings",
     "Quando":             "When",
     "Peso Net":           "Net Weight",
 
-    # Filament form
-    "Editar Filamento":          "Edit Filament",
-    "Cor (hex)":                 "Color (hex)",
-    "Diâmetro (mm)":             "Diameter (mm)",
-    "Pesquise ou digite...":     "Search or type...",
-    "Remover":                   "Remove",
-    "Remover este filamento?":   "Remove this filament?",
-
-    # Buttons
+    # ── Buttons ──────────────────────────────────────────────────────────────
     "Ver":       "View",
     "Editar":    "Edit",
     "Salvar":    "Save",
     "Cancelar":  "Cancel",
-    "Registrar": "Register",
-    "Finalizar Spool": "Finish Spool",
+    "Remover":   "Remove",
 
-    # Weigh modal
-    "Peso bruto (g)":               "Gross weight (g)",
-    "Erro de rede. Tente novamente.": "Network error. Please try again.",
-    "% disponível":                 "% available",
-    "% de estoque disponível":      "% stock available",
-
-    # Tooltips / misc
+    # ── Tooltips / misc ──────────────────────────────────────────────────────
     "Adicionar à fila":  "Add to queue",
     "Remover da fila":   "Remove from queue",
+    "Sem local":         "No location set",
 
-    # Reports
+    # ── Reports ──────────────────────────────────────────────────────────────
     "Relatório por Material":  "Report by Material",
     "Relatório por Local":     "Report by Location",
     "Histórico":               "History",
+    "Histórico de Pesagens":   "Weighing History",
+    "Filtrar por Filamento":   "Filter by Filament",
+    "Todos os filamentos":     "All filaments",
+    "Filtrar":                 "Filter",
+    "Limpar":                  "Clear",
+    "Nenhuma pesagem registrada": "No weighings recorded",
+    "Estoque por Material":    "Stock by Material",
+    "Estoque por Local":       "Stock by Location",
+    "Total Net (g)":           "Total Net (g)",
+    "Total Net (kg)":          "Total Net (kg)",
+    "Nominal (kg)":            "Nominal (kg)",
+    "Distribuição":            "Distribution",
+    "Critério: peso atual":    "Criteria: current weight",
+    "OU":                      "OR",
+    "do nominal.":             "of nominal.",
+    "Ajustar threshold":       "Adjust threshold",
+    "Busca":                   "Search",
+    "Resultados para":         "Results for",
+    "Nenhum resultado encontrado para": "No results found for",
+
+    # ── Admin: users ─────────────────────────────────────────────────────────
+    "Gerenciamento de Usuários": "User Management",
+    "Novo Usuário":              "New User",
+    "Usuário":                   "User",
+    "Senha":                     "Password",
+    "Perfil":                    "Role",
+    "Viewer (somente leitura)":  "Viewer (read only)",
+    "Admin (acesso total)":      "Admin (full access)",
+    "Criar Usuário":             "Create User",
+    "Usuários Cadastrados":      "Registered Users",
+    "Criado em":                 "Created on",
+    "você":                      "you",
+    "Alterar senha de":          "Change password for",
+    "Nova senha":                "New password",
+
+    # ── Admin: brands ────────────────────────────────────────────────────────
+    "Informe o domínio da marca para buscar o logo automaticamente via":
+        "Enter the brand domain to fetch the logo automatically via",
+    "e salvar localmente. Ou faça upload manual de um arquivo PNG/JPG/SVG.":
+        "and save it locally. Or upload a PNG/JPG/SVG file manually.",
+    "filamento(s)":              "filament(s)",
+    "ex: bambulab.com":          "e.g.: bambulab.com",
+    "Upload":                    "Upload",
+    "Nenhuma marca cadastrada. Adicione filamentos primeiro.":
+        "No brands registered. Add filaments first.",
+
+    # ── Admin: settings ──────────────────────────────────────────────────────
+    "Configurações do Sistema":  "System Settings",
+    "Geral":                     "General",
+    "URL Base do Sistema":       "System Base URL",
+    "Usada para gerar o QR code nas etiquetas. Deve ser acessível pelo celular.":
+        "Used to generate the QR code on labels. Must be reachable from the phone.",
+    "Threshold (g)":             "Threshold (g)",
+    "Threshold (%)":             "Threshold (%)",
+    "Peso mínimo antes de sinalizar.": "Minimum weight before flagging.",
+    "Porcentagem mínima do nominal.":  "Minimum percentage of nominal.",
+    "Etiquetas":                 "Labels",
+    "Largura":                   "Width",
+    "Altura":                    "Height",
+    "Tamanho do PDF gerado para impressão térmica. Padrão:":
+        "Size of the PDF generated for thermal printing. Default:",
+    "Fontes e QR code escalam automaticamente.": "Fonts and QR code scale automatically.",
+    "Impressão Direta (Niimbot)": "Direct Printing (Niimbot)",
+    "Modelo da impressora":      "Printer model",
+    "Tamanho da etiqueta":       "Label size",
+    "Usado pelo botão":          "Used by the button",
+    "(Web Bluetooth, direto do navegador). Requer Chrome/Edge em HTTPS. Não afeta o PDF acima.":
+        "(Web Bluetooth, straight from the browser). Requires Chrome/Edge over HTTPS. Does not affect the PDF above.",
+    "Salvar Configurações":      "Save Settings",
+
+    # ── Error page ───────────────────────────────────────────────────────────
+    "Erro":                      "Error",
+    "Voltar ao início":          "Back to home",
+    "Acesso negado":             "Access denied",
+    "Página não encontrada":     "Page not found",
+
+    # ── Spool models ─────────────────────────────────────────────────────────
+    "+ Novo Modelo":             "+ New Model",
+    "Cadastre os modelos de carretel vazio para que o sistema possa calcular o peso real de filamento disponível.":
+        "Register empty spool models so the system can calculate the real available filament weight.",
+    "Tara (g)":                  "Tare (g)",
+    "Nenhum modelo cadastrado":  "No models registered",
+    "Editar Modelo":             "Edit Model",
+    "Novo Modelo":               "New Model",
+    "Novo Modelo de Carretel":   "New Spool Model",
+    "ex: Bambu Lab Standard 1kg": "e.g.: Bambu Lab Standard 1kg",
+    "Peso do Carretel Vazio (g)": "Empty Spool Weight (g)",
+    "ex: 250":                   "e.g.: 250",
+    "Pese o carretel físico sem filamento.": "Weigh the physical spool with no filament.",
+
+    # ── Flash / mensagens do servidor ────────────────────────────────────────
+    "Sessão expirada ou token inválido. Tente novamente.": "Session expired or invalid token. Please try again.",
+    "Muitas tentativas. Aguarde {min} minutos e tente novamente.": "Too many attempts. Wait {min} minutes and try again.",
+    "Usuário ou senha incorretos": "Incorrect username or password",
+    "Filamento cadastrado com sucesso": "Filament registered successfully",
+    "Filamento atualizado": "Filament updated",
+    "Filamento duplicado — editando cópia": "Filament duplicated — editing copy",
+    "Filamento removido": "Filament removed",
+    "Filamento possui spools associados": "Filament has associated spools",
+    "Modelo de carretel cadastrado": "Spool model registered",
+    "Modelo atualizado": "Model updated",
+    "Modelo removido": "Model removed",
+    "Modelo em uso por spools existentes": "Model in use by existing spools",
+    "Rolo cadastrado com sucesso": "Spool registered successfully",
+    "Rolo atualizado": "Spool updated",
+    "Rolo marcado como finalizado": "Spool marked as finished",
+    "Peso bruto ({g:.0f}g) menor que tara ({t:.0f}g). Verifique.": "Gross weight ({g:.0f}g) lower than tare ({t:.0f}g). Please check.",
+    "Peso registrado: {n:.0f}g de filamento": "Weight recorded: {n:.0f}g of filament",
+    "Valor inválido": "Invalid value",
+    "Código de rolo inválido": "Invalid spool code",
+    "Rolo SP-{code} não encontrado": "Spool SP-{code} not found",
+    "Peso bruto inválido": "Invalid gross weight",
+    "SP-{code} — {n:.0f}g de filamento (bruto {g:.0f}g − tara {t:.0f}g)": "SP-{code} — {n:.0f}g of filament (gross {g:.0f}g − tare {t:.0f}g)",
+    "Adicionado à fila de impressão": "Added to the print queue",
+    "{n} rolo(s) adicionado(s) à fila de impressão": "{n} spool(s) added to the print queue",
+    "Fila vazia": "Queue empty",
+    "{n} rolo(s) removido(s) da fila": "{n} spool(s) removed from the queue",
+    "Fila limpa": "Queue cleared",
+    "Usuário e senha são obrigatórios": "Username and password are required",
+    "Usuário já existe": "User already exists",
+    "Usuário {u} criado": "User {u} created",
+    "Senha não pode ser vazia": "Password cannot be empty",
+    "Senha atualizada": "Password updated",
+    "Você não pode deletar seu próprio usuário": "You cannot delete your own user",
+    "Usuário removido": "User removed",
+    "Marca e domínio são obrigatórios": "Brand and domain are required",
+    "Logo de '{brand}' baixado com sucesso": "Logo for '{brand}' downloaded successfully",
+    "Não foi possível baixar o logo via Clearbit para '{domain}'": "Could not download the logo via Clearbit for '{domain}'",
+    "Selecione um arquivo": "Select a file",
+    "Arquivo inválido": "Invalid file",
+    "Formato não suportado (PNG, JPG ou WEBP)": "Unsupported format (PNG, JPG or WEBP)",
+    "Logo de '{brand}' salvo": "Logo for '{brand}' saved",
+    "Configurações salvas": "Settings saved",
+    "Selecione um arquivo de backup (.zip)": "Select a backup file (.zip)",
+    "Arquivo inválido — não é um .zip de backup": "Invalid file — not a backup .zip",
+    "Backup inválido: spool.db ausente no arquivo": "Invalid backup: spool.db missing in the file",
+    "Backup inválido: o banco não tem a estrutura do Spool Control": "Invalid backup: the database doesn't have the Spool Control structure",
+    "Backup restaurado com sucesso ({n} logo(s)). Recomendado sair e entrar novamente.": "Backup restored successfully ({n} logo(s)). It's recommended to log out and back in.",
+
+    # ── Color buckets (stats) ────────────────────────────────────────────────
+    "Preto":    "Black",
+    "Branco":   "White",
+    "Cinza":    "Gray",
+    "Vermelho": "Red",
+    "Laranja":  "Orange",
+    "Amarelo":  "Yellow",
+    "Verde":    "Green",
+    "Ciano":    "Cyan",
+    "Azul":     "Blue",
+    "Roxo":     "Purple",
+    "Rosa":     "Pink",
+    "Marrom":   "Brown",
 }
+
+_ES = {
+    # ── Nav ──────────────────────────────────────────────────────────────────
+    "Filamentos":         "Filamentos",
+    "Spools":             "Bobinas",
+    "Carretéis":          "Carretes Vacíos",
+    "Carretéis Vazios":   "Carretes Vacíos",
+    "Pesar":              "Pesar",
+    "Relatórios":         "Informes",
+    "Por Material":       "Por Material",
+    "Por Local":          "Por Ubicación",
+    "Estoque Baixo":      "Stock Bajo",
+    "Histórico de Peso":  "Historial de Peso",
+    "Fila de Etiquetas":  "Cola de Etiquetas",
+    "Estatísticas":       "Estadísticas",
+    "Inventário":         "Inventario",
+    "Admin":              "Admin",
+    "Usuários":           "Usuarios",
+    "Marcas / Logos":     "Marcas / Logos",
+    "Configurações":      "Ajustes",
+    "Buscar...":          "Buscar...",
+    "Sair":               "Salir",
+    "Tema":               "Tema",
+    "Login":              "Iniciar sesión",
+    "Entrar":             "Entrar",
+
+    # ── Updates ──────────────────────────────────────────────────────────────
+    "Atualizações":         "Actualizaciones",
+    "Nova":                 "Nueva",
+    "Versão atual":         "Versión actual",
+    "Última versão":        "Última versión",
+    "não verificada":       "no verificada",
+    "Não foi possível verificar a última versão no GitHub. Tente novamente mais tarde.":
+        "No se pudo verificar la última versión en GitHub. Inténtalo de nuevo más tarde.",
+    "Atualização disponível": "Actualización disponible",
+    "Ver novidades":        "Ver novedades",
+    "Atualizar agora":      "Actualizar ahora",
+    "Sistema atualizado":   "Sistema actualizado",
+    "Atualizando… o serviço será reiniciado, aguarde.":
+        "Actualizando… el servicio se reiniciará, espera.",
+    "A atualização baixa a última release publicada e reinicia o serviço. Pode levar 1–2 minutos.":
+        "La actualización descarga la última versión publicada y reinicia el servicio. Puede tardar 1–2 minutos.",
+    "Concluído! Recarregando…": "¡Listo! Recargando…",
+    "Falha ao iniciar a atualização": "Error al iniciar la actualización",
+
+    # ── Backup / restore ─────────────────────────────────────────────────────
+    "Backup":               "Copia de seguridad",
+    "Backup e restauração": "Copia y restauración",
+    "Fazer backup":         "Crear copia",
+    "Baixar backup":        "Descargar copia",
+    "Restaurar backup":     "Restaurar copia",
+    "Baixa um arquivo .zip com o banco de dados (filamentos, spools, usuários, configurações) e os logos das marcas. Guarde-o em local seguro.":
+        "Descarga un .zip con la base de datos (filamentos, bobinas, usuarios, ajustes) y los logos de marcas. Guárdalo en un lugar seguro.",
+    "A restauração substitui TODOS os dados atuais (incluindo usuários e senhas) pelos do arquivo. Não há como desfazer.":
+        "La restauración reemplaza TODOS los datos actuales (incluidos usuarios y contraseñas) por los del archivo. No se puede deshacer.",
+    "Selecione um arquivo .zip gerado por este sistema.":
+        "Selecciona un archivo .zip generado por este sistema.",
+    "Tem certeza? Todos os dados atuais serão substituídos.":
+        "¿Seguro? Todos los datos actuales serán reemplazados.",
+    "Após reinstalar o sistema, restaure aqui o último backup para recuperar tudo.":
+        "Tras reinstalar el sistema, restaura aquí la última copia para recuperar todo.",
+
+    # ── Headers / common ─────────────────────────────────────────────────────
+    "Material":           "Material",
+    "Marca":              "Marca",
+    "Marcas":             "Marcas",
+    "Materiais":          "Materiales",
+    "Famílias de cor":    "Familias de color",
+    "Família":            "Familia",
+    "Spools Ativos":      "Bobinas Activas",
+    "Total":              "Total",
+    "Local":              "Ubicación",
+    "Peso":               "Peso",
+    "Peso Atual":         "Peso Actual",
+    "Status":             "Estado",
+    "Nominal":            "Nominal",
+    "Marca / Família":    "Marca / Familia",
+    "Nome":               "Nombre",
+    "Data/Hora":          "Fecha/Hora",
+    "Bruto (g)":          "Bruto (g)",
+    "Tara (g)":           "Tara (g)",
+    "Net (g)":            "Neto (g)",
+    "Sem dados":          "Sin datos",
+    "ativos":             "activas",
+    "total":              "total",
+
+    # ── Filaments ────────────────────────────────────────────────────────────
+    "Filtrar...":                    "Filtrar...",
+    "+ Novo Filamento":              "+ Nuevo Filamento",
+    "Novo Filamento":                "Nuevo Filamento",
+    "Editar Filamento":              "Editar Filamento",
+    "Filamento":                     "Filamento",
+    "Nenhum filamento cadastrado":   "Ningún filamento registrado",
+    "Duplicar filamento":            "Duplicar filamento",
+    "Remover filamento":             "Eliminar filamento",
+    "Remover o filamento":           "Eliminar el filamento",
+    "spool(s) vinculado(s) — remova-os antes de excluir":
+        "bobina(s) vinculada(s) — elimínalas antes de borrar",
+    "ex: Basic, Matte, Rapid, HS":   "ej.: Basic, Matte, Rapid, HS",
+    "Cor (hex)":                     "Color (hex)",
+    "Diâmetro (mm)":                 "Diámetro (mm)",
+    "Pesquise ou digite...":         "Busca o escribe...",
+    "Remover este filamento?":       "¿Eliminar este filamento?",
+    "Diâmetro":                      "Diámetro",
+    "Notas":                         "Notas",
+    "Carretel Vazio":                "Carrete Vacío",
+    "Ativo":                         "Activo",
+    "Finalizado":                    "Finalizado",
+
+    # ── Spools ───────────────────────────────────────────────────────────────
+    "todos":                "todas",
+    "Ver finalizados":      "Ver finalizadas",
+    "Só ativos":            "Solo activas",
+    "Fila: Todos":          "Cola: Todas",
+    "Todos":                "Todas",
+    "+ Novo Spool":         "+ Nueva Bobina",
+    "Novo Spool":           "Nueva Bobina",
+    "Editar Spool":         "Editar Bobina",
+    "Finalizar Spool":      "Finalizar Bobina",
+    "Marcar spool como finalizado?": "¿Marcar la bobina como finalizada?",
+    "Nenhum spool encontrado": "Ninguna bobina encontrada",
+    "Nenhum spool cadastrado":   "Ninguna bobina registrada",
+    "Filtrar por Spool":    "Filtrar por Bobina",
+    "Todos os spools":      "Todas las bobinas",
+    "Spool":                "Bobina",
+    "Código do Spool":      "Código de la Bobina",
+    "Ver todos os spools":  "Ver todas las bobinas",
+    "Nenhum spool abaixo do threshold configurado.": "Ninguna bobina por debajo del umbral configurado.",
+    "Adicione spools pela página de detalhe ou ao cadastrar um novo.":
+        "Agrega bobinas desde la página de detalle o al registrar una nueva.",
+    "Use a barra de busca no topo para pesquisar spools e filamentos.":
+        "Usa la barra de búsqueda de arriba para buscar bobinas y filamentos.",
+    "Detalhe do Spool":     "Detalle de la bobina",
+    # Spool form
+    "Selecione um filamento...":   "Selecciona un filamento...",
+    "Editar cor / filamento":      "Editar color / filamento",
+    "Modelo de Carretel Vazio":    "Modelo de Carrete Vacío",
+    "Tara personalizada / desconhecida": "Tara personalizada / desconocida",
+    "Tara Personalizada (g)":      "Tara Personalizada (g)",
+    "Deixe em branco se usar o modelo acima": "Deja en blanco si usas el modelo de arriba",
+    "Peso Nominal do Filamento (g)": "Peso Nominal del Filamento (g)",
+    "Peso declarado na embalagem (ex: 1000g).": "Peso indicado en el empaque (ej.: 1000g).",
+    "Local de Armazenamento":      "Lugar de Almacenamiento",
+    "ex: Gaveta A3, Prateleira 2": "ej.: Cajón A3, Estante 2",
+    "Data de Compra":              "Fecha de Compra",
+    "Preço":                       "Precio",
+    "(sem cor)":                   "(sin color)",
+    "Tara do modelo":              "Tara del modelo",
+
+    # ── Weigh ────────────────────────────────────────────────────────────────
+    "Registrar Peso":              "Registrar Peso",
+    "Tara do carretel":            "Tara del carrete",
+    "Último peso registrado":      "Último peso registrado",
+    "Peso Bruto na Balança (g)":   "Peso Bruto en la Balanza (g)",
+    "ex: 1182":                    "ej.: 1182",
+    "Peso do rolo completo (filamento + carretel vazio).": "Peso del rollo completo (filamento + carrete vacío).",
+    "de filamento disponível":     "de filamento disponible",
+    "Notas (opcional)":            "Notas (opcional)",
+    "ex: pré-impressão longa":     "ej.: preimpresión larga",
+    "Salvar Pesagem":              "Guardar Pesaje",
+    "de tara":                     "de tara",
+    "Pesagem Rápida":              "Pesaje Rápido",
+    "Aceita SP-0001, SP0001 ou somente o número.": "Acepta SP-0001, SP0001 o solo el número.",
+    "Peso Bruto (g)":              "Peso Bruto (g)",
+    "Peso total com o carretel. A tara é subtraída automaticamente.":
+        "Peso total con el carrete. La tara se resta automáticamente.",
+
+    # ── Weigh modal ──────────────────────────────────────────────────────────
+    "Peso bruto (g)":               "Peso bruto (g)",
+    "Erro de rede. Tente novamente.": "Error de red. Inténtalo de nuevo.",
+    "% disponível":                 "% disponible",
+    "% de estoque disponível":      "% de stock disponible",
+    "Registrar":                    "Registrar",
+
+    # ── Label queue / printing ───────────────────────────────────────────────
+    "Imprimir":             "Imprimir",
+    "Imprimir PDF":         "Imprimir PDF",
+    "Imprimir Niimbot":     "Imprimir Niimbot",
+    "Imprimir Tudo":        "Imprimir Todo",
+    "Limpar Fila":          "Vaciar Cola",
+    "Nenhuma etiqueta na fila.": "No hay etiquetas en la cola.",
+    "Após imprimir, você pode limpar a fila clicando em \"Limpar Fila\".":
+        "Después de imprimir, puedes vaciar la cola con \"Vaciar Cola\".",
+
+    # ── Dashboard ────────────────────────────────────────────────────────────
+    "Dashboard":          "Panel",
+    "Restante":           "Restante",
+    "Pesagens Recentes":  "Pesajes Recientes",
+    "Quando":             "Cuándo",
+    "Peso Net":           "Peso Neto",
+
+    # ── Buttons ──────────────────────────────────────────────────────────────
+    "Ver":       "Ver",
+    "Editar":    "Editar",
+    "Salvar":    "Guardar",
+    "Cancelar":  "Cancelar",
+    "Remover":   "Eliminar",
+
+    # ── Tooltips / misc ──────────────────────────────────────────────────────
+    "Adicionar à fila":  "Agregar a la cola",
+    "Remover da fila":   "Quitar de la cola",
+    "Sem local":         "Sin ubicación",
+
+    # ── Reports ──────────────────────────────────────────────────────────────
+    "Relatório por Material":  "Informe por Material",
+    "Relatório por Local":     "Informe por Ubicación",
+    "Histórico":               "Historial",
+    "Histórico de Pesagens":   "Historial de Pesajes",
+    "Filtrar por Filamento":   "Filtrar por Filamento",
+    "Todos os filamentos":     "Todos los filamentos",
+    "Filtrar":                 "Filtrar",
+    "Limpar":                  "Limpiar",
+    "Nenhuma pesagem registrada": "Ningún pesaje registrado",
+    "Estoque por Material":    "Stock por Material",
+    "Estoque por Local":       "Stock por Ubicación",
+    "Total Net (g)":           "Neto Total (g)",
+    "Total Net (kg)":          "Neto Total (kg)",
+    "Nominal (kg)":            "Nominal (kg)",
+    "Distribuição":            "Distribución",
+    "Critério: peso atual":    "Criterio: peso actual",
+    "OU":                      "O",
+    "do nominal.":             "del nominal.",
+    "Ajustar threshold":       "Ajustar umbral",
+    "Busca":                   "Búsqueda",
+    "Resultados para":         "Resultados para",
+    "Nenhum resultado encontrado para": "Ningún resultado encontrado para",
+
+    # ── Admin: users ─────────────────────────────────────────────────────────
+    "Gerenciamento de Usuários": "Gestión de Usuarios",
+    "Novo Usuário":              "Nuevo Usuario",
+    "Usuário":                   "Usuario",
+    "Senha":                     "Contraseña",
+    "Perfil":                    "Perfil",
+    "Viewer (somente leitura)":  "Viewer (solo lectura)",
+    "Admin (acesso total)":      "Admin (acceso total)",
+    "Criar Usuário":             "Crear Usuario",
+    "Usuários Cadastrados":      "Usuarios Registrados",
+    "Criado em":                 "Creado el",
+    "você":                      "tú",
+    "Alterar senha de":          "Cambiar contraseña de",
+    "Nova senha":                "Nueva contraseña",
+
+    # ── Admin: brands ────────────────────────────────────────────────────────
+    "Informe o domínio da marca para buscar o logo automaticamente via":
+        "Indica el dominio de la marca para buscar el logo automáticamente vía",
+    "e salvar localmente. Ou faça upload manual de um arquivo PNG/JPG/SVG.":
+        "y guardarlo localmente. O sube un archivo PNG/JPG/SVG manualmente.",
+    "filamento(s)":              "filamento(s)",
+    "ex: bambulab.com":          "ej.: bambulab.com",
+    "Upload":                    "Subir",
+    "Nenhuma marca cadastrada. Adicione filamentos primeiro.":
+        "Ninguna marca registrada. Agrega filamentos primero.",
+
+    # ── Admin: settings ──────────────────────────────────────────────────────
+    "Configurações do Sistema":  "Ajustes del Sistema",
+    "Geral":                     "General",
+    "URL Base do Sistema":       "URL Base del Sistema",
+    "Usada para gerar o QR code nas etiquetas. Deve ser acessível pelo celular.":
+        "Se usa para generar el código QR en las etiquetas. Debe ser accesible desde el móvil.",
+    "Threshold (g)":             "Umbral (g)",
+    "Threshold (%)":             "Umbral (%)",
+    "Peso mínimo antes de sinalizar.": "Peso mínimo antes de avisar.",
+    "Porcentagem mínima do nominal.":  "Porcentaje mínimo del nominal.",
+    "Etiquetas":                 "Etiquetas",
+    "Largura":                   "Ancho",
+    "Altura":                    "Alto",
+    "Tamanho do PDF gerado para impressão térmica. Padrão:":
+        "Tamaño del PDF generado para impresión térmica. Predeterminado:",
+    "Fontes e QR code escalam automaticamente.": "Las fuentes y el QR escalan automáticamente.",
+    "Impressão Direta (Niimbot)": "Impresión Directa (Niimbot)",
+    "Modelo da impressora":      "Modelo de impresora",
+    "Tamanho da etiqueta":       "Tamaño de la etiqueta",
+    "Usado pelo botão":          "Usado por el botón",
+    "(Web Bluetooth, direto do navegador). Requer Chrome/Edge em HTTPS. Não afeta o PDF acima.":
+        "(Web Bluetooth, directo desde el navegador). Requiere Chrome/Edge en HTTPS. No afecta al PDF de arriba.",
+    "Salvar Configurações":      "Guardar Ajustes",
+
+    # ── Error page ───────────────────────────────────────────────────────────
+    "Erro":                      "Error",
+    "Voltar ao início":          "Volver al inicio",
+    "Acesso negado":             "Acceso denegado",
+    "Página não encontrada":     "Página no encontrada",
+
+    # ── Spool models ─────────────────────────────────────────────────────────
+    "+ Novo Modelo":             "+ Nuevo Modelo",
+    "Cadastre os modelos de carretel vazio para que o sistema possa calcular o peso real de filamento disponível.":
+        "Registra los modelos de carrete vacío para que el sistema calcule el peso real de filamento disponible.",
+    "Tara (g)":                  "Tara (g)",
+    "Nenhum modelo cadastrado":  "Ningún modelo registrado",
+    "Editar Modelo":             "Editar Modelo",
+    "Novo Modelo":               "Nuevo Modelo",
+    "Novo Modelo de Carretel":   "Nuevo Modelo de Carrete",
+    "ex: Bambu Lab Standard 1kg": "ej.: Bambu Lab Standard 1kg",
+    "Peso do Carretel Vazio (g)": "Peso del Carrete Vacío (g)",
+    "ex: 250":                   "ej.: 250",
+    "Pese o carretel físico sem filamento.": "Pesa el carrete físico sin filamento.",
+
+    # ── Flash / mensagens do servidor ────────────────────────────────────────
+    "Sessão expirada ou token inválido. Tente novamente.": "Sesión expirada o token inválido. Inténtalo de nuevo.",
+    "Muitas tentativas. Aguarde {min} minutos e tente novamente.": "Demasiados intentos. Espera {min} minutos e inténtalo de nuevo.",
+    "Usuário ou senha incorretos": "Usuario o contraseña incorrectos",
+    "Filamento cadastrado com sucesso": "Filamento registrado con éxito",
+    "Filamento atualizado": "Filamento actualizado",
+    "Filamento duplicado — editando cópia": "Filamento duplicado — editando copia",
+    "Filamento removido": "Filamento eliminado",
+    "Filamento possui spools associados": "El filamento tiene bobinas asociadas",
+    "Modelo de carretel cadastrado": "Modelo de carrete registrado",
+    "Modelo atualizado": "Modelo actualizado",
+    "Modelo removido": "Modelo eliminado",
+    "Modelo em uso por spools existentes": "Modelo en uso por bobinas existentes",
+    "Rolo cadastrado com sucesso": "Bobina registrada con éxito",
+    "Rolo atualizado": "Bobina actualizada",
+    "Rolo marcado como finalizado": "Bobina marcada como finalizada",
+    "Peso bruto ({g:.0f}g) menor que tara ({t:.0f}g). Verifique.": "Peso bruto ({g:.0f}g) menor que la tara ({t:.0f}g). Verifica.",
+    "Peso registrado: {n:.0f}g de filamento": "Peso registrado: {n:.0f}g de filamento",
+    "Valor inválido": "Valor inválido",
+    "Código de rolo inválido": "Código de bobina inválido",
+    "Rolo SP-{code} não encontrado": "Bobina SP-{code} no encontrada",
+    "Peso bruto inválido": "Peso bruto inválido",
+    "SP-{code} — {n:.0f}g de filamento (bruto {g:.0f}g − tara {t:.0f}g)": "SP-{code} — {n:.0f}g de filamento (bruto {g:.0f}g − tara {t:.0f}g)",
+    "Adicionado à fila de impressão": "Agregado a la cola de impresión",
+    "{n} rolo(s) adicionado(s) à fila de impressão": "{n} bobina(s) agregada(s) a la cola de impresión",
+    "Fila vazia": "Cola vacía",
+    "{n} rolo(s) removido(s) da fila": "{n} bobina(s) eliminada(s) de la cola",
+    "Fila limpa": "Cola vaciada",
+    "Usuário e senha são obrigatórios": "Usuario y contraseña son obligatorios",
+    "Usuário já existe": "El usuario ya existe",
+    "Usuário {u} criado": "Usuario {u} creado",
+    "Senha não pode ser vazia": "La contraseña no puede estar vacía",
+    "Senha atualizada": "Contraseña actualizada",
+    "Você não pode deletar seu próprio usuário": "No puedes eliminar tu propio usuario",
+    "Usuário removido": "Usuario eliminado",
+    "Marca e domínio são obrigatórios": "Marca y dominio son obligatorios",
+    "Logo de '{brand}' baixado com sucesso": "Logo de '{brand}' descargado con éxito",
+    "Não foi possível baixar o logo via Clearbit para '{domain}'": "No se pudo descargar el logo vía Clearbit para '{domain}'",
+    "Selecione um arquivo": "Selecciona un archivo",
+    "Arquivo inválido": "Archivo inválido",
+    "Formato não suportado (PNG, JPG ou WEBP)": "Formato no soportado (PNG, JPG o WEBP)",
+    "Logo de '{brand}' salvo": "Logo de '{brand}' guardado",
+    "Configurações salvas": "Ajustes guardados",
+    "Selecione um arquivo de backup (.zip)": "Selecciona un archivo de copia (.zip)",
+    "Arquivo inválido — não é um .zip de backup": "Archivo inválido — no es un .zip de copia",
+    "Backup inválido: spool.db ausente no arquivo": "Copia inválida: falta spool.db en el archivo",
+    "Backup inválido: o banco não tem a estrutura do Spool Control": "Copia inválida: la base no tiene la estructura de Spool Control",
+    "Backup restaurado com sucesso ({n} logo(s)). Recomendado sair e entrar novamente.": "Copia restaurada con éxito ({n} logo(s)). Se recomienda cerrar sesión y volver a entrar.",
+
+    # ── Color buckets (stats) ────────────────────────────────────────────────
+    "Preto":    "Negro",
+    "Branco":   "Blanco",
+    "Cinza":    "Gris",
+    "Vermelho": "Rojo",
+    "Laranja":  "Naranja",
+    "Amarelo":  "Amarillo",
+    "Verde":    "Verde",
+    "Ciano":    "Cian",
+    "Azul":     "Azul",
+    "Roxo":     "Morado",
+    "Rosa":     "Rosa",
+    "Marrom":   "Marrón",
+}
+
+# PT-BR: só os termos que mudam em relação ao texto-fonte (Spool → Rolo).
+_PT = {
+    "Spools":               "Rolos",
+    "Spool":                "Rolo",
+    "Spools Ativos":        "Rolos Ativos",
+    "Nenhum spool encontrado": "Nenhum rolo encontrado",
+    "Nenhum spool cadastrado": "Nenhum rolo cadastrado",
+    "+ Novo Spool":         "+ Novo Rolo",
+    "Novo Spool":           "Novo Rolo",
+    "Editar Spool":         "Editar Rolo",
+    "Finalizar Spool":      "Finalizar Rolo",
+    "Marcar spool como finalizado?": "Marcar rolo como finalizado?",
+    "Filtrar por Spool":    "Filtrar por Rolo",
+    "Todos os spools":      "Todos os rolos",
+    "Código do Spool":      "Código do Rolo",
+    "Ver todos os spools":  "Ver todos os rolos",
+    "Nenhum spool abaixo do threshold configurado.": "Nenhum rolo abaixo do threshold configurado.",
+    "Adicione spools pela página de detalhe ou ao cadastrar um novo.":
+        "Adicione rolos pela página de detalhe ou ao cadastrar um novo.",
+    "Use a barra de busca no topo para pesquisar spools e filamentos.":
+        "Use a barra de busca no topo para pesquisar rolos e filamentos.",
+    "Detalhe do Spool":     "Detalhe do Rolo",
+    "spool(s) vinculado(s) — remova-os antes de excluir":
+        "rolo(s) vinculado(s) — remova-os antes de excluir",
+}
+
+_TABLES = {"en": _EN, "es": _ES, "pt": _PT}
 
 
 def get_translator(lang: str):
-    table = _EN if lang == "en" else {}
+    table = _TABLES.get(lang, {})
 
     def _(s: str) -> str:
         return table.get(s, s)

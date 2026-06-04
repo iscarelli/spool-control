@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Erro {{ code }} — Spool Control{% endblock %}
+{% block title %}{{ _('Erro') }} {{ code }} — Spool Control{% endblock %}
 {% block content %}
 <div class="text-center py-5">
   <div class="display-1 text-muted fw-bold">{{ code }}</div>
   <div class="fs-5 mb-4">{{ message }}</div>
-  <a href="{{ url_for('dashboard') }}" class="btn btn-dark">Voltar ao início</a>
+  <a href="{{ url_for('dashboard') }}" class="btn btn-dark">{{ _('Voltar ao início') }}</a>
 </div>
 {% endblock %}

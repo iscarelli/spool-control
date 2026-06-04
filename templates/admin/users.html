@@ -1,56 +1,56 @@
 {% extends "base.html" %}
-{% block title %}Usuários — Spool Control{% endblock %}
+{% block title %}{{ _('Usuários') }} — Spool Control{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <h4 class="mb-0 fw-bold">Gerenciamento de Usuários</h4>
+  <h4 class="mb-0 fw-bold">{{ _('Gerenciamento de Usuários') }}</h4>
 </div>
 
 <div class="row g-4">
   <div class="col-md-5">
     <div class="card">
-      <div class="card-header fw-semibold">Novo Usuário</div>
+      <div class="card-header fw-semibold">{{ _('Novo Usuário') }}</div>
       <div class="card-body">
         <form method="post" action="{{ url_for('admin_users_new') }}">
           <div class="mb-3">
-            <label class="form-label">Usuário</label>
+            <label class="form-label">{{ _('Usuário') }}</label>
             <input type="text" name="username" class="form-control" required>
           </div>
           <div class="mb-3">
-            <label class="form-label">Senha</label>
+            <label class="form-label">{{ _('Senha') }}</label>
             <input type="password" name="password" class="form-control" required minlength="6">
           </div>
           <div class="mb-3">
-            <label class="form-label">Perfil</label>
+            <label class="form-label">{{ _('Perfil') }}</label>
             <select name="role" class="form-select">
-              <option value="viewer">Viewer (somente leitura)</option>
-              <option value="admin">Admin (acesso total)</option>
+              <option value="viewer">{{ _('Viewer (somente leitura)') }}</option>
+              <option value="admin">{{ _('Admin (acesso total)') }}</option>
             </select>
           </div>
-          <button type="submit" class="btn btn-dark">Criar Usuário</button>
+          <button type="submit" class="btn btn-dark">{{ _('Criar Usuário') }}</button>
         </form>
       </div>
     </div>
   </div>
   <div class="col-md-7">
     <div class="card overflow-hidden">
-      <div class="card-header fw-semibold">Usuários Cadastrados</div>
+      <div class="card-header fw-semibold">{{ _('Usuários Cadastrados') }}</div>
       <div class="table-responsive">
         <table class="table table-sm mb-0">
           <thead class="table-light">
-            <tr><th>Usuário</th><th>Perfil</th><th>Criado em</th><th></th></tr>
+            <tr><th>{{ _('Usuário') }}</th><th>{{ _('Perfil') }}</th><th>{{ _('Criado em') }}</th><th></th></tr>
           </thead>
           <tbody>
             {% for u in users %}
             <tr>
-              <td class="fw-semibold">{{ u.username }} {% if u.id == session.user_id %}<span class="badge bg-secondary">você</span>{% endif %}</td>
+              <td class="fw-semibold">{{ u.username }} {% if u.id == session.user_id %}<span class="badge bg-secondary">{{ _('você') }}</span>{% endif %}</td>
               <td><span class="badge {% if u.role == 'admin' %}bg-dark{% else %}bg-light text-dark border{% endif %}">{{ u.role }}</span></td>
               <td class="text-muted small">{{ u.created_at | localdate }}</td>
               <td>
-                <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#pwModal{{ u.id }}">Senha</button>
+                <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#pwModal{{ u.id }}">{{ _('Senha') }}</button>
                 {% if u.id != session.user_id %}
                 <form method="post" action="{{ url_for('admin_users_delete', user_id=u.id) }}" class="d-inline"
-                      onsubmit="return confirm('Remover {{ u.username }}?')">
-                  <button class="btn btn-sm btn-outline-danger">Remover</button>
+                      onsubmit="return confirm('{{ _('Remover') }} {{ u.username }}?')">
+                  <button class="btn btn-sm btn-outline-danger">{{ _('Remover') }}</button>
                 </form>
                 {% endif %}
               </td>
@@ -60,15 +60,15 @@
             <div class="modal fade" id="pwModal{{ u.id }}" tabindex="-1">
               <div class="modal-dialog modal-sm">
                 <div class="modal-content">
-                  <div class="modal-header"><h6 class="modal-title">Alterar senha de {{ u.username }}</h6>
+                  <div class="modal-header"><h6 class="modal-title">{{ _('Alterar senha de') }} {{ u.username }}</h6>
                     <button class="btn-close" data-bs-dismiss="modal"></button>
                   </div>
                   <form method="post" action="{{ url_for('admin_users_password', user_id=u.id) }}">
                     <div class="modal-body">
-                      <input type="password" name="password" class="form-control" placeholder="Nova senha" required minlength="6">
+                      <input type="password" name="password" class="form-control" placeholder="{{ _('Nova senha') }}" required minlength="6">
                     </div>
                     <div class="modal-footer">
-                      <button type="submit" class="btn btn-dark btn-sm">Salvar</button>
+                      <button type="submit" class="btn btn-dark btn-sm">{{ _('Salvar') }}</button>
                     </div>
                   </form>
                 </div>

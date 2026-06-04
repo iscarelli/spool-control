@@ -10,6 +10,22 @@ Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.P
 
 ---
 
+## [1.12.0] — 2026-06-04
+
+### Adicionado
+- **Idioma Espanhol (ES)** — terceiro idioma, com tradução **100%** da interface. As bandeiras do seletor de idioma passaram a ser **SVG** (`static/flags/`), pois emoji de bandeira não renderiza no Windows.
+- **i18n 100%** — todo texto visível (templates + mensagens flash/erro do servidor) agora passa por tradução (`_()` nos templates, helper `t()` no `app.py`). `translations.py` com `_EN`/`_ES` completos e `_PT` só com overrides. Documentação de "como adicionar um idioma" no `CLAUDE.md`.
+- **Relatório de Inventário** (`/reports/inventory`) — grid visual com um donut por rolo físico, filtro instantâneo e modal de detalhe ao clicar (logo, material, cor, restante, diâmetro, local, notas, **QR** e link). Novo endpoint `GET /spools/<id>/qr.png`.
+- **Relatório de Estatísticas** (`/reports/stats`) — barras horizontais por **Marca**, **Material** e **Cor**. A cor é classificada a partir do hexa (`classify_color`, agrupa todos os verdes/vermelhos/etc.). Cada barra é **clicável** e leva à lista filtrada (`?q=` para marca/material, `?color=` para cor).
+- Código **hexa da cor** exibido no detalhe do rolo (abaixo da família, com a bolinha de cor antes).
+- Botão **Imprimir** na lista de rolos (ao lado de "Todos", quando há itens na fila).
+
+### Alterado
+- **PT-BR: "Spool" → "Rolo(s)"** em toda a interface (mantendo o código "SP-"; EN continua "Spool", ES "Bobina").
+- Na fila de etiquetas, **"Imprimir Tudo" → "Imprimir PDF"**, no mesmo padrão visual do "Imprimir Niimbot".
+
+---
+
 ## [1.11.3] — 2026-06-03
 
 ### Corrigido

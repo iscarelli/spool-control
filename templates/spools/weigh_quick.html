@@ -1,33 +1,33 @@
 {% extends "base.html" %}
-{% block title %}Pesagem Rápida — Spool Control{% endblock %}
+{% block title %}{{ _('Pesagem Rápida') }} — Spool Control{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-md-5 col-lg-4">
-    <h4 class="fw-bold mb-4"><span class="icon-scale me-2"></span>Pesagem Rápida</h4>
+    <h4 class="fw-bold mb-4"><span class="icon-scale me-2"></span>{{ _('Pesagem Rápida') }}</h4>
     <div class="card">
       <div class="card-body">
         <form method="post" autocomplete="off">
           <div class="mb-3">
-            <label class="form-label fw-semibold">Código do Spool</label>
+            <label class="form-label fw-semibold">{{ _('Código do Spool') }}</label>
             <input type="text" name="spool_code" class="form-control form-control-lg font-monospace"
                    placeholder="SP-0001 ou 1" autofocus required>
-            <div class="form-text">Aceita SP-0001, SP0001 ou somente o número.</div>
+            <div class="form-text">{{ _('Aceita SP-0001, SP0001 ou somente o número.') }}</div>
           </div>
           <div class="mb-4">
-            <label class="form-label fw-semibold">Peso Bruto (g)</label>
+            <label class="form-label fw-semibold">{{ _('Peso Bruto (g)') }}</label>
             <div class="input-group input-group-lg">
               <input type="number" name="gross_weight_g" class="form-control" step="1" min="0"
                      placeholder="ex: 1150" required>
               <span class="input-group-text">g</span>
             </div>
-            <div class="form-text">Peso total com o carretel. A tara é subtraída automaticamente.</div>
+            <div class="form-text">{{ _('Peso total com o carretel. A tara é subtraída automaticamente.') }}</div>
           </div>
-          <button type="submit" class="btn btn-dark w-100">Registrar Peso</button>
+          <button type="submit" class="btn btn-dark w-100">{{ _('Registrar Peso') }}</button>
         </form>
       </div>
     </div>
     <div class="mt-3 text-center">
-      <a href="{{ url_for('spools_list') }}" class="text-muted small">← Ver todos os spools</a>
+      <a href="{{ url_for('spools_list') }}" class="text-muted small">← {{ _('Ver todos os spools') }}</a>
     </div>
   </div>
 </div>

@@ -1,21 +1,21 @@
 {% extends "base.html" %}
-{% block title %}Pesar SP-{{ '%04d'|format(spool.id) }} — Spool Control{% endblock %}
+{% block title %}{{ _('Pesar') }} SP-{{ '%04d'|format(spool.id) }} — Spool Control{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-md-6 col-lg-5">
     <div class="d-flex align-items-center mb-3">
       <a href="{{ url_for('spools_detail', spool_id=spool.id) }}" class="btn btn-sm btn-outline-secondary me-2"><i class="bi bi-arrow-left"></i></a>
-      <h4 class="mb-0 fw-bold">Registrar Peso</h4>
+      <h4 class="mb-0 fw-bold">{{ _('Registrar Peso') }}</h4>
     </div>
 
     <div class="card mb-3 border-0 bg-light">
       <div class="card-body">
         <div class="fw-semibold">SP-{{ '%04d'|format(spool.id) }} — {{ spool.material }} {{ spool.brand }} / {{ spool.family }}</div>
-        <div class="text-muted small">Tara do carretel: {{ spool.effective_tare_g|int }}g
+        <div class="text-muted small">{{ _('Tara do carretel') }}: {{ spool.effective_tare_g|int }}g
           {% if spool.model_name %}({{ spool.model_name }}){% endif %}
         </div>
         {% if spool.current_net_g is not none %}
-        <div class="text-muted small mt-1">Último peso registrado: <strong>{{ spool.current_net_g|int }}g</strong></div>
+        <div class="text-muted small mt-1">{{ _('Último peso registrado') }}: <strong>{{ spool.current_net_g|int }}g</strong></div>
         {% endif %}
       </div>
     </div>
@@ -24,23 +24,23 @@
       <div class="card-body">
         <form method="post" id="weighForm">
           <div class="mb-3">
-            <label class="form-label fw-semibold fs-5">Peso Bruto na Balança (g) <span class="text-danger">*</span></label>
+            <label class="form-label fw-semibold fs-5">{{ _('Peso Bruto na Balança (g)') }} <span class="text-danger">*</span></label>
             <input type="number" name="gross_weight_g" id="grossInput" class="form-control form-control-lg"
-                   step="0.1" min="0" required autofocus placeholder="ex: 1182">
-            <div class="form-text">Peso do rolo completo (filamento + carretel vazio).</div>
+                   step="0.1" min="0" required autofocus placeholder="{{ _('ex: 1182') }}">
+            <div class="form-text">{{ _('Peso do rolo completo (filamento + carretel vazio).') }}</div>
           </div>
 
           <div class="alert alert-info py-2" id="calcPreview" style="display:none">
-            <span class="fw-bold" id="calcNet"></span> de filamento disponível
+            <span class="fw-bold" id="calcNet"></span> {{ _('de filamento disponível') }}
             <span class="text-muted small ms-2" id="calcDetail"></span>
           </div>
 
           <div class="mb-3">
-            <label class="form-label fw-semibold">Notas (opcional)</label>
-            <input type="text" name="notes" class="form-control" placeholder="ex: pré-impressão longa">
+            <label class="form-label fw-semibold">{{ _('Notas (opcional)') }}</label>
+            <input type="text" name="notes" class="form-control" placeholder="{{ _('ex: pré-impressão longa') }}">
           </div>
 
-          <button type="submit" class="btn btn-dark w-100">Salvar Pesagem</button>
+          <button type="submit" class="btn btn-dark w-100">{{ _('Salvar Pesagem') }}</button>
         </form>
       </div>
     </div>
@@ -61,7 +61,7 @@ gross.addEventListener('input', function() {
     const net = val - tare;
     preview.style.display = '';
     calcNet.textContent = Math.max(0, net).toFixed(0) + 'g';
-    calcDetail.textContent = `(${val.toFixed(0)}g − ${tare.toFixed(0)}g de tara)`;
+    calcDetail.textContent = `(${val.toFixed(0)}g − ${tare.toFixed(0)}g {{ _('de tara') }})`;
     preview.className = net < 0 ? 'alert alert-warning py-2' : 'alert alert-info py-2';
   } else {
     preview.style.display = 'none';

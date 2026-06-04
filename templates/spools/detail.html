@@ -57,12 +57,13 @@
         <div class="text-muted small mb-1">Filamento</div>
         <div class="fs-5 fw-bold">{{ spool.material }}</div>
         <div>{{ spool.brand }}</div>
-        <div class="text-muted">
-          {% if spool.color_hex %}
+        <div class="text-muted">{{ spool.family }}</div>
+        {% if spool.color_hex %}
+        <div class="text-muted small">
           <span class="d-inline-block rounded me-1" style="width:12px;height:12px;background:{{ spool.color_hex }};border:1px solid #ccc;vertical-align:middle"></span>
-          {% endif %}
-          {{ spool.family }}
+          <span class="font-monospace text-uppercase">{{ spool.color_hex }}</span>
         </div>
+        {% endif %}
         {% if logged_in %}
         <a href="{{ url_for('filaments_detail', filament_id=spool.filament_id) }}" class="btn btn-sm btn-outline-secondary mt-2">Ver filamento</a>
         {% endif %}

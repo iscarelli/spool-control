@@ -1,17 +1,17 @@
 {% extends "base.html" %}
-{% block title %}Histórico de Pesagens — Spool Control{% endblock %}
+{% block title %}{{ _('Histórico de Pesagens') }} — Spool Control{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <h4 class="mb-0 fw-bold">Histórico de Pesagens</h4>
-  <button class="btn btn-sm btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i>Imprimir</button>
+  <h4 class="mb-0 fw-bold">{{ _('Histórico de Pesagens') }}</h4>
+  <button class="btn btn-sm btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i>{{ _('Imprimir') }}</button>
 </div>
 
 <form method="get" class="card p-3 mb-4">
   <div class="row g-2 align-items-end">
     <div class="col-md-4">
-      <label class="form-label small fw-semibold">Filtrar por Filamento</label>
+      <label class="form-label small fw-semibold">{{ _('Filtrar por Filamento') }}</label>
       <select name="filament_id" class="form-select form-select-sm">
-        <option value="">Todos os filamentos</option>
+        <option value="">{{ _('Todos os filamentos') }}</option>
         {% for f in filaments %}
         <option value="{{ f.id }}" {% if sel_filament_id == f.id %}selected{% endif %}>
           {{ f.material }} — {{ f.brand }} / {{ f.family }}
@@ -20,9 +20,9 @@
       </select>
     </div>
     <div class="col-md-4">
-      <label class="form-label small fw-semibold">Filtrar por Spool</label>
+      <label class="form-label small fw-semibold">{{ _('Filtrar por Spool') }}</label>
       <select name="spool_id" class="form-select form-select-sm">
-        <option value="">Todos os spools</option>
+        <option value="">{{ _('Todos os spools') }}</option>
         {% for s in spools %}
         <option value="{{ s.id }}" {% if sel_spool_id == s.id %}selected{% endif %}>
           SP-{{ '%04d'|format(s.id) }} — {{ s.material }} {{ s.brand }}
@@ -31,10 +31,10 @@
       </select>
     </div>
     <div class="col-md-2">
-      <button type="submit" class="btn btn-dark btn-sm w-100">Filtrar</button>
+      <button type="submit" class="btn btn-dark btn-sm w-100">{{ _('Filtrar') }}</button>
     </div>
     <div class="col-md-2">
-      <a href="{{ url_for('report_weight_history') }}" class="btn btn-outline-secondary btn-sm w-100">Limpar</a>
+      <a href="{{ url_for('report_weight_history') }}" class="btn btn-outline-secondary btn-sm w-100">{{ _('Limpar') }}</a>
     </div>
   </div>
 </form>
@@ -44,8 +44,8 @@
     <table class="table table-sm mb-0">
       <thead class="table-dark">
         <tr>
-          <th>Data/Hora</th><th>Spool</th><th>Material</th><th>Marca / Família</th>
-          <th>Local</th><th>Bruto (g)</th><th>Tara (g)</th><th>Net (g)</th>
+          <th>{{ _('Data/Hora') }}</th><th>{{ _('Spool') }}</th><th>{{ _('Material') }}</th><th>{{ _('Marca / Família') }}</th>
+          <th>{{ _('Local') }}</th><th>{{ _('Bruto (g)') }}</th><th>{{ _('Tara (g)') }}</th><th>{{ _('Net (g)') }}</th>
         </tr>
       </thead>
       <tbody>
@@ -61,7 +61,7 @@
           <td class="fw-semibold">{{ r.net_weight_g|int }}</td>
         </tr>
         {% else %}
-        <tr><td colspan="8" class="text-center text-muted py-4">Nenhuma pesagem registrada</td></tr>
+        <tr><td colspan="8" class="text-center text-muted py-4">{{ _('Nenhuma pesagem registrada') }}</td></tr>
         {% endfor %}
       </tbody>
     </table>

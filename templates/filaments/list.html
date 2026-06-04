@@ -86,12 +86,12 @@
             </form>
             {% if f.spool_count == 0 %}
             <form method="post" action="{{ url_for('filaments_delete', filament_id=f.id) }}" class="d-inline"
-                  onsubmit="return confirm('Remover o filamento {{ f.brand }} {{ f.material }} — {{ f.family }}?')">
+                  onsubmit="return confirm('{{ _('Remover o filamento') }} {{ f.brand }} {{ f.material }} — {{ f.family }}?')">
               <button class="btn btn-sm btn-outline-danger" title="{{ _('Remover filamento') }}"><i class="bi bi-trash"></i></button>
             </form>
             {% else %}
             <span data-bs-toggle="tooltip" data-bs-placement="top"
-                  title="{{ f.spool_count }} spool(s) vinculado(s) — remova-os antes de excluir"
+                  title="{{ f.spool_count }} {{ _('spool(s) vinculado(s) — remova-os antes de excluir') }}"
                   style="cursor:not-allowed;display:inline-block">
               <button class="btn btn-sm btn-outline-danger" disabled style="pointer-events:none">
                 <i class="bi bi-trash"></i>
