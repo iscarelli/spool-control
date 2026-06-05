@@ -1,451 +1,451 @@
 # Changelog
 
-Versionamento seguindo [SemVer](https://semver.org/lang/pt-BR/): **MAJOR.MINOR.PATCH**
+Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
-| Dígito | Quando incrementar |
+| Digit | When to bump |
 |---|---|
-| **MAJOR** | Quebra de compatibilidade — mudança de schema incompatível, remoção de rotas, reestruturação do deploy |
-| **MINOR** | Nova funcionalidade adicionada de forma compatível — nova rota, novo relatório, nova integração |
-| **PATCH** | Correção de bug, ajuste visual, melhoria de texto, atualização de dependência |
+| **MAJOR** | Breaking change — incompatible schema change, route removal, deploy restructuring |
+| **MINOR** | New backward-compatible feature — new route, new report, new integration |
+| **PATCH** | Bug fix, visual tweak, copy improvement, dependency update |
 
 ---
 
 ## [1.13.1] — 2026-06-04
 
-### Corrigido
-- **Instalação limpa quebrada** (`setup-inside.sh`): o script copiava uma **lista fixa** de arquivos e o `niimbot_registry.py` não estava nela — uma instalação nova subia com `ModuleNotFoundError: No module named 'niimbot_registry'`. Agora copia a **árvore versionada inteira** via `git archive` (mesmo mecanismo do `update-lxc.sh`), sem lista para manter. (A produção via `update-lxc.sh` nunca foi afetada.) Detectado validando uma instalação limpa numa LXC temporária.
+### Fixed
+- **Broken clean install** (`setup-inside.sh`): the script copied a **fixed list** of files and `niimbot_registry.py` was missing from it — a fresh install came up with `ModuleNotFoundError: No module named 'niimbot_registry'`. It now copies the **entire versioned tree** via `git archive` (same mechanism as `update-lxc.sh`), with no list to maintain. (Production via `update-lxc.sh` was never affected.) Caught while validating a clean install on a temporary LXC.
 
 ## [1.13.0] — 2026-06-04
 
-### Adicionado
-- **Novo layout da etiqueta** (PDF 60×40mm + PNG térmico Niimbot): topo com **logo + nome da marca** à esquerda e **código do rolo** à direita; separador horizontal grosso; bloco à esquerda com **Material** (grande), **Família**, **Cor** (nome classificado do hexa) e **Local:** ancorado no rodapé; **QR maior à direita**. O nome da cor é **traduzido** para o idioma da sessão (PT/EN/ES). O logo da marca entra também no térmico (achatado sobre branco para 1-bit). `get_spool` passou a trazer `brand_logo`.
-- **API da estação de pesagem automática**: `POST /api/weigh` (`{spool_id, gross_weight_g}`) e `GET /api/spools/<id>` (read-only, para o OLED confirmar antes de gravar). Máquina-a-máquina: isenta de CSRF, autenticada por `X-API-Key` (== `SPOOL_API_KEY`), `recorded_by="estação"`, respostas JSON com 400/401/404/422. Base para a estação ESP32 + leitor serial (ver `docs/estudo_balanca_qrcode.md`).
-- **`tools/validate_qr_autoweigh.py`** — valida, sem hardware, o round-trip do QR (gera → decodifica → extrai o id ancorado em `/spools/(\d+)`) e a aritmética da pesagem, com códigos pequenos e grandes; checagem opcional contra a API ao vivo (read-only).
+### Added
+- **New label layout** (60×40mm PDF + Niimbot thermal PNG): top with **logo + brand name** on the left and the **spool code** on the right; thick horizontal divider; left block with **Material** (large), **Family**, **Color** (name classified from the hex) and **Local:** anchored at the bottom; **larger QR on the right**. The color name is **translated** to the session language (PT/EN/ES). The brand logo is included on the thermal label too (flattened onto white for 1-bit). `get_spool` now returns `brand_logo`.
+- **Automatic weighing station API**: `POST /api/weigh` (`{spool_id, gross_weight_g}`) and `GET /api/spools/<id>` (read-only, for the OLED to confirm before recording). Machine-to-machine: CSRF-exempt, authenticated by `X-API-Key` (== `SPOOL_API_KEY`), `recorded_by="estação"`, JSON responses with 400/401/404/422. Foundation for the ESP32 + serial reader station (see `docs/estudo_balanca_qrcode.md`).
+- **`tools/validate_qr_autoweigh.py`** — validates, without hardware, the QR round-trip (generate → decode → extract the id anchored on `/spools/(\d+)`) and the weighing arithmetic, with small and large codes; optional live (read-only) check against the API.
 
-### Alterado
-- **URL pública garantida na instalação** (cada usuário roda no próprio servidor): novo `public_base_url()` usa a setting do banco e cai no `APP_BASE_URL` do ambiente quando ela está vazia/`localhost`; a setting passa a ser **semeada a partir do ambiente** no `init_db`. Os instaladores (`setup-inside.sh`/`proxmox-deploy.sh`) **não** têm mais default para domínio de terceiros — sem domínio usam o **IP interno** com **aviso de "rede local apenas"** e geram `SPOOL_API_KEY` no `spool.env`. A tela de **Configurações** pré-preenche a URL efetiva (salvar passa a valer para tudo).
+### Changed
+- **Public URL guaranteed at install time** (each user runs on their own server): new `public_base_url()` uses the DB setting and falls back to the `APP_BASE_URL` env var when it is empty/`localhost`; the setting is now **seeded from the environment** in `init_db`. The installers (`setup-inside.sh`/`proxmox-deploy.sh`) **no longer** default to a third-party domain — without a domain they use the **internal IP** with a **"local network only" warning** and generate `SPOOL_API_KEY` in `spool.env`. The **Settings** screen pre-fills the effective URL (saving applies everywhere).
 
-### Segurança
-- `POST /api/weigh` exige `X-API-Key` quando `SPOOL_API_KEY` está definido (gerado por padrão na instalação). Sem chave configurada, a API fica aberta — adequado só a dev/LAN.
+### Security
+- `POST /api/weigh` requires `X-API-Key` when `SPOOL_API_KEY` is set (generated by default at install). With no key configured the API is open — dev/LAN only.
 
 ## [1.12.0] — 2026-06-04
 
-### Adicionado
-- **Idioma Espanhol (ES)** — terceiro idioma, com tradução **100%** da interface. As bandeiras do seletor de idioma passaram a ser **SVG** (`static/flags/`), pois emoji de bandeira não renderiza no Windows.
-- **i18n 100%** — todo texto visível (templates + mensagens flash/erro do servidor) agora passa por tradução (`_()` nos templates, helper `t()` no `app.py`). `translations.py` com `_EN`/`_ES` completos e `_PT` só com overrides. Documentação de "como adicionar um idioma" no `CLAUDE.md`.
-- **Relatório de Inventário** (`/reports/inventory`) — grid visual com um donut por rolo físico, filtro instantâneo e modal de detalhe ao clicar (logo, material, cor, restante, diâmetro, local, notas, **QR** e link). Novo endpoint `GET /spools/<id>/qr.png`.
-- **Relatório de Estatísticas** (`/reports/stats`) — barras horizontais por **Marca**, **Material** e **Cor**. A cor é classificada a partir do hexa (`classify_color`, agrupa todos os verdes/vermelhos/etc.). Cada barra é **clicável** e leva à lista filtrada (`?q=` para marca/material, `?color=` para cor).
-- Código **hexa da cor** exibido no detalhe do rolo (abaixo da família, com a bolinha de cor antes).
-- Botão **Imprimir** na lista de rolos (ao lado de "Todos", quando há itens na fila).
+### Added
+- **Spanish (ES) language** — third language, with a **100%** translated UI. Language-selector flags became **SVG** (`static/flags/`), since flag emojis don't render on Windows.
+- **100% i18n** — every visible string (templates + server flash/error messages) now goes through translation (`_()` in templates, `t()` helper in `app.py`). `translations.py` with complete `_EN`/`_ES` and `_PT` overrides only. "How to add a language" documented in `CLAUDE.md`.
+- **Inventory report** (`/reports/inventory`) — visual grid with one donut per physical spool, instant filter and a detail modal on click (logo, material, color, remaining, diameter, location, notes, **QR** and link). New endpoint `GET /spools/<id>/qr.png`.
+- **Statistics report** (`/reports/stats`) — horizontal bars by **Brand**, **Material** and **Color**. Color is classified from the hex (`classify_color`, groups all greens/reds/etc.). Each bar is **clickable** and leads to the filtered list (`?q=` for brand/material, `?color=` for color).
+- Color **hex code** shown on the spool detail (below the family, with the color dot before it).
+- **Print** button on the spool list (next to "All", when there are items in the queue).
 
-### Alterado
-- **PT-BR: "Spool" → "Rolo(s)"** em toda a interface (mantendo o código "SP-"; EN continua "Spool", ES "Bobina").
-- Na fila de etiquetas, **"Imprimir Tudo" → "Imprimir PDF"**, no mesmo padrão visual do "Imprimir Niimbot".
+### Changed
+- **PT-BR: "Spool" → "Rolo(s)"** across the UI (keeping the "SP-" code; EN stays "Spool", ES "Bobina").
+- In the label queue, **"Print All" → "Print PDF"**, matching the "Print Niimbot" visual style.
 
 ---
 
 ## [1.11.3] — 2026-06-03
 
-### Corrigido
-- **Donut de disponibilidade agora aparece na página de detalhe do spool** (`/spools/<id>`). Antes só existia na listagem; no detalhe aparecia apenas a bolinha de cor da família. O donut (% restante, na cor do filamento) foi adicionado ao cabeçalho, ao lado do `SP-XXXX`, com a mesma lógica e tooltip da listagem.
+### Fixed
+- **Availability donut now shows on the spool detail page** (`/spools/<id>`). It only existed in the listing before; the detail showed just the family color dot. The donut (% remaining, in the filament color) was added to the header, next to `SP-XXXX`, with the same logic and tooltip as the listing.
 
-### Alterado (interno)
-- Macro `donut` extraída para o parcial compartilhado `templates/spools/_macros.html` e importada na listagem e no detalhe (fonte única).
+### Changed (internal)
+- `donut` macro extracted to the shared partial `templates/spools/_macros.html` and imported in the listing and the detail (single source).
 
 ---
 
 ## [1.11.2] — 2026-06-03
 
-### Corrigido (robustez do deploy)
-- **`update-lxc.sh` não derruba mais o serviço por arquivo faltando.** Causa do crash loop / 404 aleatório: o script copiava os `.py` por nome, e bastava esquecer um módulo novo (foi o caso do `niimbot_registry.py`) para o `app.py` não importar e o serviço reiniciar em loop. Duas camadas de correção:
-  1. **Aplica toda a árvore versionada via `git archive`** — não há mais lista de arquivos para esquecer; o que está no git é aplicado. Não apaga itens fora do git (`data/`, `spool.env`, `.venv`, `static/brands/`).
-  2. **Smoke test (`import app`) antes de reiniciar** — se o novo código não importar (módulo faltando, erro de sintaxe, etc.), o deploy **aborta e mantém o serviço atual no ar**, em vez de reiniciar para um crash loop.
+### Fixed (deploy robustness)
+- **`update-lxc.sh` no longer takes the service down due to a missing file.** Cause of the crash loop / random 404: the script copied `.py` files by name, and forgetting a new module (it happened with `niimbot_registry.py`) made `app.py` fail to import and the service restart in a loop. Two layers of fix:
+  1. **Applies the whole versioned tree via `git archive`** — no file list to forget; whatever is in git gets applied. Does not delete items outside git (`data/`, `spool.env`, `.venv`, `static/brands/`).
+  2. **Smoke test (`import app`) before restarting** — if the new code doesn't import (missing module, syntax error, etc.), the deploy **aborts and keeps the current service running** instead of restarting into a crash loop.
 
 ---
 
 ## [1.11.1] — 2026-06-03
 
-### Corrigido
-- Linha divisória da etiqueta Niimbot (entre família e ID) ficava quase invisível na impressão térmica — agora é **mais grossa** (proporcional à altura).
+### Fixed
+- The Niimbot label divider line (between family and ID) was almost invisible in thermal printing — now it is **thicker** (proportional to the height).
 
-### Alterado (interno)
-- Driver Web Bluetooth extraído para o repositório dedicado **privado** `iscarelli/niimbot` (driver genérico + documentação do protocolo V4 + registro + demo standalone). O spool-control passa a **vendorar** uma cópia do driver (`static/niimbot.js`) e adiciona o adaptador `static/niimbot-spool.js` (busca o registro + liga os botões). Sem mudança de comportamento.
-- Nova documentação de uso: `docs/niimbot.md`.
+### Changed (internal)
+- Web Bluetooth driver extracted to the dedicated **private** repository `iscarelli/niimbot` (generic driver + V4 protocol docs + registry + standalone demo). spool-control now **vendors** a copy of the driver (`static/niimbot.js`) and adds the adapter `static/niimbot-spool.js` (fetches the registry + wires the buttons). No behavior change.
+- New usage docs: `docs/niimbot.md`.
 
 ---
 
 ## [1.11.0] — 2026-06-03
 
-### Adicionado
-- **Impressão direta na Niimbot via navegador** (Web Bluetooth): novo botão **Imprimir Niimbot** na página de detalhe do spool e na fila de etiquetas, ao lado do PDF. Imprime numa **Niimbot B1 Pro** (300 dpi, protocolo V4) sem app intermediário — protocolo portado do firmware ESP32-Telemetria-Suite.
-- Etiqueta renderizada no servidor como **PNG 1-bit** (`GET /spools/<id>/label.png`); o navegador só faz o threshold e envia via Bluetooth. Layout igual ao PDF (QR + marca/material/família/ID).
-- **Registro extensível** de modelos de impressora e tamanhos de etiqueta (`niimbot_registry.py`, exposto em `GET /api/niimbot/registry`). Hoje: B1 Pro + etiqueta 50×30 mm.
-- Configurações (Admin): seleção de **modelo da impressora** e **tamanho da etiqueta** para a impressão direta.
+### Added
+- **Direct Niimbot printing from the browser** (Web Bluetooth): new **Print Niimbot** button on the spool detail page and the label queue, next to the PDF. Prints on a **Niimbot B1 Pro** (300 dpi, V4 protocol) with no intermediary app — protocol ported from the ESP32-Telemetria-Suite firmware.
+- Label rendered server-side as a **1-bit PNG** (`GET /spools/<id>/label.png`); the browser only thresholds and sends over Bluetooth. Same layout as the PDF (QR + brand/material/family/ID).
+- **Extensible registry** of printer models and label sizes (`niimbot_registry.py`, exposed at `GET /api/niimbot/registry`). Today: B1 Pro + 50×30 mm label.
+- Settings (Admin): selection of **printer model** and **label size** for direct printing.
 
-### Notas
-- Requer **Chrome ou Edge em HTTPS** (ou localhost) — Web Bluetooth não existe em Firefox/Safari. O PDF continua disponível como antes.
+### Notes
+- Requires **Chrome or Edge over HTTPS** (or localhost) — Web Bluetooth doesn't exist in Firefox/Safari. The PDF remains available as before.
 
 ---
 
 ## [1.10.4] — 2026-06-03
 
-### Documentação
-- Adicionado screenshot da tela de estatísticas (`stats.png`) à documentação.
+### Documentation
+- Added a screenshot of the statistics screen (`stats.png`) to the docs.
 
 ---
 
 ## [1.10.3] — 2026-06-03
 
-### Corrigido
-- "Fundo azul" no favicon da aba: vinha do PNG/`.ico` (o navegador usa o raster, não o SVG). Os favicons de aba (`favicon-16x16`, `favicon-32x32`, `favicon.ico`) agora são **transparentes** — carretel azul vazado, sem o tile — visíveis em abas claras e escuras. O tile azul full-bleed foi mantido só no `apple-touch-icon` e nos ícones PWA (`android-chrome-*`), que precisam de fundo. Obs.: favicons são muito cacheados — pode ser preciso recarregar com cache limpo ou reabrir a aba.
+### Fixed
+- "Blue background" on the tab favicon: it came from the PNG/`.ico` (the browser uses the raster, not the SVG). The tab favicons (`favicon-16x16`, `favicon-32x32`, `favicon.ico`) are now **transparent** — a cut-out blue spool, no tile — visible on light and dark tabs. The full-bleed blue tile was kept only on `apple-touch-icon` and the PWA icons (`android-chrome-*`), which need a background. Note: favicons are heavily cached — you may need a hard reload or to reopen the tab.
 
 ---
 
 ## [1.10.2] — 2026-06-03
 
-### Alterado
-- Favicon SVG da aba (`spool-icon.svg`) agora é totalmente transparente (fundo e furos) e a cor do carretel acompanha o esquema do navegador via `prefers-color-scheme` (escuro em abas claras, claro em abas escuras) em vez de cor fixa — fica visível nos dois casos usando a cor do navegador. O `.ico`/PNG azul continua como fallback para navegadores sem suporte a favicon SVG.
+### Changed
+- The tab SVG favicon (`spool-icon.svg`) is now fully transparent (background and holes) and the spool color follows the browser scheme via `prefers-color-scheme` (dark on light tabs, light on dark tabs) instead of a fixed color — visible in both cases using the browser color. The blue `.ico`/PNG remains a fallback for browsers without SVG favicon support.
 
 ---
 
 ## [1.10.1] — 2026-06-03
 
-### Corrigido
-- Favicon da aba: removido o arredondamento do tile (`rx`) — os cantos transparentes apareciam brancos na barra de abas claras — e o carretel agora ocupa todo o espaço do tile (antes ficava pequeno, com muito padding). Conjunto de favicons/PWA regenerado a partir do `app-icon.svg` quadrado e full-bleed.
+### Fixed
+- Tab favicon: removed the tile rounding (`rx`) — the transparent corners showed white on light tab bars — and the spool now fills the whole tile (it was small before, with too much padding). Favicon/PWA set regenerated from the square, full-bleed `app-icon.svg`.
 
 ---
 
 ## [1.10.0] — 2026-06-03
 
-### Adicionado
-- Nova identidade visual: ícone de carretel redesenhado (flange encorpada com furos) e logo com wordmark "Spool Control", ambos *themeable* (SVG inline via `currentColor`). Aplicados na navbar (`base.html`) e na tela de login.
-- Conjunto completo de favicons + suporte PWA: `favicon.ico`, PNGs 16/32, `apple-touch-icon` 180×180, ícones 192/512, `site.webmanifest` (`display: standalone`, `theme_color #0d6efd`) e `theme-color` no `<head>`. Master em `static/icons/app-icon.svg`.
+### Added
+- New visual identity: redesigned spool icon (thicker flange with holes) and a "Spool Control" wordmark logo, both *themeable* (inline SVG via `currentColor`). Applied to the navbar (`base.html`) and the login screen.
+- Full favicon set + PWA support: `favicon.ico`, 16/32 PNGs, 180×180 `apple-touch-icon`, 192/512 icons, `site.webmanifest` (`display: standalone`, `theme_color #0d6efd`) and `theme-color` in the `<head>`. Master in `static/icons/app-icon.svg`.
 
-### Corrigido
-- Datas com timestamp UTC terminadas em `Z` (ex.: log de pesagem) eram exibidas como string ISO crua, com segundos e máscara errada, nos dois idiomas. `_parse_dt` agora remove o sufixo `Z` antes do parse; `localdt`/`localdate` voltam a formatar corretamente no dashboard, histórico de peso e detalhe do spool.
+### Fixed
+- UTC timestamps ending in `Z` (e.g. weighing logs) were shown as raw ISO strings, with seconds and the wrong mask, in both languages. `_parse_dt` now strips the `Z` suffix before parsing; `localdt`/`localdate` format correctly again on the dashboard, weight history and spool detail.
 
 ---
 
 ## [1.9.1] — 2026-06-03
 
-### Adicionado
-- Datas exibidas no formato do idioma selecionado (filtros `localdt`/`localdate`): PT `dd/mm/aaaa`, EN `mm/dd/aaaa`. Aplicado no dashboard, histórico de peso, detalhe do spool e lista de usuários.
+### Added
+- Dates shown in the selected language format (`localdt`/`localdate` filters): PT `dd/mm/yyyy`, EN `mm/dd/yyyy`. Applied on the dashboard, weight history, spool detail and user list.
 
-### Corrigido
-- Canto branco arredondado no topo das tabelas dentro de cards com cabeçalho (ex.: "Pesagens Recentes"). Causa real: `.card .table-responsive { border-radius:10px }` arredondava os 4 cantos; agora o topo só arredonda quando a tabela é o primeiro filho do card (sem header).
+### Fixed
+- Rounded white corner at the top of tables inside cards with a header (e.g. "Recent Weighings"). Root cause: `.card .table-responsive { border-radius:10px }` rounded all 4 corners; now the top only rounds when the table is the first child of the card (no header).
 
 ---
 
 ## [1.9.0] — 2026-06-03
 
-### Adicionado
-- Material e Marca no cadastro de filamento agora são **campos com busca** (`input` + `datalist`): filtram ao digitar e ainda aceitam um valor novo (substitui o select + opção "— Novo…").
-- Bandeiras (🇧🇷/🇺🇸) no seletor de idioma.
+### Added
+- Material and Brand in the filament form are now **searchable fields** (`input` + `datalist`): filter as you type and still accept a new value (replaces the select + "— New…" option).
+- Flags (🇧🇷/🇺🇸) in the language selector.
 
-### Alterado
-- Dashboard totalmente traduzido (cards, tabelas de Estoque Baixo e Pesagens Recentes); form de filamento traduzido.
-- Itens do canto superior direito (busca, tema, idioma, sair) com a mesma altura (`2rem`).
+### Changed
+- Dashboard fully translated (cards, Low Stock and Recent Weighings tables); filament form translated.
+- Top-right items (search, theme, language, logout) with the same height (`2rem`).
 
-### Corrigido
-- Cantos arredondados das tabelas dentro de cards (dashboard e usuários): `overflow-hidden` no card elimina o "fio" nos cantos.
+### Fixed
+- Rounded corners of tables inside cards (dashboard and users): `overflow-hidden` on the card removes the "hairline" at the corners.
 
 ---
 
 ## [1.8.4] — 2026-06-02
 
-### Corrigido
-- Dashboard: o 4º card (botões) estava mais alto que os demais. Os quatro cards agora têm a mesma altura (`h-100`) com o conteúdo centralizado verticalmente.
+### Fixed
+- Dashboard: the 4th card (buttons) was taller than the others. The four cards now have the same height (`h-100`) with content vertically centered.
 
 ---
 
 ## [1.8.3] — 2026-06-02
 
-### Alterado
-- Dashboard: botões "Spool" e "Filamento" agora têm a mesma largura.
-- Lista de spools: "Ver finalizados"/"Só ativos" e o botão da impressora ("Todos") não quebram mais linha (`text-nowrap`); os controles do cabeçalho (Filtrar, Ver finalizados, Todos, + Spool) ficaram todos com a mesma altura (`2rem`).
+### Changed
+- Dashboard: the "Spool" and "Filament" buttons now have the same width.
+- Spool list: "View finished"/"Active only" and the printer button ("All") no longer wrap (`text-nowrap`); the header controls (Filter, View finished, All, + Spool) all got the same height (`2rem`).
 
 ---
 
 ## [1.8.2] — 2026-06-02
 
-### Alterado
-- Os dois botões de criação que **já existiam** no card do dashboard (`+ Novo Spool` / `+ Filamento`) passaram a usar o estilo "pill primary" das páginas internas.
+### Changed
+- The two creation buttons that **already existed** in the dashboard card (`+ New Spool` / `+ Filament`) now use the internal pages' "pill primary" style.
 
-### Corrigido
-- Revertidos os dois botões extras que a 1.8.1 adicionou por engano no cabeçalho do dashboard (a intenção era alterar os existentes, não duplicar).
+### Fixed
+- Reverted the two extra buttons that 1.8.1 mistakenly added to the dashboard header (the intent was to change the existing ones, not duplicate them).
 
 ---
 
 ## [1.8.1] — 2026-06-02
 
-### Adicionado
-- Botões "+ Spool" e "+ Filamento" no cabeçalho do dashboard inicial, no mesmo estilo das páginas internas (atalho para criar sem navegar até as listas).
+### Added
+- "+ Spool" and "+ Filament" buttons in the dashboard header, in the same style as the internal pages (shortcut to create without navigating to the lists).
 
 ---
 
 ## [1.8.0] — 2026-06-02
 
-### Adicionado
-- **Backup e restauração pela interface web** (`Admin → Backup`, `/admin/backup`, só admin):
-  - **Baixar backup**: gera um `.zip` com o banco (`spool.db`, snapshot consistente via SQLite Online Backup API — inclui o WAL) e os logos das marcas (`static/brands/`).
-  - **Restaurar backup**: faz upload do `.zip`, **valida** o banco antes de aplicar e substitui todos os dados; logos restaurados com sanitização (só basename + extensão de imagem, anti zip-slip). Não precisa de root nem reiniciar o serviço.
-  - Pensado para reinstalar e recuperar tudo. `spool.env` (segredos) **não** entra no backup — ao reinstalar, basta logar de novo (senhas vêm no DB).
+### Added
+- **Backup and restore from the web UI** (`Admin → Backup`, `/admin/backup`, admin only):
+  - **Download backup**: generates a `.zip` with the database (`spool.db`, consistent snapshot via the SQLite Online Backup API — includes the WAL) and the brand logos (`static/brands/`).
+  - **Restore backup**: uploads the `.zip`, **validates** the database before applying and replaces all data; logos restored with sanitization (basename + image extension only, anti zip-slip). No root and no service restart needed.
+  - Designed to reinstall and recover everything. `spool.env` (secrets) is **not** in the backup — after reinstalling, just log in again (passwords come from the DB).
 
-### Alterado
-- `MAX_CONTENT_LENGTH` 4 MB → 64 MB (headroom para o upload do zip de restore).
+### Changed
+- `MAX_CONTENT_LENGTH` 4 MB → 64 MB (headroom for the restore zip upload).
 
 ---
 
 ## [1.7.2] — 2026-06-02
 
-### Adicionado
-- `proxmox-deploy.sh` agora pergunta **onde armazenar o template** (storage vztmpl) via radiolist quando há mais de uma opção — mesmo comportamento da seleção de storage do rootfs. Auto-seleciona se houver só um; cai para `local` se nenhum.
+### Added
+- `proxmox-deploy.sh` now asks **where to store the template** (vztmpl storage) via a radiolist when there's more than one option — same behavior as the rootfs storage selection. Auto-selects if there's only one; falls back to `local` if none.
 
-### Alterado
-- README: "Atualizações futuras" destaca o update pela interface web (`/admin/update`) como recomendado; CLI vira alternativa/recuperação.
+### Changed
+- README: "Future updates" highlights the web UI update (`/admin/update`) as recommended; CLI becomes the alternative/recovery path.
 
 ---
 
 ## [1.7.1] — 2026-06-02
 
-### Alterado
-- Bump de versão para validar a autoatualização pela interface web (`/admin/update`) ponta a ponta. Sem mudança funcional.
+### Changed
+- Version bump to validate the web UI self-update (`/admin/update`) end to end. No functional change.
 
 ---
 
 ## [1.7.0] — 2026-06-02
 
-### Adicionado
-- **Autoatualização pela interface web** (`/admin/update`, só admin): mostra versão atual × última release publicada no GitHub e atualiza com um clique. Um badge no menu Admin sinaliza quando há versão nova. A página acompanha o progresso (polling em `/admin/update/status`) e recarrega ao concluir.
-  - Execução privilegiada isolada: o app (user `spool`, não-root) só dispara `sudo systemctl start --no-block spool-update.service` — **comando fixo, sem argumentos vindos do browser**. O oneshot roda como root e chama `update-lxc.sh --latest-release`, que resolve a última tag **no servidor**. Regra `sudoers` mínima em `/etc/sudoers.d/spool-update`.
-  - Novos arquivos: `deploy/spool-update.service`, `deploy/sudoers-spool-update`.
-- `update-lxc.sh --latest-release`: resolve e instala a última release publicada (aborta se a API do GitHub falhar, sem cair para o `main`).
+### Added
+- **Self-update from the web UI** (`/admin/update`, admin only): shows the current version vs. the latest GitHub release and updates with one click. A badge in the Admin menu signals a new version. The page tracks progress (polling `/admin/update/status`) and reloads on completion.
+  - Isolated privileged execution: the app (user `spool`, non-root) only triggers `sudo systemctl start --no-block spool-update.service` — **a fixed command, no browser-supplied arguments**. The oneshot runs as root and calls `update-lxc.sh --latest-release`, which resolves the latest tag **on the server**. Minimal `sudoers` rule in `/etc/sudoers.d/spool-update`.
+  - New files: `deploy/spool-update.service`, `deploy/sudoers-spool-update`.
+- `update-lxc.sh --latest-release`: resolves and installs the latest published release (aborts if the GitHub API fails, without falling back to `main`).
 
-### Alterado
-- `setup-inside.sh` e `update-lxc.sh` provisionam o oneshot + sudoers (idempotente) e instalam o pacote `sudo`.
+### Changed
+- `setup-inside.sh` and `update-lxc.sh` provision the oneshot + sudoers (idempotent) and install the `sudo` package.
 
 ---
 
 ## [1.6.3] — 2026-06-02
 
-### Corrigido
-- **Causa raiz** da instalação que voltava ao prompt: a função `pick_template_storage` terminava em `[ -z "$TMPL_STORAGE" ] && TMPL_STORAGE="local"`. Quando o storage **era encontrado** (caminho de sucesso), o teste retornava 1, a função retornava 1 e o `set -e` abortava o script — logo após a etapa de domínio. Trocado por `if`. Mesmo padrão corrigido em `pick_storage` (`&& die` na última linha).
+### Fixed
+- **Root cause** of the install returning to the prompt: the `pick_template_storage` function ended with `[ -z "$TMPL_STORAGE" ] && TMPL_STORAGE="local"`. When the storage **was found** (success path) the test returned 1, the function returned 1, and `set -e` aborted the script — right after the domain step. Replaced with an `if`. Same pattern fixed in `pick_storage` (`&& die` on the last line).
 
 ---
 
 ## [1.6.2] — 2026-06-02
 
-### Corrigido
-- `proxmox-deploy.sh` morria silenciosamente (voltava ao prompt sem mensagem) quando qualquer comando falhava sob `set -e`. Agora há um handler global de erro (`set -E` + `trap ... ERR`) que imprime **a linha e o comando que falharam** e oferece destruir um container criado pela metade. Isso torna a causa visível para diagnóstico.
+### Fixed
+- `proxmox-deploy.sh` died silently (returned to the prompt with no message) when any command failed under `set -e`. There's now a global error handler (`set -E` + `trap ... ERR`) that prints **the failing line and command** and offers to destroy a half-created container. This makes the cause visible for diagnosis.
 
 ---
 
 ## [1.6.1] — 2026-06-02
 
-### Corrigido
-- `proxmox-deploy.sh` abortava silenciosamente logo após as verificações do host (voltava ao prompt) quando executado via `curl ... | bash`: o `stdin` era o pipe do script e o primeiro diálogo `whiptail` falhava sob `set -e`. Agora reconecta `stdin` ao `/dev/tty` quando disponível, funcionando tanto com `bash -c "$(curl ...)"` quanto com `curl ... | bash`.
+### Fixed
+- `proxmox-deploy.sh` aborted silently right after the host checks (returned to the prompt) when run via `curl ... | bash`: `stdin` was the script pipe and the first `whiptail` dialog failed under `set -e`. It now reconnects `stdin` to `/dev/tty` when available, working both with `bash -c "$(curl ...)"` and `curl ... | bash`.
 
-### Alterado
-- `proxmox-deploy.sh` traduzido para inglês (comentários, diálogos `whiptail`, mensagens e resumo final). Lógica inalterada.
+### Changed
+- `proxmox-deploy.sh` translated to English (comments, `whiptail` dialogs, messages and final summary). Logic unchanged.
 
 ---
 
 ## [1.6.0] — 2026-06-02
 
-### Adicionado
-- **Instalador Proxmox** (`deploy/proxmox-deploy.sh`) no padrão Proxmox Helper Scripts: roda no host PVE, pergunta CTID/hostname/rede/recursos/URL via whiptail, cria o LXC Debian 12 (não-privilegiado, nesting) e instala tudo. One-liner:
+### Added
+- **Proxmox installer** (`deploy/proxmox-deploy.sh`) in the Proxmox Helper Scripts style: runs on the PVE host, asks CTID/hostname/network/resources/URL via whiptail, creates the Debian 12 LXC (unprivileged, nesting) and installs everything. One-liner:
   ```bash
   bash -c "$(curl -fsSL https://raw.githubusercontent.com/iscarelli/spool-control/main/deploy/proxmox-deploy.sh)"
   ```
-  Sem domínio → acesso direto `http://IP:8001` (`SECURE_COOKIES=0`); com domínio → `SECURE_COOKIES=1`.
+  No domain → direct access `http://IP:8001` (`SECURE_COOKIES=0`); with a domain → `SECURE_COOKIES=1`.
 
-### Corrigido
-- `setup-inside.sh` não copiava `VERSION` nem `translations.py` — instalação nova quebrava no boot (`app.py` lê ambos). Agora copia o conjunto completo (igual ao `update-lxc.sh`).
+### Fixed
+- `setup-inside.sh` didn't copy `VERSION` or `translations.py` — a fresh install broke at boot (`app.py` reads both). Now it copies the full set (same as `update-lxc.sh`).
 
-### Alterado
-- `setup-inside.sh` parametrizável por ambiente: `DOMAIN`, `APP_BASE_URL`, `SECURE_COOKIES`, `USE_BR_MIRROR`, `ADMIN_DEFAULT_PASS`. Pode rodar via `bash <(curl -fsSL .../setup-inside.sh)`.
-- README: deploy reescrito em torno do instalador automático; removidas referências a token GitHub.
+### Changed
+- `setup-inside.sh` parameterizable by environment: `DOMAIN`, `APP_BASE_URL`, `SECURE_COOKIES`, `USE_BR_MIRROR`, `ADMIN_DEFAULT_PASS`. Can run via `bash <(curl -fsSL .../setup-inside.sh)`.
+- README: deploy rewritten around the automatic installer; GitHub token references removed.
 
 ---
 
 ## [1.5.0] — 2026-06-02
 
-### Segurança (hardening para exposição na internet)
-- **CSRF**: proteção global (Flask-WTF) em todos os POST. Token entregue via `<meta>`/hidden input e header `X-CSRFToken` no fetch.
-- **SECRET_KEY obrigatória**: a aplicação recusa subir em produção sem `SECRET_KEY` (evita forja de sessão com chave default).
-- **Detalhe de spool agora exige login** (`/spools/<id>`): antes era público e, com IDs sequenciais, permitia enumerar todo o estoque (preços, locais, histórico). O QR redireciona ao login quando necessário.
-- **Throttle de login**: bloqueio por IP após 10 falhas em 15 min (anti força-bruta), com tabela `login_failures`.
-- **Headers de segurança**: Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, Referrer-Policy e HSTS (em HTTPS).
-- **ProxyFix**: IP real do cliente atrás do Traefik (auditoria/throttle corretos).
-- **MAX_CONTENT_LENGTH** de 4 MB e remoção de SVG do upload de logos (evita XSS armazenado).
-- **Proteção contra open redirect** no parâmetro `next` do login.
+### Security (hardening for internet exposure)
+- **CSRF**: global protection (Flask-WTF) on all POSTs. Token delivered via `<meta>`/hidden input and the `X-CSRFToken` header in fetch.
+- **SECRET_KEY required**: the app refuses to start in production without `SECRET_KEY` (prevents session forgery with a default key).
+- **Spool detail now requires login** (`/spools/<id>`): it was public before and, with sequential IDs, allowed enumerating the whole stock (prices, locations, history). The QR redirects to login when needed.
+- **Login throttle**: per-IP block after 10 failures in 15 min (anti brute-force), with a `login_failures` table.
+- **Security headers**: Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, Referrer-Policy and HSTS (over HTTPS).
+- **ProxyFix**: real client IP behind Traefik (correct auditing/throttling).
+- **MAX_CONTENT_LENGTH** of 4 MB and SVG removed from logo uploads (prevents stored XSS).
+- **Open redirect protection** on the login `next` parameter.
 
-### Infraestrutura
-- Deploy sem token GitHub — repositório é público, clone anônimo; `.gh_token` eliminado do servidor.
-- Firewall (nftables) no LXC: porta `:8001` acessível apenas pelo Traefik e localmente (não mais exposta na LAN em HTTP puro).
-- VMID 117 incluído no job de backup do nó CasaMMD1.
+### Infrastructure
+- Deploy without a GitHub token — the repository is public, anonymous clone; `.gh_token` removed from the server.
+- Firewall (nftables) on the LXC: port `:8001` reachable only by Traefik and locally (no longer exposed on the LAN over plain HTTP).
+- VMID 117 added to the CasaMMD1 node backup job.
 
 ---
 
 ## [1.4.8] — 2026-06-02
 
-### Corrigido
-- Mensagem da fila usa singular/plural correto: "1 spool adicionado" vs "N spools adicionados/removidos"
+### Fixed
+- Queue message uses correct singular/plural: "1 spool added" vs "N spools added/removed".
 
 ---
 
 ## [1.4.7] — 2026-06-02
 
-### Adicionado
-- Botão "Todos" na lista de spools vira toggle: se todos visíveis já estão na fila, remove todos; caso contrário, adiciona todos
-- Flash de sucesso agora exibe como toast top-center que some automaticamente em 3 segundos
+### Added
+- The "All" button on the spool list becomes a toggle: if all visible ones are already queued, remove all; otherwise add all.
+- Success flash now shows as a top-center toast that auto-dismisses in 3 seconds.
 
 ---
 
 ## [1.4.6] — 2026-06-02
 
-### Adicionado
-- Opção "Novo material..." no dropdown de material do formulário de filamento — permite cadastrar tipos não listados (mesmo padrão já existente para marcas)
+### Added
+- "New material..." option in the filament form's material dropdown — allows registering types not listed (same pattern already used for brands).
 
 ---
 
 ## [1.4.1] — 2026-06-02
 
-### Corrigido
-- Ícone do carretel na navbar some no light mode — substituído `filter:invert(0.9)` inline por classe `.brand-icon` controlada via CSS por tema
-- Donuts ainda mais espessos: stroke-width 15, viewBox 50×50, cx/cy 25 — buraco interno ~36% do diâmetro externo, próximo da referência visual
+### Fixed
+- The navbar spool icon disappeared in light mode — replaced the inline `filter:invert(0.9)` with a `.brand-icon` class controlled by theme via CSS.
+- Even thicker donuts: stroke-width 15, viewBox 50×50, cx/cy 25 — inner hole ~36% of the outer diameter, closer to the visual reference.
 
 ---
 
 ## [1.4.0] — 2026-06-02
 
-### Adicionado
-- **Dark/Light mode**: toggle no navbar, preferência salva no localStorage, sem flash no carregamento
-- **i18n PT/BR → EN**: infraestrutura de tradução em `translations.py`, alternador PT|EN no navbar, rotas `/lang/pt` e `/lang/en`, strings de navegação e listas traduzidas
-- CSS design tokens para light mode (`[data-bs-theme="light"]`)
+### Added
+- **Dark/Light mode**: navbar toggle, preference saved in localStorage, no flash on load.
+- **i18n PT/BR → EN**: translation infrastructure in `translations.py`, PT|EN switcher in the navbar, `/lang/pt` and `/lang/en` routes, navigation and list strings translated.
+- CSS design tokens for light mode (`[data-bs-theme="light"]`).
 
-### Alterado
-- Donuts ainda mais espessos: stroke-width 9, viewBox 44×44, cx/cy 22 — diâmetro externo mantido
-- Track dos donuts adaptável ao tema via classe `.donut-track` e `var(--sc-border)`
-- Botões "+ Novo Filamento" e "+ Novo Spool": `btn-outline-primary` (verde contornado) — mais discreto
-- Botão de pesagem inline: `btn-outline-secondary` ao invés de `btn-outline-dark`
-- Donut macro Jinja reutilizável nos 3 templates principais
+### Changed
+- Even thicker donuts: stroke-width 9, viewBox 44×44, cx/cy 22 — outer diameter kept.
+- Donut track adapts to the theme via the `.donut-track` class and `var(--sc-border)`.
+- "+ New Filament" and "+ New Spool" buttons: `btn-outline-primary` (outlined green) — more subtle.
+- Inline weighing button: `btn-outline-secondary` instead of `btn-outline-dark`.
+- Reusable Jinja donut macro across the 3 main templates.
 
 ---
 
 ## [1.3.1] — 2026-06-02
 
-### Adicionado
-- Donut de estoque no título da página de detalhe do filamento (`/filaments/<id>`)
-- Donuts por spool na listagem de spools dentro do detalhe do filamento
-- Clique em qualquer lugar da linha abre o detalhe (filamentos e spools)
-- Modal inline de pesagem na listagem de spools: registra peso sem sair da página, atualiza donut e peso na hora
-- Botão "Fila: Todos" na listagem de spools: adiciona todos os spools visíveis à fila de impressão
-- Rota `POST /label-queue/add-all` para enfileirar múltiplos spools de uma vez
-- Suporte AJAX no endpoint de pesagem (`X-Requested-With: XMLHttpRequest` → resposta JSON)
+### Added
+- Stock donut in the filament detail page title (`/filaments/<id>`).
+- Per-spool donuts in the spool listing within the filament detail.
+- Clicking anywhere on the row opens the detail (filaments and spools).
+- Inline weighing modal in the spool listing: records weight without leaving the page, updates the donut and weight instantly.
+- "Queue: All" button in the spool listing: adds all visible spools to the print queue.
+- `POST /label-queue/add-all` route to enqueue multiple spools at once.
+- AJAX support on the weighing endpoint (`X-Requested-With: XMLHttpRequest` → JSON response).
 
-### Alterado
-- Removido donut agregado do título da listagem de filamentos (agora aparece no detalhe de cada filamento)
-- Donuts com stroke mais grosso (stroke-width 6, viewBox 40×40) — diâmetro externo mantido
-- Removida barra de progresso da listagem de spools do detalhe de filamento (substituída por donut)
+### Changed
+- Removed the aggregate donut from the filament listing title (now shown on each filament's detail).
+- Donuts with thicker stroke (stroke-width 6, viewBox 40×40) — outer diameter kept.
+- Removed the progress bar from the spool listing in the filament detail (replaced by a donut).
 
 ---
 
 ## [1.3.0] — 2026-06-02
 
-### Adicionado
-- Design system completo: dark mode nativo Bootstrap 5.3 (`data-bs-theme="dark"`) com paleta slate/green
-- Font Inter (Google Fonts) para toda a interface; Fira Code para badge de versão
-- Design tokens CSS (`--sc-bg`, `--sc-surface`, `--sc-accent`, etc.) como base de theming
-- Navbar com indicador de página ativa (`.sc-active`) por endpoint Flask
+### Added
+- Full design system: native Bootstrap 5.3 dark mode (`data-bs-theme="dark"`) with a slate/green palette.
+- Inter font (Google Fonts) for the whole UI; Fira Code for the version badge.
+- CSS design tokens (`--sc-bg`, `--sc-surface`, `--sc-accent`, etc.) as the theming base.
+- Navbar with an active-page indicator (`.sc-active`) per Flask endpoint.
 
-### Alterado
-- Navbar: layout refinado, gap entre itens, dropdowns com bordas arredondadas e sombra
-- Tabelas: header com tipografia uppercase 0.7rem + letter-spacing; background `#111827`
-- Botões: paleta revisada — primário verde, secundário slate, danger/warning sutis
-- Alerts: fundo translúcido colorido ao invés de sólido
-- Cards: superfície `#1E293B`, borda `#334155`, border-radius 10px
-- Badge de versão: monoespaçado, posicionado fixo no canto inferior direito
-- Botões "+ Novo Filamento" e "+ Novo Spool": `btn-primary` (verde) ao invés de `btn-dark`
+### Changed
+- Navbar: refined layout, gap between items, dropdowns with rounded borders and shadow.
+- Tables: header with uppercase 0.7rem typography + letter-spacing; `#111827` background.
+- Buttons: revised palette — green primary, slate secondary, subtle danger/warning.
+- Alerts: translucent colored background instead of solid.
+- Cards: `#1E293B` surface, `#334155` border, 10px border-radius.
+- Version badge: monospaced, fixed at the bottom-right corner.
+- "+ New Filament" and "+ New Spool" buttons: `btn-primary` (green) instead of `btn-dark`.
 
 ---
 
 ## [1.2.1] — 2026-06-02
 
-### Alterado
-- QR Code das etiquetas: ECC elevado de M (15%) para Q (25%) — maior robustez de leitura para a futura estação física com GM861-LED
+### Changed
+- Label QR code: ECC raised from M (15%) to Q (25%) — more robust scanning for the future physical station with the GM861-LED.
 
 ---
 
 ## [1.2.0] — 2026-06-02
 
-### Adicionado
-- Gráfico de rosca (donut SVG) na lista de filamentos: exibe proporção de estoque restante vs. nominal de todos os spools ativos, usando a cor do filamento
-- Donut agregado no título da lista de filamentos, mostrando o percentual total de estoque disponível entre todos os filamentos
-- Gráfico de rosca (donut SVG) na lista de spools: exibe proporção restante de cada rolo individualmente, usando a cor do filamento
-- Script de deploy (`update-lxc.sh`) passa a copiar o `CHANGELOG.md` para o servidor a cada atualização
+### Added
+- Donut chart (SVG) in the filament list: shows remaining vs. nominal stock across all active spools, using the filament color.
+- Aggregate donut in the filament list title, showing the total available-stock percentage across all filaments.
+- Donut chart (SVG) in the spool list: shows each spool's remaining ratio, using the filament color.
+- The deploy script (`update-lxc.sh`) now copies `CHANGELOG.md` to the server on each update.
 
-### Alterado
-- Lista de filamentos: removido swatch de cor antes da Família (substituído pelo donut)
-- Lista de spools: removido swatch de cor e barra de progresso (substituídos pelo donut)
+### Changed
+- Filament list: removed the color swatch before Family (replaced by the donut).
+- Spool list: removed the color swatch and progress bar (replaced by the donut).
 
 ---
 
 ## [1.1.0] — 2026-06-02
 
-### Adicionado
-- Busca global no navbar (`/search`) + filtro instantâneo client-side nas listas de filamentos e spools
-- Colunas ordenáveis nas listas (click no cabeçalho, ícone ⇅/↑/↓)
-- Fila de impressão de etiquetas: adicionar/remover spools, badge de contagem no menu, imprimir tudo em PDF, limpar fila
-- Prompt automático de fila ao criar spool ou alterar localização
-- Pesagem rápida (`/weigh`): código SP-XXXX + peso bruto → net calculado automaticamente
-- Logos de marcas: download via Google Favicon API + upload manual (Admin → Marcas)
-- Dropdown de marcas no form de filamento ordenado por uso (em uso primeiro, depois outras, + nova marca)
-- Tamanho da etiqueta configurável (largura × altura mm) em Admin → Configurações
-- Preview de cor + link direto "Editar cor / filamento" no form de edição de spool
-- Filamento pode ser trocado ao editar spool (muda material, cor, marca)
-- Lista de filamentos: Material, Marca e Família são links que filtram a lista de spools
-- Lista de spools: botão de fila de impressão (mostra estado) + botão editar inline
-- Botão duplicar filamento (copia só os campos, sem spools, abre edição)
-- Botão remover filamento (habilitado só sem spools; tooltip explica quando desabilitado)
-- Fluxo `?next=` na edição de filamento: salvar cor retorna para a tela do spool
-- Código SP-XXXX exibido no título do form de edição de spool
-- Ícone SVG de balança de cozinha personalizado (Bootstrap Icons não tem balança)
-- Ícone SVG de spool como favicon e logo da navbar
-- Badge de versão fixo no canto inferior direito
+### Added
+- Global navbar search (`/search`) + instant client-side filter on the filament and spool lists.
+- Sortable columns on the lists (click the header, ⇅/↑/↓ icon).
+- Label print queue: add/remove spools, count badge in the menu, print all to PDF, clear queue.
+- Automatic queue prompt when creating a spool or changing location.
+- Quick weigh (`/weigh`): SP-XXXX code + gross weight → net computed automatically.
+- Brand logos: download via the Google Favicon API + manual upload (Admin → Brands).
+- Brand dropdown in the filament form ordered by usage (in-use first, then others, + new brand).
+- Configurable label size (width × height mm) in Admin → Settings.
+- Color preview + direct "Edit color / filament" link in the spool edit form.
+- The filament can be changed when editing a spool (changes material, color, brand).
+- Filament list: Material, Brand and Family are links that filter the spool list.
+- Spool list: print-queue button (shows state) + inline edit button.
+- Duplicate-filament button (copies fields only, no spools, opens editing).
+- Remove-filament button (enabled only with no spools; tooltip explains when disabled).
+- `?next=` flow in filament editing: saving the color returns to the spool screen.
+- SP-XXXX code shown in the spool edit form title.
+- Custom kitchen-scale SVG icon (Bootstrap Icons has no scale).
+- Spool SVG icon as favicon and navbar logo.
+- Version badge fixed at the bottom-right corner.
 
-### Corrigido
-- `bi-balance-scale` não existe no Bootstrap Icons 1.11.3 — substituído por SVG próprio
-- `cp -r templates` criava `templates/templates/` no update-lxc.sh — corrigido para `cp -r templates/.`
-- Tooltip em botão `disabled` — `title` nativo não dispara; substituído por Bootstrap tooltip (`data-bs-toggle`)
-- `d-flex` em `<td>` causava barra branca na lista de filamentos — removido
-- `--preload` adicionado ao gunicorn para evitar race condition no bootstrap com 2 workers
-- `INSERT OR IGNORE` no bootstrap do admin para evitar erro em múltiplos workers
-- Ícones de ordenação invisíveis em cabeçalho dark — `color:inherit` no lugar de `text-muted`
+### Fixed
+- `bi-balance-scale` doesn't exist in Bootstrap Icons 1.11.3 — replaced with a custom SVG.
+- `cp -r templates` created `templates/templates/` in update-lxc.sh — fixed to `cp -r templates/.`.
+- Tooltip on a `disabled` button — the native `title` doesn't fire; replaced with a Bootstrap tooltip (`data-bs-toggle`).
+- `d-flex` in `<td>` caused a white bar in the filament list — removed.
+- `--preload` added to gunicorn to avoid a bootstrap race condition with 2 workers.
+- `INSERT OR IGNORE` in the admin bootstrap to avoid errors with multiple workers.
+- Sort icons invisible in the dark header — `color:inherit` instead of `text-muted`.
 
 ## [1.0.0] — 2026-06-02
 
-Primeira versão em produção.
+First production release.
 
-### Funcionalidades
-- Cadastro de filamentos (material, marca, família, cor, diâmetro)
-- Dropdown de marcas com logos automáticos (Google Favicon API) e upload manual
-- Lista de materiais expandida (~45 tipos), ordenada pelos cadastrados no sistema
-- Múltiplos spools por filamento com tara por modelo de carretel ou personalizada
-- Workflow de pesagem: peso bruto − tara = net, com histórico
-- Pesagem rápida (`/weigh`): código SP-XXXX + peso bruto, sem navegar pelo spool
-- Etiquetas térmicas PDF 60×40mm com QR code (sem peso impresso)
-- Fila de impressão de etiquetas em lote com badge de contagem no menu
-- Prompt automático de fila ao criar spool ou alterar localização
-- Relatórios: por material, por local, estoque baixo, histórico de peso
-- Filtro instantâneo client-side e colunas ordenáveis nas listagens
-- Busca global no navbar (`/search`)
-- Autenticação Flask com roles admin/viewer
-- Página pública por spool (`/spools/<id>`) — alvo do QR code, sem login
-- Admin: usuários, marcas/logos, configurações (base URL, thresholds de estoque)
+### Features
+- Filament registry (material, brand, family, color, diameter).
+- Brand dropdown with automatic logos (Google Favicon API) and manual upload.
+- Expanded material list (~45 types), ordered by the ones registered in the system.
+- Multiple spools per filament with tare by spool model or custom.
+- Weighing workflow: gross − tare = net, with history.
+- Quick weigh (`/weigh`): SP-XXXX code + gross weight, without navigating to the spool.
+- 60×40mm thermal PDF labels with QR code (no weight printed).
+- Batch label print queue with a count badge in the menu.
+- Automatic queue prompt when creating a spool or changing location.
+- Reports: by material, by location, low stock, weight history.
+- Instant client-side filter and sortable columns on listings.
+- Global navbar search (`/search`).
+- Flask authentication with admin/viewer roles.
+- Public per-spool page (`/spools/<id>`) — QR code target, no login.
+- Admin: users, brands/logos, settings (base URL, stock thresholds).
 
 ### Deploy
-- Debian 12 LXC no Proxmox
-- Gunicorn com `--preload` (2 workers, evita race condition no bootstrap)
-- Traefik via Proxmox Provider (Notes da LXC) + Let's Encrypt DNS challenge
-- Scripts: `setup-inside.sh` (instalação), `update-lxc.sh` (atualização), `seed_brands.py` (logos)
+- Debian 12 LXC on Proxmox.
+- Gunicorn with `--preload` (2 workers, avoids a bootstrap race condition).
+- Traefik via the Proxmox Provider (LXC Notes) + Let's Encrypt DNS challenge.
+- Scripts: `setup-inside.sh` (install), `update-lxc.sh` (update), `seed_brands.py` (logos).

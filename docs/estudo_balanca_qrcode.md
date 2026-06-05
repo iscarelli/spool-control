@@ -1,109 +1,109 @@
-# Estudo: Estação de pesagem autônoma (ESP32 + leitor serial GM861-LED)
+# Study: Autonomous weighing station (ESP32 + GM861-LED serial reader)
 
-> **Status:** estudo (não implementado). Aguardando compra do hardware (GM861-LED + ESP32).
-> Última atualização: 2026-06-02.
+> **Status:** the **Flask side is implemented and validated** (API + public-URL guarantee,
+> v1.13.x — see *Validation performed*). The **hardware** (GM861-LED + ESP32 + HX711) and
+> the firmware are still pending purchase/build.
+> Last updated: 2026-06-04.
 
-## Contexto
+## Context
 
-Hoje a pesagem de spools é manual: o operador abre `/weigh` (ou `/spools/<id>/weigh`)
-no navegador, escaneia/digita o código e digita o peso. A meta é uma **estação física
-autônoma**: o operador apenas **apoia o spool na balança**. A presença de peso dispara
-a leitura do QR pelo leitor serial; o ESP32 extrai o `spool_id`, espera o peso
-estabilizar e faz um `POST` ao Flask, que registra a pesagem. Sem tocar no computador.
+Today spool weighing is manual: the operator opens `/weigh` (or `/spools/<id>/weigh`) in
+the browser, scans/types the code and types the weight. The goal is a **physical autonomous
+station**: the operator just **places the spool on the scale**. The presence of weight
+triggers the QR read by the serial reader; the ESP32 extracts the `spool_id`, waits for the
+weight to stabilize and `POST`s to Flask, which records the weighing. No computer needed.
 
-O QR é gerado em `labels.py:35` (`{app_base_url}/spools/{id}`). Formato definido: **URL pública
-por inteiro (domínio `spool.lojinharacer.com.br`) + ECC maior** (ver seção *QR / etiqueta*).
+The QR is generated in `labels.py` (`{app_base_url}/spools/{id}`). Chosen format: **the full
+public URL (the domain) + higher ECC** (see *QR / label*).
 
-> **Decisão de hardware (confirmada):** leitor **GM861-LED** — rosca M25 (montagem
-> rígida trivial num gabinete), 3,3V (liga direto no ESP32, sem level shifter) e luz de
-> preenchimento que ajuda a ler etiqueta brilhante. Acionado por **Command Triggered
-> Mode** (comando serial), não por câmera.
+> **Hardware decision (confirmed):** the **GM861-LED** reader — M25 thread (trivial rigid
+> mounting in an enclosure), 3.3V (connects directly to the ESP32, no level shifter) and a
+> fill light that helps read glossy labels. Triggered by **Command Triggered Mode** (serial
+> command), not by camera.
 
 ---
 
 ## Hardware
 
-| Componente | Modelo | Observação |
+| Component | Model | Notes |
 |---|---|---|
-| Microcontrolador | **ESP32 DevKit (WROOM)** | UART livre + GPIOs de sobra; sem restrição da ESP32-CAM |
-| Leitor de QR | **GM861-LED** | Serial TTL 3,3V @9600 8N1, rosca M25, luz de preenchimento |
-| Amplificador ADC | **HX711** | 24-bit, para a célula de carga |
-| Célula de carga | **TAL220B 5kg** | 4 fios → HX711 |
-| Display (opcional) | **SSD1306 OLED 0.96" I²C** | Feedback visual ao operador |
+| Microcontroller | **ESP32 DevKit (WROOM)** | free UART + spare GPIOs; no ESP32-CAM restriction |
+| QR reader | **GM861-LED** | Serial TTL 3.3V @9600 8N1, M25 thread, fill light |
+| ADC amplifier | **HX711** | 24-bit, for the load cell |
+| Load cell | **TAL220B 5kg** | 4 wires → HX711 |
+| Display (optional) | **SSD1306 OLED 0.96" I²C** | visual feedback to the operator |
 
-### Ligações (ESP32 WROOM)
+### Wiring (ESP32 WROOM)
 
-| Periférico | Sinal | GPIO ESP32 | Obs. |
+| Peripheral | Signal | ESP32 GPIO | Note |
 |---|---|---|---|
-| GM861-LED | VCC / GND | 3V3 / GND | módulo é 3,3V — sem level shifter |
-| GM861-LED | módulo TXD → ESP32 **RX2** | GPIO16 | UART2 |
-| GM861-LED | módulo RXD ← ESP32 **TX2** | GPIO17 | UART2 |
-| HX711 | DT / SCK | GPIO32 / GPIO33 | bit-bang via lib `HX711` |
-| OLED | SDA / SCL | GPIO21 / GPIO22 | I²C padrão |
+| GM861-LED | VCC / GND | 3V3 / GND | module is 3.3V — no level shifter |
+| GM861-LED | module TXD → ESP32 **RX2** | GPIO16 | UART2 |
+| GM861-LED | module RXD ← ESP32 **TX2** | GPIO17 | UART2 |
+| HX711 | DT / SCK | GPIO32 / GPIO33 | bit-bang via the `HX711` lib |
+| OLED | SDA / SCL | GPIO21 / GPIO22 | standard I²C |
 
-> UART0 (GPIO1/3, USB) fica livre para debug; o GM861 fica isolado na **UART2**.
-> Pinos 5 (D-) e 6 (D+) do conector do GM861 são USB — **não usar**; ligar só TTL.
+> UART0 (GPIO1/3, USB) stays free for debug; the GM861 is isolated on **UART2**.
+> Pins 5 (D-) and 6 (D+) of the GM861 connector are USB — **do not use**; wire TTL only.
 
 ---
 
-## QR / etiqueta (decidido: URL + ECC, base = domínio público)
+## QR / label (decided: URL + ECC, base = public domain)
 
-O firmware só precisa do `spool_id`. Há um trade-off entre **uso humano** (escanear com
-o celular abre a página do spool) e **confiabilidade do leitor** (payload mais curto =
-QR com menos módulos = módulos maiores no mesmo tamanho físico = leitura mais robusta a
-distância/curvatura/brilho).
+The firmware only needs the `spool_id`. There's a trade-off between **human use** (scanning
+with a phone opens the spool page) and **reader reliability** (shorter payload = QR with
+fewer modules = larger modules at the same physical size = more robust reading at
+distance/curvature/glare).
 
-| Opção de payload | Celular abre página? | QR no leitor | Parsing no ESP32 |
+| Payload option | Phone opens page? | QR at the reader | Parsing on the ESP32 |
 |---|---|---|---|
-| **URL completa** (atual) `https://spool.lojinharacer.com.br/spools/42` | ✅ | mais denso | regex `/spools/(\d+)` |
-| **ID puro** `42` | ❌ | mais robusto | `atoi` direto |
-| **Prefixado** `SP42` / `s/42` | ❌ | robusto | tira o prefixo |
+| **Full URL** (current) `https://spool.lojinharacer.com.br/spools/42` | ✅ | denser | regex `/spools/(\d+)` |
+| **Bare ID** `42` | ❌ | more robust | direct `atoi` |
+| **Prefixed** `SP42` / `s/42` | ❌ | robust | strip the prefix |
 
-**Decisão (confirmada):** o QR usa a **URL pública por inteiro** — base
-**`https://spool.lojinharacer.com.br`** (o domínio, nunca o IP interno nem `localhost`,
-senão o celular não abre o spool) — e **ECC** subido para M/Q. Custo de parsing no ESP32 é nulo.
+**Decision (confirmed):** the QR uses the **full public URL** — base
+**`https://<your-domain>`** (the domain, never the internal IP or `localhost`, otherwise the
+phone won't open the spool) — with **ECC** raised to M/Q. Parsing cost on the ESP32 is nil.
 
-> ⚠️ **O default atual está errado pra esse uso:** `app_base_url` vem como
-> `http://localhost:5000` (`database.py:102`). "Trocar a URL do QR como um todo" =
-> garantir que `app_base_url` em **produção** seja `https://spool.lojinharacer.com.br`
-> (setting editável em `/admin/settings`, `app.py:718`); opcionalmente trocar também o
-> **default** em `database.py:102` pra nunca cair em localhost. *(O caminho `/spools/<id>`
-> permanece — só a base muda.)*
+> ✅ **Public URL guaranteed at install time (implemented in v1.13.0):** `app_base_url` is
+> seeded from the `APP_BASE_URL` env var at `init_db`, and `public_base_url()` falls back to
+> that env var if the setting is empty/`localhost`. The installers no longer default to a
+> third-party domain; without a domain they use the internal IP and warn it's LAN-only. It's
+> editable in **Admin → Settings** (saving applies everywhere). (The `/spools/<id>` path is
+> unchanged — only the base differs.)
 
-> **Endereço (decidido):** o **QR** e o **POST da estação** usam o mesmo domínio público
-> `https://spool.lojinharacer.com.br` (via Traefik). Implicações no ESP32:
-> - `WiFiClientSecure` + `HTTPClient` em HTTPS;
-> - na traga inicial, `client.setInsecure()` (pula validação de cert); em produção, *pin* da
->   CA **Let's Encrypt ISRG Root X1** via `setCACert()` (válida até ~2035);
-> - ✅ **reachability na LAN (confirmado):** a rede tem **split-DNS/hairpin**, então
->   `spool.lojinharacer.com.br` resolve pro Traefik (`10.1.0.15`) de dentro da LAN e o HTTPS
->   funciona na estação. (*Fallback* só se um dia faltar: `SERVER` = `http://10.1.0.29:8001`,
->   HTTP direto no Gunicorn, sem TLS.)
+> **Address (decided):** the **QR** and the **station's POST** use the same public domain
+> (via Traefik). ESP32 implications:
+> - `WiFiClientSecure` + `HTTPClient` over HTTPS;
+> - on first bring-up, `client.setInsecure()` (skip cert validation); in production, pin the
+>   **Let's Encrypt ISRG Root X1** CA via `setCACert()` (valid until ~2035);
+> - ✅ **LAN reachability (confirmed):** the network has **split-DNS/hairpin**, so the domain
+>   resolves to the Traefik node from inside the LAN and HTTPS works at the station.
+>   (*Fallback* only if it ever stops: `SERVER` = `http://<LXC_IP>:8001`, plain HTTP on
+>   Gunicorn, no TLS.)
 
-> ⚠️ **Parsing robusto:** o ESP32 deve casar `/spools/(\d+)` **ancorado**, não "o primeiro
-> número da string". (A rota `/weigh` atual usa `re.search(r'\d+', code)` em `app.py:492`,
-> que pegaria `10` numa base_url tipo `http://10.1.0.29:5000`. O firmware não deve repetir
-> esse atalho.)
+> ✅ **Robust parsing:** the ESP32 must match `/spools/(\d+)` **anchored**, not "the first
+> number in the string" (a URL with numbers in the host/port, e.g. `http://10.1.0.29:8001`,
+> would otherwise yield `10`). The reference parser is in `tools/validate_qr_autoweigh.py`.
 
 ---
 
-## Parte 1 — Flask: endpoint de API JSON
+## Part 1 — Flask: JSON API endpoint (implemented)
 
-Sem mudanças em `database.py`. Reaproveitar o que já existe:
-- `db.get_spool(spool_id)` (`database.py:413`) — já devolve `brand`, `material`,
-  `family`, `effective_tare_g`, `nominal_weight_g`, `current_net_g`, `last_weighed_at`.
-- `db.add_weight_reading(spool_id, gross_weight_g, tare_weight_g, recorded_by, notes)`
-  (`database.py:473`).
-- `db.get_setting(key, default)` (`database.py:185`) para ler a chave de API.
+No `database.py` changes needed. Reuses what already exists:
+- `db.get_spool(spool_id)` — returns `brand`, `material`, `family`, `effective_tare_g`,
+  `nominal_weight_g`, `current_net_g`, `last_weighed_at`.
+- `db.add_weight_reading(spool_id, gross_weight_g, tare_weight_g, recorded_by, notes)`.
+- `db.get_setting(key, default)`.
 
-A lógica espelha a rota existente `/weigh` (`app.py:487`) — incluindo a validação
-`gross < tare` — mas responde **JSON** e autentica por **API key** em vez de sessão.
+The logic mirrors the existing `/weigh` route — including the `gross < tare` check — but
+responds with **JSON** and authenticates by **API key** instead of a session.
 
-### Nova rota: `POST /api/weigh` (em `app.py`)
+### Route: `POST /api/weigh` (in `app.py`)
 
 ```
 Headers: Content-Type: application/json
-         X-API-Key: <chave>
+         X-API-Key: <key>
 
 Body: { "spool_id": 42, "gross_weight_g": 347.5 }
 
@@ -118,135 +118,133 @@ Body: { "spool_id": 42, "gross_weight_g": 347.5 }
   "remaining_pct": 16.25
 }
 
-4xx: { "ok": false, "error": "mensagem" }   // 401 chave, 404 spool, 422 gross<tare
+4xx: { "ok": false, "error": "message" }   // 401 key, 404 spool, 422 gross<tare, 400 body
 ```
 
-### Rota opcional: `GET /api/spools/<id>`
-Devolve `filament`, `effective_tare_g`, `nominal_weight_g`, `current_net_g`,
-`last_weighed_at` — para o OLED mostrar o spool **antes** de gravar (confirmação visual).
+### Route: `GET /api/spools/<id>`
+Returns `filament`, `effective_tare_g`, `nominal_weight_g`, `current_net_g`,
+`last_weighed_at` — for the OLED to show the spool **before** recording (visual confirmation).
 
-### Detalhes de implementação (`app.py`)
-- Ler a chave de `os.environ.get("SPOOL_API_KEY", "")`. Se vazia, aceitar sem auth
-  (facilita dev local). Alternativa: guardar como setting via `set_setting`/`get_setting`.
-- `recorded_by="estação"` (distingue no histórico das pesagens manuais).
-- `nominal_weight_g` pode ser `None`/0 → proteger o cálculo de `remaining_pct`.
-- **Não** usar `@login_required` (é máquina-a-máquina, autentica por chave).
+### Implementation details (`app.py`)
+- Reads the key from `os.environ.get("SPOOL_API_KEY", "")`. If empty, accepts without auth
+  (eases local dev). Generated by default at install in `spool.env`.
+- `recorded_by="estação"` (distinguishes station weighings from manual ones in the history).
+- `nominal_weight_g` may be `None`/0 → guard the `remaining_pct` computation.
+- **Not** `@login_required` (machine-to-machine, authenticated by key); CSRF-exempt.
 
 ---
 
-## Parte 2 — Firmware ESP32 (a balança é o gatilho)
+## Part 2 — ESP32 firmware (the scale is the trigger)
 
-### Bibliotecas
+### Libraries
 `WiFi.h`, `WiFiClientSecure.h`, `HTTPClient.h`, `ArduinoJson`, `bogde/HX711`,
-`Adafruit_SSD1306` (opcional). Leitor GM861: **nenhuma lib** — é UART pura (`Serial2`).
+`Adafruit_SSD1306` (optional). GM861 reader: **no lib** — it's pure UART (`Serial2`).
 
-### Configurar o GM861-LED uma única vez
-Por padrão o módulo pode vir em modo automático/contínuo. Configurá-lo para
-**Command Triggered Mode** (manual §3.4) — escaneando o **código de configuração** do
-manual ou enviando o comando de setup. A partir daí, cada leitura é disparada por:
-
-```
-Trigger 1 leitura:  7E 00 08 01 00 02 01 AB CD
-Resposta do módulo: 02 00 00 01 00 33 31   (ack, então escaneia e devolve o payload)
-```
-
-### Máquina de estados (loop principal)
+### Configure the GM861-LED once
+By default the module may come in automatic/continuous mode. Configure it to
+**Command Triggered Mode** (manual §3.4) — by scanning the **configuration code** from the
+manual or sending the setup command. From then on, each read is triggered by:
 
 ```
-BOOT → conecta WiFi → HX711.tare() (zera a balança vazia)
-
-ESTADO IDLE:
-  - lê HX711 (média de ~10 amostras)
-  - se peso > LIMIAR (ex.: 50g)  → debounce ~300ms → estado LENDO_QR
-
-ESTADO LENDO_QR:
-  - envia 7E 00 08 01 00 02 01 AB CD na Serial2
-  - aguarda payload até timeout 10s
-  - extrai spool_id (regex ancorado em "/spools/(\d+)" — ver seção QR)
-  - falhou? → OLED "QR não lido" → AGUARDA_REMOÇÃO
-
-ESTADO PESANDO:
-  - aguarda estabilidade: |amostra - média| ≤ 2g por 500ms
-  - gross_weight_g = média estável
-
-ESTADO ENVIANDO:
-  - HTTPS POST /api/weigh { spool_id, gross_weight_g } + header X-API-Key (via Traefik)
-  - OLED mostra "PLA+ Vermelho / 162.5g (16%)" a partir da resposta
-  - erro de rede/TLS → OLED "Falha rede" → retry 1x
-
-ESTADO AGUARDA_REMOÇÃO:
-  - espera peso < LIMIAR (spool retirado) → volta a IDLE
-  - (evita re-disparar no mesmo spool)
+Trigger 1 read:    7E 00 08 01 00 02 01 AB CD
+Module response:   02 00 00 01 00 33 31   (ack, then scans and returns the payload)
 ```
 
-### Config do firmware (hardcoded ou NVS)
+### State machine (main loop)
+
+```
+BOOT → connect WiFi → HX711.tare() (zero the empty scale)
+
+STATE IDLE:
+  - read HX711 (average of ~10 samples)
+  - if weight > THRESHOLD (e.g. 50g)  → debounce ~300ms → state READING_QR
+
+STATE READING_QR:
+  - send 7E 00 08 01 00 02 01 AB CD on Serial2
+  - wait for the payload up to a 10s timeout
+  - extract spool_id (regex anchored on "/spools/(\d+)" — see QR section)
+  - failed? → OLED "QR not read" → WAIT_REMOVAL
+
+STATE WEIGHING:
+  - wait for stability: |sample - average| ≤ 2g for 500ms
+  - gross_weight_g = stable average
+
+STATE SENDING:
+  - HTTPS POST /api/weigh { spool_id, gross_weight_g } + X-API-Key header (via Traefik)
+  - OLED shows "PLA+ Vermelho / 162.5g (16%)" from the response
+  - network/TLS error → OLED "Network fail" → retry 1x
+
+STATE WAIT_REMOVAL:
+  - wait for weight < THRESHOLD (spool removed) → back to IDLE
+  - (avoids re-triggering on the same spool)
+```
+
+### Firmware config (hardcoded or NVS)
 ```cpp
 const char* WIFI_SSID = "...";
 const char* WIFI_PASS = "...";
-const char* SERVER    = "https://spool.lojinharacer.com.br";   // POST via Traefik (HTTPS). Fallback LAN: http://10.1.0.29:8001
-const char* API_KEY   = "...";
-const float LIMIAR_G  = 50.0;
-float SCALE_FACTOR    = 2280.0;   // calibrar com peso conhecido
+const char* SERVER    = "https://<your-domain>";   // POST via Traefik (HTTPS). LAN fallback: http://<LXC_IP>:8001
+const char* API_KEY   = "...";                      // == SPOOL_API_KEY on the server
+const float THRESHOLD_G = 50.0;
+float SCALE_FACTOR    = 2280.0;   // calibrate with a known weight
 ```
 
 ---
 
-## Ordem de implementação
+## Implementation order
 
-1. ~~**QR** — subir o ECC em `labels.py` (mantendo a URL `app_base_url` = domínio público).~~ ✅ **feito em v1.2.1** — `ERROR_CORRECT_M` → `ERROR_CORRECT_Q`
-2. ~~**Flask** — adicionar `POST /api/weigh` (+ `GET /api/spools/<id>`) em `app.py`.~~ ✅ **implementado** — isento de CSRF, auth por `X-API-Key`==`SPOOL_API_KEY`, `recorded_by="estação"`; 400/401/404/422. **URL pública garantida na instalação:** `public_base_url()` (env `APP_BASE_URL` quando a setting está vazia/localhost) + seed da setting a partir do env + `setup-inside.sh`/`proxmox-deploy.sh` sem default de domínio de terceiros (sem domínio → IP interno, com aviso de "rede local apenas") + `SPOOL_API_KEY` gerado no `spool.env`. Validação sem hardware: `tools/validate_qr_autoweigh.py`.
-3. **Testar a API** via `curl` antes de tocar no hardware.
-4. **ESP32** — montar HX711 + célula, calibrar (`SCALE_FACTOR`), validar leitura de peso.
-5. **ESP32** — ligar GM861 na UART2, pôr em Command Triggered Mode, testar trigger+leitura.
-6. **ESP32** — juntar tudo na máquina de estados; testar com etiqueta impressa real.
-7. **Deploy** — `SPOOL_API_KEY` no `spool.env` do servidor + redeploy via `update-lxc.sh`.
-
----
-
-## Verificação
-
-- **API pelo domínio** (mesmo caminho do ESP32 — valida Traefik + TLS + API):
-  ```bash
-  curl -X POST https://spool.lojinharacer.com.br/api/weigh \
-    -H "Content-Type: application/json" -H "X-API-Key: <key>" \
-    -d '{"spool_id":1,"gross_weight_g":350}'
-  ```
-  → JSON com `net_weight_g` e `remaining_pct`; chave errada → 401; spool inexistente → 404.
-- **Direto no app** (isola o Traefik): trocar a URL por `http://10.1.0.29:8001/api/weigh`
-  (Gunicorn; dev local `app.run` usa `:5000`).
-- **Reachability da estação:** de um device na LAN, `curl https://spool.lojinharacer.com.br/health`
-  deve responder — confirma NAT hairpin/split-DNS (senão usar o fallback IP interno).
-- **Persistência:** abrir o spool no browser → o histórico mostra a leitura com
-  `recorded_by = "estação"`.
-- **Trigger pela balança:** apoiar o spool → leitor dispara sozinho, OLED confirma, e a
-  pesagem aparece no histórico sem nenhuma interação no PC.
-- **Leitura do QR:** etiqueta impressa real lida pelo GM861-LED a ~5–25cm.
+1. ~~**QR** — raise the ECC in `labels.py` (keeping `app_base_url` = public domain).~~ ✅ **done in v1.2.1** — `ERROR_CORRECT_M` → `ERROR_CORRECT_Q`
+2. ~~**Flask** — add `POST /api/weigh` (+ `GET /api/spools/<id>`) in `app.py`.~~ ✅ **implemented (v1.13.0)** — CSRF-exempt, auth by `X-API-Key`==`SPOOL_API_KEY`, `recorded_by="estação"`; 400/401/404/422. **Public URL guaranteed at install:** `public_base_url()` + env seeding + installers with no third-party domain default (no domain → internal IP, "local network only" warning) + `SPOOL_API_KEY` generated in `spool.env`. Hardware-free validation: `tools/validate_qr_autoweigh.py`.
+3. ~~**Test the API** via `curl` before touching hardware.~~ ✅ **done** — see *Validation performed*.
+4. **ESP32** — wire HX711 + cell, calibrate (`SCALE_FACTOR`), validate weight reading.
+5. **ESP32** — wire the GM861 on UART2, set Command Triggered Mode, test trigger+read.
+6. **ESP32** — assemble the state machine; test with a real printed label.
+7. **Deploy** — `SPOOL_API_KEY` is already in the server `spool.env`; rotate as needed.
 
 ---
 
-## Arquivos a modificar
+## Validation performed (no hardware) — 2026-06-04
 
-| Arquivo | O que muda |
-|---|---|
-| `app.py` | +2 rotas de API JSON (`/api/weigh`, `/api/spools/<id>`); reusa helpers existentes |
-| `labels.py` | subir o ECC do QR (mantendo a URL com domínio público) — ver seção QR |
-| `database.py` | *(opcional)* default de `app_base_url` (`:102`) de `localhost` → domínio |
-| produção (`/admin/settings`) | garantir `app_base_url = https://spool.lojinharacer.com.br` |
-| `spool.env` (servidor) | +`SPOOL_API_KEY=<gerada>` |
-| **firmware** (fora do repo Flask) | novo `esp32-estacao/estacao.ino`; POST HTTPS via `WiFiClientSecure` |
+Everything validated in software, before buying the hardware (GM861-LED / ESP32 / HX711).
 
-> Os *helpers* de `database.py` (`get_spool`, `add_weight_reading`) **não** mudam — já
-> bastam. A única mexida possível ali é o default de `app_base_url` (opcional, `:102`).
+**QR — automated round-trip** (`tools/validate_qr_autoweigh.py`): generates the QR with the
+same function as the label → decodes it (`cv2`, a proxy for the reader) → extracts the
+`spool_id` anchored on `/spools/(\d+)`. Tested with **small and large codes** (SP-0001 …
+SP-9999999) and with adversarial payloads — the parser is proof against numbers in the
+host/port, querystring, route suffix and garbage (returns `None`, never a wrong id).
+
+**Real label (printed PDF)** — QRs from actually exported labels (`spool-*.pdf`) decoded
+with `pymupdf`+`cv2`:
+- install **without a domain** → `http://<IP>:8001/spools/1`
+- install **with a domain** → `https://spoolteste.lojinharacer.com.br/spools/1`
+Layout checked visually (logo/brand, SP code, Material/Family/Color, "Local:").
+
+**Weighing API** — `POST /api/weigh` and `GET /api/spools/<id>` validated:
+`200` (ok), `401` (missing/wrong key), `404` (nonexistent spool), `422` (gross<tare),
+`400` (invalid body). **Full round-trip simulating the ESP32** (QR from the real PDF →
+extract id → `POST /api/weigh` with `X-API-Key` → `ok:true` with net/%), tested **via IP on
+the LAN** and **via the domain (HTTPS/Traefik)**.
+
+**Clean install** — install from scratch on a temporary LXC (Debian 12): service active,
+`/health` 200, `app_base_url` **seeded from the environment** (IP/domain, never localhost),
+`SPOOL_API_KEY` generated, "local network only" warning when there's no domain.
+> **Bug found and fixed (v1.13.1):** `setup-inside.sh` copied a fixed file list and was
+> missing `niimbot_registry.py` → a fresh install broke with `ModuleNotFoundError`. It now
+> uses `git archive` of the whole tree.
+
+**Traefik (domain route)** — validated after fixing a **router name collision**: the `spool`
+name is **global** in Traefik, so the test LXC needs a unique name (e.g. `spooltest`). With
+a unique name + non-indented labels, `https://<test-domain>/health` → 200, TLS OK.
 
 ---
 
-## Manuais de referência (na pasta `docs/`)
+## Reference manuals (in the `docs/` folder)
 
 - `GM861 GM861-LED Barcode reader module User Manual-V1.2.4.pdf`
 - `GM861S GM861S-LED Barcode reader module User Manual-V1.2.4.pdf`
 - `GM861XS Barcode reader module User Manual-V1.1.2.pdf`
 - `GM861XS-0 Barcode reader module User Manual-V1.1.2.pdf`
 
-> Todos os quatro suportam trigger por hardware (§3.3.1, Level/Edge) **e** por comando serial
-> (§3.4, *Command Triggered Mode*). O **GM861-LED** foi o escolhido pela montagem M25 + 3,3V +
-> luz de preenchimento.
+> All four support hardware trigger (§3.3.1, Level/Edge) **and** serial command trigger
+> (§3.4, *Command Triggered Mode*). The **GM861-LED** was chosen for the M25 mount + 3.3V +
+> fill light.
