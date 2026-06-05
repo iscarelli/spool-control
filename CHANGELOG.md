@@ -10,6 +10,12 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.16.1] — 2026-06-05
+
+### Fixed
+- **API key fechado por padrão**: `SPOOL_API_KEY` ausente agora retorna 401 (antes abria sem auth). `update-lxc.sh` passa a gerar a chave no `spool.env` de fallback.
+- **Timing attack**: comparação da API key migrada para `secrets.compare_digest()`.
+
 ## [1.16.0] — 2026-06-05
 
 ### Added
