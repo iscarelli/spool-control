@@ -169,6 +169,18 @@ def init_db():
         (os.environ.get("APP_BASE_URL", "").strip() or "http://localhost:5000",),
     )
     db.commit()
+
+    # Migrations: adiciona colunas que não existiam em versões antigas do schema.
+    # ALTER TABLE não suporta IF NOT EXISTS no SQLite — usamos try/except.
+    for sql in [
+        "ALTER TABLE brands ADD COLUMN domain     TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE brands ADD COLUMN updated_at TEXT NOT NULL DEFAULT ''",
+    ]:
+        try:
+            db.execute(sql)
+        except sqlite3.OperationalError:
+            pass  # coluna já existe
+    db.commit()
     db.close()
 
 

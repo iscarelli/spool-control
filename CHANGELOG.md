@@ -10,6 +10,11 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.18.5] — 2026-06-05
+
+### Fixed
+- **Migration automática do schema de `brands`**: bancos antigos não tinham as colunas `domain` e `updated_at` — `CREATE TABLE IF NOT EXISTS` não as adicionava. O `init_db()` agora roda `ALTER TABLE brands ADD COLUMN` com try/except para garantir compatibilidade. Corrige o `seed_brands.py` falhando silenciosamente no update e a lista de marcas ficando vazia.
+
 ## [1.18.4] — 2026-06-05
 
 ### Changed
