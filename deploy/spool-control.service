@@ -8,11 +8,7 @@ WorkingDirectory=/opt/spool-control
 Environment=HOME=/tmp
 EnvironmentFile=/opt/spool-control/spool.env
 ExecStart=/opt/spool-control/.venv/bin/gunicorn \
-    -w 2 \
-    -b 0.0.0.0:8001 \
-    --timeout 30 \
-    --worker-tmp-dir /dev/shm \
-    --preload \
+    --config /opt/spool-control/deploy/gunicorn.conf.py \
     app:app
 Restart=always
 RestartSec=5

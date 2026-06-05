@@ -4,6 +4,9 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.units import mm
 from reportlab.lib.utils import ImageReader
 from PIL import Image, ImageDraw, ImageFont
+import logger as log_cfg
+
+_log = log_cfg.get_logger("spool.labels")
 
 
 def _make_qr_image(url: str) -> Image.Image:
@@ -79,6 +82,8 @@ def _draw_label(c, spool: dict, base_url: str, page_w: float, page_h: float):
                         logo_w, logo_h, mask="auto")
             brand_x = left + logo_w + gap
         except Exception:
+            _log.warning("label_pdf.logo_render_failed", logo=str(logo_file),
+                         exc_info=True)
             brand_x = left
 
     brand_max = (right - code_w - gap) - brand_x
@@ -245,6 +250,8 @@ def generate_label_png(spool: dict, base_url: str,
             img.paste(limg, (left, y))
             bx = left + lw + max(4, round(w_px * 0.01))
         except Exception:
+            _log.warning("label_png.logo_render_failed", logo=str(logo_file),
+                         exc_info=True)
             bx = left
 
     brand_max = (right - code_w - max(6, round(w_px * 0.02))) - bx

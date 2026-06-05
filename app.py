@@ -3,6 +3,7 @@ import io
 import re
 import json
 import time
+import uuid
 import zipfile
 import tempfile
 import subprocess
@@ -13,7 +14,7 @@ from pathlib import Path
 from datetime import datetime
 from flask import (
     Flask, render_template, request, redirect, url_for,
-    session, flash, Response, abort, jsonify,
+    session, flash, Response, abort, jsonify, g,
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -23,6 +24,8 @@ import database as db
 import labels as lbl
 import translations as i18n
 import niimbot_registry as reg
+import logger as log_cfg
+from structlog.contextvars import clear_contextvars, bind_contextvars
 
 BRANDS_DIR = Path(__file__).parent / "static" / "brands"
 
@@ -52,7 +55,8 @@ def _fetch_brand_logo(brand_name: str, domain: str) -> bool:
                 db.update_brand_logo_path(brand_name, f"brands/{slug}.png")
                 return True
     except Exception:
-        pass
+        log.warning("brand_logo.fetch_failed", brand=brand_name, domain=domain,
+                    exc_info=True)
     return False
 
 app = Flask(__name__)
@@ -94,6 +98,24 @@ csrf = CSRFProtect(app)
 LOGIN_MAX_FAILURES = 10
 LOGIN_WINDOW_MIN = 15
 
+log_cfg.configure_logging(app)
+log = log_cfg.get_logger()
+
+
+@app.before_request
+def _req_start():
+    clear_contextvars()
+    rid = uuid.uuid4().hex[:8]
+    bind_contextvars(
+        request_id=rid,
+        method=request.method,
+        path=request.path,
+        ip=request.remote_addr,
+        user=session.get("username", "anon"),
+    )
+    g._request_id = rid
+    g._t0 = time.perf_counter()
+
 
 @app.after_request
 def set_security_headers(resp):
@@ -110,6 +132,13 @@ def set_security_headers(resp):
     )
     if request.is_secure:
         resp.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    rid = getattr(g, "_request_id", None)
+    if rid:
+        resp.headers["X-Request-ID"] = rid
+    t0 = getattr(g, "_t0", None)
+    if t0 is not None:
+        log.info("request", status=resp.status_code,
+                 duration_ms=round((time.perf_counter() - t0) * 1000, 1))
     return resp
 
 
@@ -180,6 +209,7 @@ def check_latest_release(force=False):
             _release_cache.update(ts=now, ok=False)
     except Exception:
         _release_cache.update(ts=now, ok=False)
+        log.warning("github_release.check_failed", exc_info=True)
     return _release_cache["tag"]
 
 
@@ -408,6 +438,7 @@ def filaments_new():
             flash(t("Filamento cadastrado com sucesso"), "success")
             return redirect(url_for("filaments_detail", filament_id=fid))
         except Exception as e:
+            log.error("filament.create_failed", exc_info=True)
             flash(f"{t('Erro')}: {e}", "danger")
     return render_template("filaments/form.html", filament=None,
                            materials=get_ordered_materials(), brands=db.list_brands_ordered())
@@ -444,6 +475,7 @@ def filaments_edit(filament_id):
             flash(t("Filamento atualizado"), "success")
             return redirect(next_url or url_for("filaments_detail", filament_id=filament_id))
         except Exception as e:
+            log.error("filament.update_failed", filament_id=filament_id, exc_info=True)
             flash(f"{t('Erro')}: {e}", "danger")
     return render_template("filaments/form.html", filament=filament,
                            materials=get_ordered_materials(), brands=db.list_brands_ordered(),
@@ -502,6 +534,7 @@ def spool_models_new():
             flash(t("Modelo de carretel cadastrado"), "success")
             return redirect(url_for("spool_models_list"))
         except Exception as e:
+            log.error("spool_model.create_failed", exc_info=True)
             flash(f"{t('Erro')}: {e}", "danger")
     return render_template("spool_models/form.html", model=None)
 
@@ -523,6 +556,7 @@ def spool_models_edit(model_id):
             flash(t("Modelo atualizado"), "success")
             return redirect(url_for("spool_models_list"))
         except Exception as e:
+            log.error("spool_model.update_failed", model_id=model_id, exc_info=True)
             flash(f"{t('Erro')}: {e}", "danger")
     return render_template("spool_models/form.html", model=model)
 
@@ -579,6 +613,7 @@ def spools_new():
             flash(t("Rolo cadastrado com sucesso"), "success")
             return redirect(url_for("spools_detail", spool_id=spool_id, queue_prompt="1"))
         except Exception as e:
+            log.error("spool.create_failed", exc_info=True)
             flash(f"{t('Erro')}: {e}", "danger")
     filaments = db.list_filaments()
     spool_models = db.list_spool_models()
@@ -627,6 +662,7 @@ def spools_edit(spool_id):
                 return redirect(url_for("spools_detail", spool_id=spool_id, queue_prompt="1"))
             return redirect(url_for("spools_detail", spool_id=spool_id))
         except Exception as e:
+            log.error("spool.update_failed", spool_id=spool_id, exc_info=True)
             flash(f"{t('Erro')}: {e}", "danger")
     filaments = db.list_filaments()
     spool_models = db.list_spool_models()
@@ -905,7 +941,7 @@ def label_queue_add_all():
             db.queue_add(int(sid))
             added += 1
         except Exception:
-            pass
+            log.warning("label_queue.add_failed", spool_id=sid, exc_info=True)
     flash(t("{n} rolo(s) adicionado(s) à fila de impressão").format(n=added), "success")
     return redirect(request.form.get("next") or url_for("spools_list"))
 
@@ -946,7 +982,7 @@ def label_queue_remove_all():
             db.queue_remove(int(sid))
             removed += 1
         except Exception:
-            pass
+            log.warning("label_queue.remove_failed", spool_id=sid, exc_info=True)
     flash(t("{n} rolo(s) removido(s) da fila").format(n=removed), "success")
     return redirect(request.form.get("next") or url_for("spools_list"))
 
@@ -1166,7 +1202,9 @@ def admin_update_run():
         )
     except Exception as e:
         msg = (getattr(e, "stderr", "") or str(e)).strip()
+        log.error("admin.update_failed", error=msg[:300], exc_info=True)
         return jsonify(ok=False, error=msg[:300]), 500
+    log.info("admin.update_triggered")
     return jsonify(ok=True)
 
 
@@ -1273,19 +1311,73 @@ def admin_backup_restore():
 
 @app.route("/health")
 def health():
-    return jsonify(status="ok")
+    checks: dict = {}
+
+    try:
+        conn = db.get_db()
+        try:
+            conn.execute("SELECT 1")
+            checks["db"] = "ok"
+        finally:
+            conn.close()
+    except Exception as e:
+        checks["db"] = str(e)
+        log.error("health.db_failed", exc_info=True)
+
+    data_dir = Path(__file__).parent / "data"
+    checks["data_dir"] = "ok" if data_dir.is_dir() else "missing"
+
+    ok = all(v == "ok" for v in checks.values())
+    return jsonify(
+        status="ok" if ok else "degraded",
+        version=APP_VERSION,
+        checks=checks,
+    ), 200 if ok else 503
 
 
 # ── Error handlers ─────────────────────────────────────────────────────────
 
+@app.errorhandler(400)
+def err_400(e):
+    log.warning("http.400", detail=str(e))
+    if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return jsonify(ok=False, error="bad_request"), 400
+    return render_template("error.html", code=400, message=t("Requisição inválida")), 400
+
+
 @app.errorhandler(403)
 def err_403(e):
+    log.warning("http.403", path=request.path)
     return render_template("error.html", code=403, message=t("Acesso negado")), 403
 
 
 @app.errorhandler(404)
 def err_404(e):
     return render_template("error.html", code=404, message=t("Página não encontrada")), 404
+
+
+@app.errorhandler(422)
+def err_422(e):
+    log.warning("http.422", detail=str(e))
+    if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return jsonify(ok=False, error="unprocessable_entity"), 422
+    return render_template("error.html", code=422, message=t("Requisição inválida")), 422
+
+
+@app.errorhandler(500)
+def err_500(e):
+    log.error("http.500", exc_info=True)
+    if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return jsonify(ok=False, error="internal_error"), 500
+    return render_template("error.html", code=500, message=t("Erro interno do servidor")), 500
+
+
+@app.errorhandler(Exception)
+def err_unhandled(e):
+    log.critical("unhandled_exception", exc=str(e), exc_info=True)
+    if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return jsonify(ok=False, error="internal_error"), 500
+    return render_template("error.html", code=500, message=t("Erro interno do servidor")), 500
 
 
 if __name__ == "__main__":

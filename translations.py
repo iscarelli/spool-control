@@ -282,6 +282,8 @@ _EN = {
     "Voltar ao início":          "Back to home",
     "Acesso negado":             "Access denied",
     "Página não encontrada":     "Page not found",
+    "Requisição inválida":       "Invalid request",
+    "Erro interno do servidor":  "Internal server error",
 
     # ── Spool models ─────────────────────────────────────────────────────────
     "+ Novo Modelo":             "+ New Model",
@@ -643,6 +645,8 @@ _ES = {
     "Voltar ao início":          "Volver al inicio",
     "Acesso negado":             "Acceso denegado",
     "Página não encontrada":     "Página no encontrada",
+    "Requisição inválida":       "Solicitud inválida",
+    "Erro interno do servidor":  "Error interno del servidor",
 
     # ── Spool models ─────────────────────────────────────────────────────────
     "+ Novo Modelo":             "+ Nuevo Modelo",

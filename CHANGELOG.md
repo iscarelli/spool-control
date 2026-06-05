@@ -10,6 +10,21 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.16.0] — 2026-06-05
+
+### Added
+- **Structured JSON logging** (`structlog`): every log line is a JSON object with `event`, `level`, `logger`, `timestamp`, `request_id`, `method`, `path`, `ip`, `user`, and `duration_ms`. Captured by journald and parseable by Loki/ELK.
+- **Request ID middleware**: each HTTP request generates an 8-char `X-Request-ID` header (returned to the client and bound to every log line in that request).
+- **Data masking**: fields named `password`, `token`, `secret`, `api_key`, `authorization`, `cookie`, `spool_api_key`, and `password_hash` are replaced with `***` before any log is written.
+- **Gunicorn config file** (`deploy/gunicorn.conf.py`): all gunicorn parameters migrated from the service file; access log now emits JSON.
+- **Enhanced `/health` endpoint**: checks DB connectivity and data directory; returns `{"status":"ok"|"degraded","version":"...","checks":{...}}` with HTTP 503 on failure.
+- **Missing HTTP error handlers**: 400, 422, 500, and a catch-all `Exception` handler — all log at the appropriate level and return JSON for API requests.
+
+### Fixed
+- 8 silent `except Exception: pass` blocks replaced with `log.warning/error(exc_info=True)` so no failure goes unnoticed.
+- `is_valid_backup_db` now logs the exception detail before returning `False`.
+- Logo rendering failures in PDF and PNG labels now log a warning instead of silently degrading.
+
 ## [1.15.0] — 2026-06-05
 
 ### Added

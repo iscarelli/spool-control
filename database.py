@@ -3,6 +3,9 @@ import os
 import colorsys
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
+import logger as log_cfg
+
+_log = log_cfg.get_logger("spool.db")
 
 DB_PATH = Path(__file__).parent / "data" / "spool.db"
 
@@ -41,6 +44,7 @@ def is_valid_backup_db(path):
         finally:
             con.close()
     except Exception:
+        _log.error("backup.validation_failed", path=str(path), exc_info=True)
         return False
     return {"users", "filaments", "spools", "settings"}.issubset(names)
 
