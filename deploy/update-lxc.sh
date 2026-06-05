@@ -107,6 +107,12 @@ EOF
 
     chown -R spool:spool "$APP_DIR"
 
+    # ── Logos de marcas conhecidas ────────────────────────────────────────────
+    info "Atualizando logos de marcas conhecidas..."
+    "${APP_DIR}/.venv/bin/python" "${APP_DIR}/deploy/seed_brands.py" \
+        || warn "Falha ao buscar alguns logos — sem impacto no funcionamento."
+    chown -R spool:spool "${APP_DIR}/static/brands" 2>/dev/null || true
+
     # ── Aparato de autoatualizacao pela web (oneshot + sudoers) ──────────────
     info "Configurando autoatualizacao (systemd oneshot + sudoers)..."
     command -v sudo >/dev/null 2>&1 || { apt-get update -qq && apt-get install -y -q sudo; }

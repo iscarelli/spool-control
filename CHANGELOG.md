@@ -10,6 +10,13 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.18.4] — 2026-06-05
+
+### Changed
+- `static/brands/`: logos das 26 marcas conhecidas commitados no repositório — instalações e updates não dependem mais da API do Google Favicon estando online.
+- `deploy/update-lxc.sh`: executa `seed_brands.py` a cada deploy para manter logos atualizados e baixar novas marcas adicionadas ao script.
+- `deploy/setup-inside.sh`: idem (introduzido na v1.18.3).
+
 ## [1.18.3] — 2026-06-05
 
 ### Changed
