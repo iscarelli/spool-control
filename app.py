@@ -37,27 +37,39 @@ def _clean_domain(domain: str) -> str:
     return domain.split('/')[0].strip()
 
 
-def _fetch_brand_logo(brand_name: str, domain: str) -> bool:
-    BRANDS_DIR.mkdir(exist_ok=True)
-    slug = re.sub(r'[^a-z0-9]+', '-', brand_name.lower()).strip('-')
-    dest = BRANDS_DIR / f"{slug}.png"
-    clean = _clean_domain(domain)
-    url = (
-        f"https://t3.gstatic.com/faviconV2"
-        f"?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
-        f"&url=https://{clean}&size=256"
-    )
+def _logo_sources(domain: str) -> list[str]:
+    return [
+        f"https://logo.clearbit.com/{domain}",
+        f"https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://{domain}&size=256",
+        f"https://icons.duckduckgo.com/ip3/{domain}.ico",
+    ]
+
+
+def _try_fetch_image(url: str) -> bytes | None:
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
         with urllib.request.urlopen(req, timeout=10) as resp:
             ct = resp.headers.get('Content-Type', '')
             if resp.status == 200 and ('image' in ct or 'octet' in ct):
-                dest.write_bytes(resp.read())
-                db.update_brand_logo_path(brand_name, f"brands/{slug}.png")
-                return True
+                return resp.read()
     except Exception:
-        log.warning("brand_logo.fetch_failed", brand=brand_name, domain=domain,
-                    exc_info=True)
+        pass
+    return None
+
+
+def _fetch_brand_logo(brand_name: str, domain: str) -> bool:
+    BRANDS_DIR.mkdir(exist_ok=True)
+    slug = re.sub(r'[^a-z0-9]+', '-', brand_name.lower()).strip('-')
+    dest = BRANDS_DIR / f"{slug}.png"
+    clean = _clean_domain(domain)
+    for url in _logo_sources(clean):
+        data = _try_fetch_image(url)
+        if data:
+            dest.write_bytes(data)
+            db.update_brand_logo_path(brand_name, f"brands/{slug}.png")
+            log.info("brand_logo.fetched", brand=brand_name, source=url)
+            return True
+    log.warning("brand_logo.fetch_failed", brand=brand_name, domain=domain)
     return False
 
 app = Flask(__name__)

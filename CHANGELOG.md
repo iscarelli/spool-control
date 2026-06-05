@@ -10,6 +10,11 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.19.1] — 2026-06-05
+
+### Changed
+- **Busca de logos**: cadeia de fallback com 3 fontes — Clearbit Logo API → Google Favicon API → DuckDuckGo Favicon. Aumenta a taxa de sucesso para marcas que não têm favicon no Google mas têm em outras fontes.
+
 ## [1.19.0] — 2026-06-05
 
 ### Added

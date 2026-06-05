@@ -47,22 +47,32 @@ def _slug(name: str) -> str:
     return re.sub(r'[^a-z0-9]+', '-', name.lower()).strip('-')
 
 
-def fetch_logo(name: str, domain: str) -> str | None:
-    dest = BRANDS_DIR / f"{_slug(name)}.png"
-    url = (
-        f"https://t3.gstatic.com/faviconV2"
-        f"?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
-        f"&url=https://{domain}&size=256"
-    )
+LOGO_SOURCES = [
+    "https://logo.clearbit.com/{domain}",
+    "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://{domain}&size=256",
+    "https://icons.duckduckgo.com/ip3/{domain}.ico",
+]
+
+
+def _try_fetch(url: str) -> bytes | None:
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
         with urllib.request.urlopen(req, timeout=10) as resp:
             ct = resp.headers.get('Content-Type', '')
             if resp.status == 200 and ('image' in ct or 'octet' in ct):
-                dest.write_bytes(resp.read())
-                return f"brands/{_slug(name)}.png"
+                return resp.read()
     except Exception:
         pass
+    return None
+
+
+def fetch_logo(name: str, domain: str) -> str | None:
+    dest = BRANDS_DIR / f"{_slug(name)}.png"
+    for template in LOGO_SOURCES:
+        data = _try_fetch(template.format(domain=domain))
+        if data:
+            dest.write_bytes(data)
+            return f"brands/{_slug(name)}.png"
     return None
 
 
