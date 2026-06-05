@@ -10,6 +10,12 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.19.0] — 2026-06-05
+
+### Added
+- **Admin > Marcas**: botão "+ Nova Marca" abre modal para adicionar uma marca manualmente (sem precisar criar filamento antes).
+- **Admin > Marcas**: botão "Remover" (lixeira) em marcas sem filamentos vinculados.
+
 ## [1.18.5] — 2026-06-05
 
 ### Fixed

@@ -1165,6 +1165,32 @@ def admin_brand_upload():
     return redirect(url_for("admin_brands"))
 
 
+@app.route("/admin/brands/new", methods=["POST"])
+@admin_required
+def admin_brand_new():
+    name = request.form.get("name", "").strip()
+    if not name:
+        flash(t("Nome da marca é obrigatório"), "danger")
+        return redirect(url_for("admin_brands"))
+    db.create_brand(name)
+    flash(t("Marca '{brand}' adicionada").format(brand=name), "success")
+    return redirect(url_for("admin_brands"))
+
+
+@app.route("/admin/brands/delete", methods=["POST"])
+@admin_required
+def admin_brand_delete():
+    name = request.form.get("brand_name", "").strip()
+    if not name:
+        return redirect(url_for("admin_brands"))
+    try:
+        db.delete_brand(name)
+        flash(t("Marca removida"), "success")
+    except ValueError as e:
+        flash(t(str(e)), "danger")
+    return redirect(url_for("admin_brands"))
+
+
 @app.route("/admin/settings", methods=["GET", "POST"])
 @admin_required
 def admin_settings():

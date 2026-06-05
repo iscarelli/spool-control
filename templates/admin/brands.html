@@ -1,11 +1,16 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Marcas') }} — Spool Control{% endblock %}
 {% block content %}
-<h4 class="fw-bold mb-4">{{ _('Marcas / Logos') }}</h4>
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="fw-bold mb-0">{{ _('Marcas / Logos') }}</h4>
+  <button class="btn btn-dark btn-sm" data-bs-toggle="modal" data-bs-target="#newBrandModal">
+    <i class="bi bi-plus-lg me-1"></i>{{ _('Nova Marca') }}
+  </button>
+</div>
 <p class="text-muted small mb-4">
   {{ _('Informe o domínio da marca para buscar o logo automaticamente via') }}
-  <a href="https://clearbit.com" target="_blank">Clearbit</a>
-  {{ _('e salvar localmente. Ou faça upload manual de um arquivo PNG/JPG/SVG.') }}
+  Google Favicon
+  {{ _('e salvar localmente. Ou faça upload manual de um arquivo PNG/JPG/WEBP.') }}
 </p>
 
 <div class="row g-3">
@@ -23,10 +28,19 @@
             {{ b.name[0] }}
           </div>
           {% endif %}
-          <div>
+          <div class="flex-grow-1">
             <div class="fw-semibold">{{ b.name }}</div>
             <div class="text-muted small">{{ b.filament_count }} {{ _('filamento(s)') }}</div>
           </div>
+          {% if b.filament_count == 0 %}
+          <form method="post" action="{{ url_for('admin_brand_delete') }}"
+                data-sc-confirm="{{ _('Remover a marca') }} {{ b.name }}?">
+            <input type="hidden" name="brand_name" value="{{ b.name }}">
+            <button class="btn btn-sm btn-outline-danger" title="{{ _('Remover marca') }}">
+              <i class="bi bi-trash"></i>
+            </button>
+          </form>
+          {% endif %}
         </div>
 
         <form method="post" action="{{ url_for('admin_brand_fetch') }}" class="mb-2">
@@ -35,7 +49,7 @@
             <input type="text" name="domain" class="form-control"
                    placeholder="{{ _('ex: bambulab.com') }}" value="{{ b.domain or '' }}">
             <button class="btn btn-outline-dark" type="submit">
-              <i class="bi bi-cloud-download me-1"></i>Clearbit
+              <i class="bi bi-cloud-download me-1"></i>{{ _('Buscar logo') }}
             </button>
           </div>
         </form>
@@ -44,7 +58,7 @@
               enctype="multipart/form-data">
           <input type="hidden" name="brand_name" value="{{ b.name }}">
           <div class="input-group input-group-sm">
-            <input type="file" name="logo" class="form-control" accept=".png,.jpg,.jpeg,.svg,.webp">
+            <input type="file" name="logo" class="form-control" accept=".png,.jpg,.jpeg,.webp">
             <button class="btn btn-outline-secondary" type="submit">
               <i class="bi bi-upload me-1"></i>{{ _('Upload') }}
             </button>
@@ -55,8 +69,31 @@
   </div>
   {% else %}
   <div class="col-12 text-muted text-center py-5">
-    {{ _('Nenhuma marca cadastrada. Adicione filamentos primeiro.') }}
+    {{ _('Nenhuma marca cadastrada.') }}
   </div>
   {% endfor %}
+</div>
+
+<!-- Modal: Nova Marca -->
+<div class="modal fade" id="newBrandModal" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <form method="post" action="{{ url_for('admin_brand_new') }}">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">{{ _('Nova Marca') }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <label class="form-label fw-semibold">{{ _('Nome da Marca') }}</label>
+          <input type="text" name="name" class="form-control" required
+                 placeholder="{{ _('ex: Bambu Lab') }}" autofocus>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">{{ _('Cancelar') }}</button>
+          <button type="submit" class="btn btn-dark btn-sm">{{ _('Adicionar') }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 {% endblock %}

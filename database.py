@@ -350,6 +350,26 @@ def get_brand(name):
     return row
 
 
+def create_brand(name):
+    db = get_db()
+    db.execute("INSERT OR IGNORE INTO brands (name) VALUES (?)", (name,))
+    db.commit()
+    db.close()
+
+
+def delete_brand(name):
+    db = get_db()
+    count = db.execute(
+        "SELECT COUNT(*) FROM filaments WHERE brand=?", (name,)
+    ).fetchone()[0]
+    if count > 0:
+        db.close()
+        raise ValueError("Marca possui filamentos vinculados — remova-os antes")
+    db.execute("DELETE FROM brands WHERE name=?", (name,))
+    db.commit()
+    db.close()
+
+
 def update_brand_domain(name, domain):
     db = get_db()
     db.execute(
