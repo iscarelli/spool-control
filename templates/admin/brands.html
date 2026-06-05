@@ -84,9 +84,17 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <label class="form-label fw-semibold">{{ _('Nome da Marca') }}</label>
-          <input type="text" name="name" class="form-control" required
-                 placeholder="{{ _('ex: Bambu Lab') }}" autofocus>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">{{ _('Nome da Marca') }}</label>
+            <input type="text" name="name" class="form-control" required
+                   placeholder="{{ _('ex: Bambu Lab') }}" autofocus>
+          </div>
+          <div>
+            <label class="form-label fw-semibold">{{ _('Domínio') }} <span class="text-muted fw-normal">({{ _('opcional') }})</span></label>
+            <input type="text" name="domain" class="form-control"
+                   placeholder="{{ _('ex: bambulab.com') }}">
+            <div class="form-text">{{ _('Se preenchido, busca o logo automaticamente.') }}</div>
+          </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">{{ _('Cancelar') }}</button>

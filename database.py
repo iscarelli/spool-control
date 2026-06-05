@@ -350,9 +350,12 @@ def get_brand(name):
     return row
 
 
-def create_brand(name):
+def create_brand(name, domain=""):
     db = get_db()
-    db.execute("INSERT OR IGNORE INTO brands (name) VALUES (?)", (name,))
+    db.execute(
+        "INSERT OR IGNORE INTO brands (name, domain) VALUES (?,?)",
+        (name, domain),
+    )
     db.commit()
     db.close()
 

@@ -1184,8 +1184,15 @@ def admin_brand_new():
     if not name:
         flash(t("Nome da marca é obrigatório"), "danger")
         return redirect(url_for("admin_brands"))
-    db.create_brand(name)
-    flash(t("Marca '{brand}' adicionada").format(brand=name), "success")
+    domain = _clean_domain(request.form.get("domain", "").strip())
+    db.create_brand(name, domain)
+    if domain:
+        if _fetch_brand_logo(name, domain):
+            flash(t("Marca '{brand}' adicionada com logo").format(brand=name), "success")
+        else:
+            flash(t("Marca '{brand}' adicionada (logo não encontrado)").format(brand=name), "warning")
+    else:
+        flash(t("Marca '{brand}' adicionada").format(brand=name), "success")
     return redirect(url_for("admin_brands"))
 
 

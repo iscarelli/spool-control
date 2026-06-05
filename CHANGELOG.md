@@ -10,6 +10,11 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.19.2] — 2026-06-05
+
+### Changed
+- **Nova Marca**: modal de criação agora inclui campo opcional de domínio. Se preenchido, busca e salva o logo automaticamente ao adicionar a marca — sem precisar de uma segunda ação no card.
+
 ## [1.19.1] — 2026-06-05
 
 ### Changed
