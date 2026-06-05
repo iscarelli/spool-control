@@ -10,6 +10,12 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.15.0] — 2026-06-05
+
+### Added
+- **Language selector on the login page**: the PT/EN/ES flag dropdown (same as the main nav) now sits in the top-right corner of the login screen, so the language can be switched before signing in. Works logged-out and returns to the login page.
+- **Prominent label-queue shortcut in the main menu**: when the print queue has items, a highlighted **yellow** entry (matching the spools page "print" action) appears in the navbar right after **Reports**, with the item count. It disappears automatically once the queue is emptied. The queue was moved out of the Reports dropdown into this conditional top-level shortcut.
+
 ## [1.14.0] — 2026-06-05
 
 ### Added

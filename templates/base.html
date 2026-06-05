@@ -61,7 +61,7 @@
           </a>
         </li>
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle {% if ep in ('report_by_material','report_by_location','report_low_stock','report_weight_history','report_stats','report_inventory','label_queue') %}sc-active{% endif %}"
+          <a class="nav-link dropdown-toggle {% if ep in ('report_by_material','report_by_location','report_low_stock','report_weight_history','report_stats','report_inventory') %}sc-active{% endif %}"
              href="#" data-bs-toggle="dropdown">
             <i class="bi bi-bar-chart-fill me-1"></i>{{ _('Relatórios') }}
           </a>
@@ -73,17 +73,18 @@
             <li><a class="dropdown-item" href="{{ url_for('report_by_location') }}">{{ _('Por Local') }}</a></li>
             <li><a class="dropdown-item" href="{{ url_for('report_low_stock') }}">{{ _('Estoque Baixo') }}</a></li>
             <li><a class="dropdown-item" href="{{ url_for('report_weight_history') }}">{{ _('Histórico de Peso') }}</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li>
-              <a class="dropdown-item d-flex align-items-center gap-2" href="{{ url_for('label_queue') }}">
-                <i class="bi bi-printer"></i>{{ _('Fila de Etiquetas') }}
-                {% if label_queue_count > 0 %}
-                <span class="badge bg-danger rounded-pill ms-auto">{{ label_queue_count }}</span>
-                {% endif %}
-              </a>
-            </li>
           </ul>
         </li>
+        {# Fila de etiquetas: atalho destacado (amarelo) só quando há itens na fila; some ao esvaziar #}
+        {% if label_queue_count > 0 %}
+        <li class="nav-item">
+          <a class="nav-link text-warning fw-semibold {% if ep == 'label_queue' %}sc-active{% endif %}"
+             href="{{ url_for('label_queue') }}">
+            <i class="bi bi-printer-fill me-1"></i>{{ _('Fila de Etiquetas') }}
+            <span class="badge bg-warning text-dark rounded-pill ms-1">{{ label_queue_count }}</span>
+          </a>
+        </li>
+        {% endif %}
         {% if session.role == 'admin' %}
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle {% if ep in ('admin_users','admin_brands','admin_settings','admin_backup','admin_update') %}sc-active{% endif %}"
