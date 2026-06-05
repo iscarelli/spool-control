@@ -10,6 +10,11 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.18.1] — 2026-06-05
+
+### Fixed
+- **Inline scripts bloqueados pelo CSP**: 9 templates com `<script>` sem nonce passaram a receber `nonce="{{ nonce }}"` — corrige botão "Atualizar agora", filtros, formulários e todos os handlers JS das páginas afetadas pela CSP introduzida na v1.17.0.
+
 ## [1.18.0] — 2026-06-05
 
 ### Security

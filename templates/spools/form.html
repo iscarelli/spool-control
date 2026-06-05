@@ -100,7 +100,7 @@
 </div>
 {% endblock %}
 {% block scripts %}
-<script>
+<script nonce="{{ nonce }}">
 // Filament color preview
 const filamentSel = document.getElementById('filamentSel');
 const filMeta     = document.getElementById('filamentMeta');

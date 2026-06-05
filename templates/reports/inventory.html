@@ -92,7 +92,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
+<script nonce="{{ nonce }}">
 /* ── Filtro instantâneo dos tiles ──────────────────────────────────────────── */
 document.getElementById('invFilter').addEventListener('input', function () {
   const q = this.value.toLowerCase();

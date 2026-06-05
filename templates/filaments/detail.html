@@ -124,7 +124,7 @@
 </div>
 {% endblock %}
 {% block scripts %}
-<script>
+<script nonce="{{ nonce }}">
 document.querySelectorAll('.spool-row').forEach(row => {
   row.addEventListener('click', e => {
     if (e.target.closest('a, button, form')) return;

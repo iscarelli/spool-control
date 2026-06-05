@@ -48,7 +48,7 @@
 </div>
 {% endblock %}
 {% block scripts %}
-<script>
+<script nonce="{{ nonce }}">
 const tare = {{ spool.effective_tare_g }};
 const gross = document.getElementById('grossInput');
 const preview = document.getElementById('calcPreview');

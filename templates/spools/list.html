@@ -132,7 +132,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
+<script nonce="{{ nonce }}">
 /* ── Row click ──────────────────────────────────────────────────────────── */
 document.querySelectorAll('.spool-row').forEach(row => {
   row.addEventListener('click', e => {

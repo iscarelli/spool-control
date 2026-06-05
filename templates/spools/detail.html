@@ -148,7 +148,7 @@
 <script src="{{ url_for('static', filename='niimbot.js') }}"></script>
 <script src="{{ url_for('static', filename='niimbot-spool.js') }}"></script>
 {% if queue_prompt %}
-<script>
+<script nonce="{{ nonce }}">
 window.addEventListener('DOMContentLoaded', function() {
   const modal = new bootstrap.Modal(document.getElementById('queueModal'));
   modal.show();
