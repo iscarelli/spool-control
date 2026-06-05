@@ -10,6 +10,11 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.18.2] — 2026-06-05
+
+### Changed
+- Version bump to validate auto-update flow via `/admin/update`.
+
 ## [1.18.1] — 2026-06-05
 
 ### Fixed
