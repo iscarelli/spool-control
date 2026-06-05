@@ -10,6 +10,11 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.14.0] — 2026-06-05
+
+### Added
+- **"Keep me signed in" on the login page**: a checkbox that controls session persistence. **Unchecked (default)** the session is a browser cookie that ends when the browser closes; **checked** it persists for **30 days**. Translated (PT/EN/ES). Previously every login was forced to a fixed 12 h with no choice. Cookie hardening unchanged (`HttpOnly`, `SameSite=Lax`, `Secure` via `SECURE_COOKIES`).
+
 ## [1.13.1] — 2026-06-04
 
 ### Fixed

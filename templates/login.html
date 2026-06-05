@@ -33,6 +33,11 @@
           <label class="form-label">{{ _('Senha') }}</label>
           <input type="password" name="password" class="form-control" required>
         </div>
+        <div class="form-check mb-3">
+          <input type="checkbox" name="remember" value="1" id="remember" class="form-check-input"
+                 {% if request.form.get('remember') %}checked{% endif %}>
+          <label class="form-check-label" for="remember">{{ _('Manter conectado') }}</label>
+        </div>
         <button class="btn btn-dark w-100" type="submit">{{ _('Entrar') }}</button>
       </form>
     </div>

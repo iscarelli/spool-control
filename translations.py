@@ -24,6 +24,7 @@ _EN = {
     "Tema":               "Theme",
     "Login":              "Login",
     "Entrar":             "Sign in",
+    "Manter conectado":   "Keep me signed in",
 
     # ── Updates ──────────────────────────────────────────────────────────────
     "Atualizações":         "Updates",
@@ -384,6 +385,7 @@ _ES = {
     "Tema":               "Tema",
     "Login":              "Iniciar sesión",
     "Entrar":             "Entrar",
+    "Manter conectado":   "Mantener la sesión iniciada",
 
     # ── Updates ──────────────────────────────────────────────────────────────
     "Atualizações":         "Actualizaciones",
