@@ -10,6 +10,11 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.18.3] — 2026-06-05
+
+### Changed
+- `deploy/setup-inside.sh`: executa `seed_brands.py` automaticamente ao final da instalação — logos das 29 marcas conhecidas são baixados via Google Favicon API sem intervenção manual.
+
 ## [1.18.2] — 2026-06-05
 
 ### Changed

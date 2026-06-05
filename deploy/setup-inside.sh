@@ -134,6 +134,12 @@ systemctl is-active spool-control || error "Servico nao iniciou. Veja: journalct
 HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 10 \
     "http://$(hostname -I | awk '{print $1}'):8001/health" || echo "000")
 
+# ── 12. Logos de marcas conhecidas ───────────────────────────────────────────
+info "Baixando logos de marcas conhecidas..."
+"${APP_DIR}/.venv/bin/python" "${APP_DIR}/deploy/seed_brands.py" \
+    || warn "Falha ao buscar alguns logos — sem impacto no funcionamento."
+chown -R spool:spool "${APP_DIR}/static/brands" 2>/dev/null || true
+
 echo ""
 echo -e "${GREEN}=====================================================${NC}"
 echo -e "${GREEN}  Setup concluido!${NC}"
