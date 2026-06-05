@@ -4,6 +4,7 @@ import re
 import json
 import time
 import uuid
+import secrets
 import zipfile
 import tempfile
 import subprocess
@@ -835,14 +836,16 @@ def quick_weigh():
 
 # ── API da estação de pesagem (ESP32) ───────────────────────────────────────
 # Máquina-a-máquina: sem sessão/login, isenta de CSRF, autenticada por API key
-# (header X-API-Key == env SPOOL_API_KEY). Se SPOOL_API_KEY estiver vazio, abre
-# sem auth (facilita dev/LAN). Ver docs/estudo_balanca_qrcode.md.
+# (header X-API-Key == env SPOOL_API_KEY). SPOOL_API_KEY ausente = 401 sempre.
+# Ver docs/estudo_balanca_qrcode.md.
 
 def _api_authorized():
     key = os.environ.get("SPOOL_API_KEY", "").strip()
     if not key:
-        return True
-    return request.headers.get("X-API-Key", "") == key
+        return False   # chave ausente = fechado (não open-by-default)
+    return secrets.compare_digest(
+        request.headers.get("X-API-Key", ""), key
+    )
 
 
 def _spool_summary(spool):

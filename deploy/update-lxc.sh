@@ -89,14 +89,16 @@ main() {
     local ENV_FILE="${APP_DIR}/spool.env"
     if [ ! -f "$ENV_FILE" ]; then
         warn "spool.env nao encontrado — gerando automaticamente..."
-        local SECRET_KEY ADMIN_PASS
+        local SECRET_KEY ADMIN_PASS SPOOL_API_KEY
         SECRET_KEY=$(openssl rand -hex 32)
         ADMIN_PASS=$(openssl rand -base64 12 | tr -d '/+=')
+        SPOOL_API_KEY=$(openssl rand -hex 24)
         cat > "$ENV_FILE" << EOF
 SECRET_KEY=${SECRET_KEY}
 ADMIN_DEFAULT_PASS=${ADMIN_PASS}
 APP_BASE_URL=https://spool.lojinharacer.com.br
 SECURE_COOKIES=1
+SPOOL_API_KEY=${SPOOL_API_KEY}
 EOF
         chmod 600 "$ENV_FILE"
         chown spool:spool "$ENV_FILE" 2>/dev/null || true
