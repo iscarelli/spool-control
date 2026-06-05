@@ -10,6 +10,17 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.17.0] — 2026-06-05
+
+### Security
+- **XSS (Stored) — confirm() dialogs**: 7 templates trocaram `onsubmit="return confirm('{{ var }}')"` por `data-sc-confirm="{{ var }}"` lido via `dataset` em JS — Jinja2 escapa o atributo HTML corretamente; o JS nunca recebe string injetada.
+- **CSP sem `unsafe-inline`**: script CSRF movido para `static/csrf.js`; toast + theme toggle movidos para `static/spool.js`; único script inline restante (anti-flash de tema) recebe nonce por request — `script-src` usa `'nonce-{n}'` em vez de `'unsafe-inline'`.
+- **Open redirect**: helper `_safe_next()` valida que o parâmetro `next` começa com `/` e não com `//` — aplicado em `filaments_edit`, `label_queue_add/remove/add-all/remove-all`.
+- **Credencial admin padrão**: fallback `admin123` removido. Quando `ADMIN_DEFAULT_PASS` não está definido no env, gera senha aleatória (`secrets.token_urlsafe(12)`) e a loga em `WARNING` no startup — nunca usa senha conhecida.
+
+### Added
+- `static/csrf.js`: CSRF token injection (forms + fetch) extraído de `base.html`.
+
 ## [1.16.1] — 2026-06-05
 
 ### Fixed

@@ -62,7 +62,7 @@
             <a href="{{ url_for('filaments_detail', filament_id=filament.id) if filament else url_for('filaments_list') }}" class="btn btn-outline-secondary">{{ _('Cancelar') }}</a>
             {% if filament and session.role == 'admin' %}
             <form method="post" action="{{ url_for('filaments_delete', filament_id=filament.id) }}" class="ms-auto"
-                  onsubmit="return confirm('{{ _('Remover este filamento?') }}')">
+                  data-sc-confirm="{{ _('Remover este filamento?') }}">
               <button type="submit" class="btn btn-outline-danger btn-sm">{{ _('Remover') }}</button>
             </form>
             {% endif %}

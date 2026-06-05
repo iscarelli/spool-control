@@ -88,7 +88,7 @@
             <a href="{{ url_for('spools_detail', spool_id=spool.id) if spool else url_for('spools_list') }}" class="btn btn-outline-secondary">{{ _('Cancelar') }}</a>
             {% if spool and spool.active %}
             <form method="post" action="{{ url_for('spools_deactivate', spool_id=spool.id) }}" class="ms-auto"
-                  onsubmit="return confirm('{{ _('Marcar spool como finalizado?') }}')">
+                  data-sc-confirm="{{ _('Marcar spool como finalizado?') }}">
               <button type="submit" class="btn btn-outline-danger btn-sm">{{ _('Finalizar Spool') }}</button>
             </form>
             {% endif %}

@@ -21,7 +21,7 @@
           <td>
             <a href="{{ url_for('spool_models_edit', model_id=m.id) }}" class="btn btn-sm btn-outline-secondary">{{ _('Editar') }}</a>
             <form method="post" action="{{ url_for('spool_models_delete', model_id=m.id) }}" class="d-inline"
-                  onsubmit="return confirm('{{ _('Remover') }} {{ m.name }}?')">
+                  data-sc-confirm="{{ _('Remover') }} {{ m.name }}?">
               <button class="btn btn-sm btn-outline-danger">{{ _('Remover') }}</button>
             </form>
           </td>

@@ -86,7 +86,7 @@
             </form>
             {% if f.spool_count == 0 %}
             <form method="post" action="{{ url_for('filaments_delete', filament_id=f.id) }}" class="d-inline"
-                  onsubmit="return confirm('{{ _('Remover o filamento') }} {{ f.brand }} {{ f.material }} — {{ f.family }}?')">
+                  data-sc-confirm="{{ _('Remover o filamento') }} {{ f.brand }} {{ f.material }} — {{ f.family }}?">
               <button class="btn btn-sm btn-outline-danger" title="{{ _('Remover filamento') }}"><i class="bi bi-trash"></i></button>
             </form>
             {% else %}

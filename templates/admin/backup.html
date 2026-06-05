@@ -23,7 +23,7 @@
           <div>{{ _('A restauração substitui TODOS os dados atuais (incluindo usuários e senhas) pelos do arquivo. Não há como desfazer.') }}</div>
         </div>
         <form method="post" action="{{ url_for('admin_backup_restore') }}" enctype="multipart/form-data"
-              onsubmit="return confirm('{{ _('Tem certeza? Todos os dados atuais serão substituídos.') }}');">
+              data-sc-confirm="{{ _('Tem certeza? Todos os dados atuais serão substituídos.') }}">
           <div class="mb-3">
             <input type="file" name="backup" accept=".zip" class="form-control" required>
             <div class="form-text">{{ _('Selecione um arquivo .zip gerado por este sistema.') }}</div>

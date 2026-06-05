@@ -49,7 +49,7 @@
                 <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#pwModal{{ u.id }}">{{ _('Senha') }}</button>
                 {% if u.id != session.user_id %}
                 <form method="post" action="{{ url_for('admin_users_delete', user_id=u.id) }}" class="d-inline"
-                      onsubmit="return confirm('{{ _('Remover') }} {{ u.username }}?')">
+                      data-sc-confirm="{{ _('Remover') }} {{ u.username }}?">
                   <button class="btn btn-sm btn-outline-danger">{{ _('Remover') }}</button>
                 </form>
                 {% endif %}

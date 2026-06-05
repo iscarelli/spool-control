@@ -115,6 +115,7 @@ def _req_start():
         user=session.get("username", "anon"),
     )
     g._request_id = rid
+    g._nonce = secrets.token_urlsafe(16)
     g._t0 = time.perf_counter()
 
 
@@ -123,11 +124,12 @@ def set_security_headers(resp):
     resp.headers["X-Content-Type-Options"] = "nosniff"
     resp.headers["X-Frame-Options"] = "DENY"
     resp.headers["Referrer-Policy"] = "same-origin"
+    nonce = getattr(g, "_nonce", "")
     resp.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
         "img-src 'self' data:; "
         "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
-        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+        f"script-src 'self' 'nonce-{nonce}' https://cdn.jsdelivr.net; "
         "font-src 'self' https://cdn.jsdelivr.net; "
         "frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     )
@@ -155,7 +157,11 @@ def handle_csrf_error(e):
 
 def bootstrap():
     db.init_db()
-    default_pass = os.environ.get("ADMIN_DEFAULT_PASS", "admin123")
+    default_pass = os.environ.get("ADMIN_DEFAULT_PASS")
+    if not default_pass:
+        default_pass = secrets.token_urlsafe(12)
+        log.warning("admin.ephemeral_password", password=default_pass,
+                    note="Define ADMIN_DEFAULT_PASS em spool.env para suprimir este aviso")
     db.ensure_admin_user("admin", generate_password_hash(default_pass))
 
 
@@ -269,6 +275,13 @@ def t(s):
     return i18n.get_translator(session.get("lang", "pt"))(s)
 
 
+def _safe_next(url, default=""):
+    """Aceita só caminhos relativos ao próprio site — evita open redirect."""
+    if url and url.startswith("/") and not url.startswith("//"):
+        return url
+    return default
+
+
 @app.context_processor
 def inject_globals():
     count = db.queue_count() if "user_id" in session else 0
@@ -279,6 +292,7 @@ def inject_globals():
         "lang": lang,
         "_": i18n.get_translator(lang),
         "update_available": is_update_available() if session.get("role") == "admin" else False,
+        "nonce": getattr(g, "_nonce", ""),
     }
 
 
@@ -461,7 +475,7 @@ def filaments_edit(filament_id):
     filament = db.get_filament(filament_id)
     if not filament:
         abort(404)
-    next_url = request.args.get("next") or request.form.get("next") or ""
+    next_url = _safe_next(request.args.get("next") or request.form.get("next"))
     if request.method == "POST":
         try:
             db.update_filament(
@@ -930,7 +944,7 @@ def label_queue():
 def label_queue_add(spool_id):
     db.queue_add(spool_id)
     flash(t("Adicionado à fila de impressão"), "success")
-    next_url = request.form.get("next") or url_for("spools_detail", spool_id=spool_id)
+    next_url = _safe_next(request.form.get("next"), url_for("spools_detail", spool_id=spool_id))
     return redirect(next_url)
 
 
@@ -946,14 +960,16 @@ def label_queue_add_all():
         except Exception:
             log.warning("label_queue.add_failed", spool_id=sid, exc_info=True)
     flash(t("{n} rolo(s) adicionado(s) à fila de impressão").format(n=added), "success")
-    return redirect(request.form.get("next") or url_for("spools_list"))
+    return redirect(_safe_next(request.form.get("next"), url_for("spools_list")))
 
 
 @app.route("/label-queue/remove/<int:spool_id>", methods=["POST"])
 @login_required
 def label_queue_remove(spool_id):
     db.queue_remove(spool_id)
-    next_url = request.form.get("next") or request.referrer or url_for("label_queue")
+    next_url = (_safe_next(request.form.get("next"))
+                or _safe_next(request.referrer)
+                or url_for("label_queue"))
     return redirect(next_url)
 
 
@@ -987,7 +1003,7 @@ def label_queue_remove_all():
         except Exception:
             log.warning("label_queue.remove_failed", spool_id=sid, exc_info=True)
     flash(t("{n} rolo(s) removido(s) da fila").format(n=removed), "success")
-    return redirect(request.form.get("next") or url_for("spools_list"))
+    return redirect(_safe_next(request.form.get("next"), url_for("spools_list")))
 
 
 @app.route("/label-queue/clear", methods=["POST"])

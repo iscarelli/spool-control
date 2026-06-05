@@ -1,3 +1,31 @@
+/* ── Toast init ─────────────────────────────────────────────────────────── */
+document.querySelectorAll('.sc-toast').forEach(function (el) {
+  new bootstrap.Toast(el).show();
+});
+
+/* ── Theme toggle ───────────────────────────────────────────────────────── */
+(function () {
+  var icon = document.getElementById('themeIcon');
+  function applyTheme(t) {
+    document.documentElement.setAttribute('data-bs-theme', t);
+    if (icon) icon.className = t === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+  }
+  applyTheme(localStorage.getItem('sc-theme') || 'dark');
+  var btn = document.getElementById('themeToggle');
+  if (btn) btn.addEventListener('click', function () {
+    var next = document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('sc-theme', next);
+    applyTheme(next);
+  });
+})();
+
+/* ── Safe confirm dialogs (data-sc-confirm) ─────────────────────────────── */
+/* Replaces onsubmit="return confirm('...')" — avoids XSS via JS string injection. */
+document.addEventListener('submit', function (e) {
+  var msg = e.target.dataset && e.target.dataset.scConfirm;
+  if (msg && !confirm(msg)) e.preventDefault();
+}, true);
+
 /* ── Bootstrap tooltips (global) ─────────────────────────────────────── */
 document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
   new bootstrap.Tooltip(el);
