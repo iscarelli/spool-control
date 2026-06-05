@@ -84,8 +84,9 @@ The step-by-step to **add a new language** is in [`docs/i18n.md`](docs/i18n.md).
 
 Machine-to-machine endpoints for an automatic weighing station (e.g. a scale + QR reader +
 ESP32 — see [`docs/estudo_balanca_qrcode.md`](docs/estudo_balanca_qrcode.md)).
-Authenticated by `X-API-Key` (== the `SPOOL_API_KEY` env var, generated at install; if
-empty the API is open — dev/LAN only). CSRF-exempt.
+Authenticated by `X-API-Key` (== the `SPOOL_API_KEY` env var, generated at install).
+**If `SPOOL_API_KEY` is not set the endpoints return 401** — there is no open-by-default
+mode. CSRF-exempt.
 
 - `POST /api/weigh` — body `{"spool_id": 1, "gross_weight_g": 532}` → records the weighing
   (`net = gross − tare`) and returns JSON with `net_weight_g` and `remaining_pct`.
@@ -197,3 +198,89 @@ SPOOL_API_KEY=<random hex>
 ```
 
 > `spool.env` is in `.gitignore` and must never be committed.
+
+## Observability / Logs
+
+Every log line is a JSON object written to stdout and captured by systemd's journal.
+Each request gets a unique 8-character `request_id` that is bound to all log lines
+produced during that request and returned to the client as the `X-Request-ID`
+response header.
+
+### Typical log line
+
+```json
+{
+  "event": "request",
+  "level": "info",
+  "request_id": "43a5ae17",
+  "method": "GET",
+  "path": "/filaments",
+  "ip": "10.1.1.254",
+  "user": "admin",
+  "status": 200,
+  "duration_ms": 8.3,
+  "logger": "spool",
+  "timestamp": "2026-06-05T11:53:04.474012Z"
+}
+```
+
+Error lines include the full Python traceback inline:
+
+```json
+{
+  "event": "spool.update_failed",
+  "level": "error",
+  "request_id": "c4d1e882",
+  "spool_id": 42,
+  "exception": "Traceback (most recent call last): ...",
+  "timestamp": "..."
+}
+```
+
+**Sensitive fields** (`password`, `token`, `secret`, `api_key`, `authorization`,
+`cookie`, `spool_api_key`, `password_hash`) are replaced with `***` before any log
+is written.
+
+### Viewing logs
+
+```bash
+# Tail all logs in real time (on the LXC):
+journalctl -u spool-control -f -o cat
+
+# Last 200 lines:
+journalctl -u spool-control -n 200 -o cat
+
+# Errors and criticals only:
+journalctl -u spool-control -o cat | grep -E '"level":"(error|critical)"'
+
+# All events for a specific request (copy the id from the X-Request-ID header):
+journalctl -u spool-control -o cat | grep '"request_id":"43a5ae17"'
+
+# Requests slower than 100 ms (requires jq):
+journalctl -u spool-control -o cat | \
+  jq 'select(.event == "request" and .duration_ms > 100)'
+```
+
+From the **Proxmox host** (replace `117` with your VMID):
+
+```bash
+pct exec 117 -- journalctl -u spool-control -f -o cat
+```
+
+### Health check
+
+`GET /health` returns a JSON object with per-component status and HTTP 503 if any
+check fails:
+
+```json
+{
+  "status": "ok",
+  "version": "1.16.1",
+  "checks": {
+    "db": "ok",
+    "data_dir": "ok"
+  }
+}
+```
+
+Useful for uptime monitors (`/health` does not require authentication).
