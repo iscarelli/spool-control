@@ -11,6 +11,7 @@ print 60×40mm thermal labels with a QR code, and get stock reports.
 - Multiple spools per filament with a full weighing history
 - Quick weigh: enter the spool code and the gross weight — the system subtracts the tare
 - 60×40mm PDF labels with a QR code (points to the spool page — login required)
+- **Direct thermal printing to Niimbot** (B1 Pro) straight from the browser via Web Bluetooth — no Niimbot app required
 - Batch label print queue
 - Reports: by material, by location, low stock, weight history
 - Search and sorting on listings
