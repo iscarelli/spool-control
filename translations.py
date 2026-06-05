@@ -282,8 +282,9 @@ _EN = {
     "Voltar ao início":          "Back to home",
     "Acesso negado":             "Access denied",
     "Página não encontrada":     "Page not found",
-    "Requisição inválida":       "Invalid request",
-    "Erro interno do servidor":  "Internal server error",
+    "Requisição inválida":              "Invalid request",
+    "Erro interno do servidor":         "Internal server error",
+    "Erro ao processar. Tente novamente.": "Processing error. Please try again.",
 
     # ── Spool models ─────────────────────────────────────────────────────────
     "+ Novo Modelo":             "+ New Model",
@@ -645,8 +646,9 @@ _ES = {
     "Voltar ao início":          "Volver al inicio",
     "Acesso negado":             "Acceso denegado",
     "Página não encontrada":     "Página no encontrada",
-    "Requisição inválida":       "Solicitud inválida",
-    "Erro interno do servidor":  "Error interno del servidor",
+    "Requisição inválida":              "Solicitud inválida",
+    "Erro interno do servidor":         "Error interno del servidor",
+    "Erro ao processar. Tente novamente.": "Error al procesar. Por favor intente de nuevo.",
 
     # ── Spool models ─────────────────────────────────────────────────────────
     "+ Novo Modelo":             "+ Nuevo Modelo",

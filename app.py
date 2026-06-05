@@ -454,7 +454,7 @@ def filaments_new():
             return redirect(url_for("filaments_detail", filament_id=fid))
         except Exception as e:
             log.error("filament.create_failed", exc_info=True)
-            flash(f"{t('Erro')}: {e}", "danger")
+            flash(t("Erro ao processar. Tente novamente."), "danger")
     return render_template("filaments/form.html", filament=None,
                            materials=get_ordered_materials(), brands=db.list_brands_ordered())
 
@@ -491,7 +491,7 @@ def filaments_edit(filament_id):
             return redirect(next_url or url_for("filaments_detail", filament_id=filament_id))
         except Exception as e:
             log.error("filament.update_failed", filament_id=filament_id, exc_info=True)
-            flash(f"{t('Erro')}: {e}", "danger")
+            flash(t("Erro ao processar. Tente novamente."), "danger")
     return render_template("filaments/form.html", filament=filament,
                            materials=get_ordered_materials(), brands=db.list_brands_ordered(),
                            next_url=next_url)
@@ -550,7 +550,7 @@ def spool_models_new():
             return redirect(url_for("spool_models_list"))
         except Exception as e:
             log.error("spool_model.create_failed", exc_info=True)
-            flash(f"{t('Erro')}: {e}", "danger")
+            flash(t("Erro ao processar. Tente novamente."), "danger")
     return render_template("spool_models/form.html", model=None)
 
 
@@ -572,7 +572,7 @@ def spool_models_edit(model_id):
             return redirect(url_for("spool_models_list"))
         except Exception as e:
             log.error("spool_model.update_failed", model_id=model_id, exc_info=True)
-            flash(f"{t('Erro')}: {e}", "danger")
+            flash(t("Erro ao processar. Tente novamente."), "danger")
     return render_template("spool_models/form.html", model=model)
 
 
@@ -629,7 +629,7 @@ def spools_new():
             return redirect(url_for("spools_detail", spool_id=spool_id, queue_prompt="1"))
         except Exception as e:
             log.error("spool.create_failed", exc_info=True)
-            flash(f"{t('Erro')}: {e}", "danger")
+            flash(t("Erro ao processar. Tente novamente."), "danger")
     filaments = db.list_filaments()
     spool_models = db.list_spool_models()
     return render_template("spools/form.html", spool=None,
@@ -678,7 +678,7 @@ def spools_edit(spool_id):
             return redirect(url_for("spools_detail", spool_id=spool_id))
         except Exception as e:
             log.error("spool.update_failed", spool_id=spool_id, exc_info=True)
-            flash(f"{t('Erro')}: {e}", "danger")
+            flash(t("Erro ao processar. Tente novamente."), "danger")
     filaments = db.list_filaments()
     spool_models = db.list_spool_models()
     return render_template("spools/form.html", spool=spool,
@@ -718,9 +718,10 @@ def spools_weigh(spool_id):
                 flash(t("Peso registrado: {n:.0f}g de filamento").format(n=net), "success")
                 return redirect(url_for("spools_detail", spool_id=spool_id))
         except ValueError as e:
+            log.warning("spool.weigh_invalid_input", exc_info=True)
             if ajax:
-                return {"ok": False, "error": str(e)}
-            flash(f"{t('Valor inválido')}: {e}", "danger")
+                return {"ok": False, "error": "invalid_input"}
+            flash(t("Valor inválido"), "danger")
     return render_template("spools/weigh.html", spool=spool)
 
 
@@ -1340,7 +1341,7 @@ def health():
         finally:
             conn.close()
     except Exception as e:
-        checks["db"] = str(e)
+        checks["db"] = "error"
         log.error("health.db_failed", exc_info=True)
 
     data_dir = Path(__file__).parent / "data"

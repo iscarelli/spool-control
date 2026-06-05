@@ -10,6 +10,13 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.18.0] — 2026-06-05
+
+### Security
+- **Exception info disclosure — flash messages**: 6 handlers (`filaments_new/edit`, `spool_models_new/edit`, `spools_new/edit`) trocaram `flash(f"{t('Erro')}: {e}")` por mensagem genérica — SQLite constraint names e detalhes internos não chegam mais ao browser.
+- **Exception info disclosure — weigh API**: `ValueError` no endpoint `/spools/<id>/weigh` retornava `str(e)` (com o valor bruto do usuário) no JSON; agora retorna `"invalid_input"` e loga o detalhe internamente.
+- **Health endpoint info leak**: `str(e)` no check de DB (caminho do filesystem em erros SQLite) substituído por `"error"` fixo — endpoint não requer autenticação.
+
 ## [1.17.0] — 2026-06-05
 
 ### Security
