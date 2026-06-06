@@ -15,7 +15,10 @@ warn() { echo -e "${YELLOW}[$(date '+%H:%M:%S')]${NC} $*"; }
 
 [ "$(id -u)" -eq 0 ] || { echo "Execute como root."; exit 1; }
 
-info "Parando serviço..."
+info "Atualizando para a última release..."
+bash "${APP_DIR}/deploy/update-lxc.sh" --latest-release
+
+info "Parando serviço para reset dos dados..."
 systemctl stop spool-control
 
 info "Removendo banco de dados..."
