@@ -21,6 +21,10 @@ cur = conn.cursor()
 
 now = datetime.utcnow().isoformat()
 
+# Garante que o admin sempre usa a senha "demo"
+cur.execute("UPDATE users SET password_hash=? WHERE username='admin'",
+            (generate_password_hash("demo"),))
+
 
 def ts(days_ago=0, hours_ago=0):
     return (datetime.utcnow() - timedelta(days=days_ago, hours=hours_ago)).isoformat()
