@@ -10,6 +10,16 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.20.0] — 2026-06-06
+
+### Added
+- **Modo demo** (`DEMO_MODE=1` em `spool.env`): bloqueia troca de senha, criação/deleção de usuários, alteração de configurações e restore de backup; banner informativo exibido em todas as páginas
+- `deploy/seed-demo-data.py`: popula o banco com 12 filamentos, 6 marcas, 3 modelos de carretel e 14 spools de demonstração com histórico de pesagens
+- `deploy/reset-demo.sh`: reinicia o banco e reaplicar o seed
+- `deploy/spool-demo-reset.service` + `.timer`: reset diário automático via systemd às 00:00 UTC
+
+---
+
 ## [1.19.2] — 2026-06-05
 
 ### Changed

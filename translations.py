@@ -784,6 +784,16 @@ _PT = {
         "rolo(s) vinculado(s) — remova-os antes de excluir",
 }
 
+_EN["Versão demonstrativa"] = "Demo version"
+_EN["Os dados são reiniciados diariamente. Senha e criação de usuários não estão disponíveis."] = \
+    "Data is reset daily. Password changes and user creation are not available."
+_EN["Função desabilitada na versão demonstrativa."] = "This feature is disabled in the demo version."
+
+_ES["Versão demonstrativa"] = "Versión de demostración"
+_ES["Os dados são reiniciados diariamente. Senha e criação de usuários não estão disponíveis."] = \
+    "Los datos se reinician diariamente. El cambio de contraseña y la creación de usuarios no están disponibles."
+_ES["Função desabilitada na versão demonstrativa."] = "Esta función está deshabilitada en la versión de demostración."
+
 _TABLES = {"en": _EN, "es": _ES, "pt": _PT}
 
 

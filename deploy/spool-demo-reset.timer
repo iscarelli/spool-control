@@ -1,0 +1,10 @@
+[Unit]
+Description=Reset diário dos dados demo do Spool Control
+Requires=spool-demo-reset.service
+
+[Timer]
+OnCalendar=*-*-* 00:00:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target

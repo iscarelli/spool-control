@@ -1,0 +1,9 @@
+[Unit]
+Description=Spool Control — Reset dados demo
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /opt/spool-control/deploy/reset-demo.sh
+StandardOutput=journal
+StandardError=journal

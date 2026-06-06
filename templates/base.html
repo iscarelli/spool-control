@@ -147,6 +147,15 @@
 </nav>
 {% endif %}
 
+{% if demo_mode %}
+<div class="alert mb-0 py-2 rounded-0 border-0 border-bottom text-center"
+     style="background:rgba(255,193,7,.15);font-size:.85rem" role="alert">
+  <i class="bi bi-flask me-1"></i>
+  <strong>{{ _('Versão demonstrativa') }}</strong> —
+  {{ _('Os dados são reiniciados diariamente. Senha e criação de usuários não estão disponíveis.') }}
+</div>
+{% endif %}
+
 {% with messages = get_flashed_messages(with_categories=true) %}
 {% if messages %}
 <div class="position-fixed top-0 start-50 translate-middle-x pt-3" style="z-index:1090;pointer-events:none">

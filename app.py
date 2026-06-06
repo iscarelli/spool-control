@@ -92,6 +92,8 @@ if not _secret:
         )
 app.secret_key = _secret
 
+DEMO_MODE = os.environ.get("DEMO_MODE", "0") == "1"
+
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
@@ -305,6 +307,7 @@ def inject_globals():
         "_": i18n.get_translator(lang),
         "update_available": is_update_available() if session.get("role") == "admin" else False,
         "nonce": getattr(g, "_nonce", ""),
+        "demo_mode": DEMO_MODE,
     }
 
 
@@ -369,6 +372,16 @@ def admin_required(f):
             return redirect(url_for("login", next=request.path))
         if session.get("role") != "admin":
             abort(403)
+        return f(*args, **kwargs)
+    return decorated
+
+
+def demo_blocked(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if DEMO_MODE:
+            flash(t("Função desabilitada na versão demonstrativa."), "warning")
+            return redirect(request.referrer or url_for("dashboard"))
         return f(*args, **kwargs)
     return decorated
 
@@ -1091,6 +1104,7 @@ def admin_users():
 
 @app.route("/admin/users/new", methods=["POST"])
 @admin_required
+@demo_blocked
 def admin_users_new():
     username = request.form.get("username", "").strip()
     password = request.form.get("password", "")
@@ -1107,6 +1121,7 @@ def admin_users_new():
 
 @app.route("/admin/users/<int:user_id>/password", methods=["POST"])
 @admin_required
+@demo_blocked
 def admin_users_password(user_id):
     password = request.form.get("password", "")
     if not password:
@@ -1119,6 +1134,7 @@ def admin_users_password(user_id):
 
 @app.route("/admin/users/<int:user_id>/delete", methods=["POST"])
 @admin_required
+@demo_blocked
 def admin_users_delete(user_id):
     if user_id == session["user_id"]:
         flash(t("Você não pode deletar seu próprio usuário"), "danger")
@@ -1213,6 +1229,9 @@ def admin_brand_delete():
 @app.route("/admin/settings", methods=["GET", "POST"])
 @admin_required
 def admin_settings():
+    if request.method == "POST" and DEMO_MODE:
+        flash(t("Função desabilitada na versão demonstrativa."), "warning")
+        return redirect(url_for("admin_settings"))
     if request.method == "POST":
         db.set_setting("app_base_url", request.form.get("app_base_url", "").strip())
         db.set_setting("low_stock_threshold_g", request.form.get("low_stock_threshold_g", "200").strip())
@@ -1328,6 +1347,7 @@ def admin_backup_download():
 
 @app.route("/admin/backup/restore", methods=["POST"])
 @admin_required
+@demo_blocked
 def admin_backup_restore():
     f = request.files.get("backup")
     if not f or not f.filename:
