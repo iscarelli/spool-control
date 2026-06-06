@@ -10,6 +10,18 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.20.3] — 2026-06-06
+
+### Fixed
+- `VERSION` não estava sendo atualizado nos patches 1.20.1–1.20.3
+
+### Changed
+- Seed demo expandido para 15 filamentos e 40 spools
+- Reset diário atualiza automaticamente para a última release
+- Senha `admin/demo` garantida a cada reset
+
+---
+
 ## [1.20.0] — 2026-06-06
 
 ### Added
