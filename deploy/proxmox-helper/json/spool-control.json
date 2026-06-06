@@ -1,0 +1,45 @@
+{
+  "name": "Spool Control",
+  "slug": "spool-control",
+  "categories": [
+    10
+  ],
+  "date_created": "2026-06-06",
+  "type": "ct",
+  "updateable": true,
+  "privileged": false,
+  "has_arm": false,
+  "interface_port": 8001,
+  "documentation": "https://github.com/iscarelli/spool-control#readme",
+  "website": "https://github.com/iscarelli/spool-control",
+  "logo": "https://cdn.jsdelivr.net/gh/iscarelli/spool-control@main/static/favicon.png",
+  "description": "Web application for managing 3D printing filament spools. Track stock, weight, color, brand and material. Generate QR-coded 60x40mm labels, print directly to Niimbot printers via Web Bluetooth, and record weighings from automatic stations. Multi-user with role-based access and multilingual UI (PT/EN/ES).",
+  "install_methods": [
+    {
+      "type": "default",
+      "script": "ct/spool-control.sh",
+      "config_path": "/opt/spool-control/spool.env",
+      "resources": {
+        "cpu": 1,
+        "ram": 256,
+        "hdd": 2,
+        "os": "Debian",
+        "version": "12"
+      }
+    }
+  ],
+  "default_credentials": {
+    "username": "admin",
+    "password": null
+  },
+  "notes": [
+    {
+      "text": "Admin password is auto-generated and stored in /opt/spool-control/.admin-pass inside the container.",
+      "type": "info"
+    },
+    {
+      "text": "Set APP_BASE_URL in /opt/spool-control/spool.env (or via Admin > Settings) to your public domain for QR codes to work outside the local network.",
+      "type": "warning"
+    }
+  ]
+}

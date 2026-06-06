@@ -10,6 +10,15 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.21.0] — 2026-06-06
+
+### Added
+- `deploy/proxmox-helper/` — scripts no formato community-scripts/ProxmoxVE para futura submissão ao catálogo público (requisitos: 6 meses + 600 stars)
+  - `ct/spool-control.sh` — criação de container com update_script() usando fetch_and_deploy_gh_release + backup de spool.env e data/
+  - `install/spool-control-install.sh` — instalação dentro do LXC, compatível com framework ou standalone (define stubs quando $FUNCTIONS_FILE_PATH ausente)
+  - `json/spool-control.json` — metadados para o site community-scripts.org
+- README: seção "Proxmox Helper Scripts" e estrutura atualizada
+
 ## [1.20.3] — 2026-06-06
 
 ### Fixed

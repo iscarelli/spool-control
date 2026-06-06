@@ -54,10 +54,14 @@ spool-control/
 │   └── validate_qr_autoweigh.py  # Validate the QR/auto-weigh flow without hardware
 └── deploy/
     ├── proxmox-deploy.sh   # Proxmox LXC installer (creates the container + installs)
-    ├── spool-control.service
     ├── setup-inside.sh     # Install inside the LXC (public clone + venv + systemd)
     ├── update-lxc.sh       # Update via git archive
-    └── seed_brands.py      # Download brand logos
+    ├── seed_brands.py      # Download brand logos
+    ├── spool-control.service
+    └── proxmox-helper/     # community-scripts compatible format (future PR)
+        ├── ct/spool-control.sh
+        ├── install/spool-control-install.sh
+        └── json/spool-control.json
 ```
 
 `data/spool.db` and `spool.env` live outside git (generated on the server).
@@ -158,6 +162,12 @@ traefik.http.services.spool.loadbalancer.server.url: http://<LXC_IP>:8001'
 > otherwise the routers collide and one of them returns 404.
 
 Wait ~30s for Traefik to pick up the route. Check it at `https://spool.example.com/health`.
+
+### Proxmox Helper Scripts (community-scripts)
+
+Files in `deploy/proxmox-helper/` follow the [community-scripts/ProxmoxVE](https://github.com/community-scripts/ProxmoxVE) format
+and will be submitted there once the project meets their requirements (6 months old, 600+ stars).
+Until then, use the standalone installer above.
 
 ### Future updates
 
