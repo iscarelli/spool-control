@@ -5,6 +5,12 @@ Web app for managing 3D-printing filaments.
 Register filaments, catalog spools, weigh them with automatic tare subtraction,
 print 60×40mm thermal labels with a QR code, and get stock reports.
 
+## Live Demo
+
+**[spool-demo.duckdns.org](https://spool-demo.duckdns.org)** — login: `admin` / `demo`
+
+> Data resets daily at midnight UTC. Password and user creation are disabled.
+
 ## Features
 
 - Filament registry (material, brand, family, color) with automatic brand logos
@@ -195,7 +201,17 @@ ADMIN_DEFAULT_PASS=<initial password>
 APP_BASE_URL=https://spool.example.com
 SECURE_COOKIES=1
 SPOOL_API_KEY=<random hex>
+DEMO_MODE=0          # set to 1 to enable demo mode (see below)
 ```
+
+### Demo mode (`DEMO_MODE=1`)
+
+Restricts the instance for public demonstration:
+
+- Password changes, user creation/deletion, settings changes and backup restore are disabled
+- An informative banner is shown on every page
+- Run `deploy/seed-demo-data.py` to populate the database with sample data
+- Use `deploy/reset-demo.sh` + `spool-demo-reset.timer` for automatic daily resets (pulls latest release, then reseeds)
 
 > `spool.env` is in `.gitignore` and must never be committed.
 
