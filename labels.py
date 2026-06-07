@@ -215,8 +215,9 @@ def generate_label_png(spool: dict, base_url: str,
     f_material = _load_font(max(16, round(h_px * 0.15)), bold=True)
     f_family = _load_font(max(10, round(h_px * 0.07)))
     f_color = _load_font(max(12, round(h_px * 0.105)), bold=True)
-    f_loc = _load_font(max(9, round(h_px * 0.065)))
-    f_cap = _load_font(max(8, round(h_px * 0.05)))
+    # Local (valor) em negrito e um pouco maior — legível mesmo na B1 (203 dpi).
+    f_loc = _load_font(max(11, round(h_px * 0.08)), bold=True)
+    f_cap = _load_font(max(8, round(h_px * 0.055)))
 
     brand = str(spool.get("brand", ""))
     material = str(spool.get("material", ""))

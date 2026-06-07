@@ -47,6 +47,37 @@ DEFAULT_MODEL = _DATA.get("default_model") if _DATA.get("default_model") in PRIN
 DEFAULT_SIZE = _DATA.get("default_size") if _DATA.get("default_size") in LABEL_SIZES \
     else next(iter(LABEL_SIZES))
 
+# ── Tamanhos FÍSICOS (mm), agnósticos de impressora ──────────────────────────
+# A etiqueta física é a mesma (ex.: 50 × 30 mm) na B1 e na B1 Pro; só muda a
+# resolução em pixels conforme o DPI da impressora. O usuário escolhe só o tamanho
+# físico; o `static/niimbot-spool.js` identifica a impressora na conexão e resolve
+# a variante concreta de `LABEL_SIZES` com o DPI certo. Aqui deduplicamos as
+# variantes por (w_mm, h_mm) — o representante é a variante com o DPI do modelo
+# padrão (p/ o render server-side default ficar coerente).
+_DEFAULT_DPI = PRINTER_MODELS.get(DEFAULT_MODEL, {}).get("dpi")
+
+_rep_key: dict = {}
+for _k, _s in LABEL_SIZES.items():
+    _dims = (_s.get("w_mm"), _s.get("h_mm"))
+    if _dims not in _rep_key or _s.get("dpi") == _DEFAULT_DPI:
+        _rep_key[_dims] = _k
+
+
+def _fmt_mm(v) -> str:
+    return ("%g" % v) if v is not None else "?"
+
+
+PHYSICAL_SIZES = {
+    _k: {"label": f"{_fmt_mm(_d[0])} × {_fmt_mm(_d[1])} mm", "w_mm": _d[0], "h_mm": _d[1]}
+    for _d, _k in _rep_key.items()
+}
+
+# Representante físico do tamanho padrão (chave também presente em LABEL_SIZES).
+DEFAULT_PHYSICAL_SIZE = _rep_key.get(
+    (LABEL_SIZES[DEFAULT_SIZE].get("w_mm"), LABEL_SIZES[DEFAULT_SIZE].get("h_mm")),
+    next(iter(PHYSICAL_SIZES)),
+)
+
 
 def get_model(key: str) -> dict:
     return PRINTER_MODELS.get(key, PRINTER_MODELS[DEFAULT_MODEL])

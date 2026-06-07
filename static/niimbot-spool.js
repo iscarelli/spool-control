@@ -3,6 +3,13 @@
  * de iscarelli/niimbot-web-bluetooth). Aqui mora tudo que é do spool-control: busca
  * o registro em /api/niimbot/registry e liga os botões da UI.
  *
+ * Auto-adaptação por impressora: a etiqueta física é a mesma (50×30 mm) na B1 e na
+ * B1 Pro — só muda o DPI. O usuário escolhe só o tamanho físico; aqui identificamos
+ * a impressora na conexão (Niimbot.identify) e resolvemos internamente o MODELO
+ * (por id/task) e a VARIANTE de pixel (mesmo tamanho físico, DPI da impressora),
+ * pedindo o PNG na resolução certa. As mensagens vêm traduzidas do servidor (campo
+ * `i18n` do registro) — o driver vendorado é só em inglês.
+ *
  * Botões:
  *   [data-niimbot-url="/spools/<id>/label.png"]  → imprime 1 etiqueta
  *   [data-niimbot-urls='["/spools/1/label.png", …]'] → imprime a fila em sequência
@@ -18,22 +25,90 @@
     registry = await resp.json();
     return registry;
   }
-  function activeModel(rg) { return rg.models[rg.selected_model] || Object.values(rg.models)[0]; }
-  function activeSize(rg) { return rg.sizes[rg.selected_size] || Object.values(rg.sizes)[0]; }
+
+  // ── i18n ────────────────────────────────────────────────────────────────────
+  // Fallback em PT caso o registro não carregue (idioma da sessão vem do servidor).
+  const I18N_FALLBACK = {
+    identifying: "identificando impressora…",
+    printing: "imprimindo…",
+    printed: "Impresso",
+    no_printer: "Nenhuma impressora selecionada.",
+    failed: "Falha na impressão.",
+    unsupported: "Use Chrome ou Edge em HTTPS para imprimir direto na Niimbot.",
+    unrecognized: "Impressora não reconhecida ({printer}). Atualize o app ou reporte.",
+  };
+  function msg(rg, key) { return (rg && rg.i18n && rg.i18n[key]) || I18N_FALLBACK[key] || key; }
+  function fmt(tpl, vars) {
+    return String(tpl).replace(/\{(\w+)\}/g, (_, k) => (k in vars ? vars[k] : "{" + k + "}"));
+  }
+
+  // ── Resolução modelo/tamanho a partir da impressora detectada ────────────────
+  // Filtro BLE de descoberta: união dos name_prefixes de todos os modelos (assim o
+  // seletor lista qualquer Niimbot conhecida; a identificação decide qual é).
+  function discoveryModel(rg) {
+    const set = new Set();
+    Object.values(rg.models || {}).forEach((m) => (m.name_prefixes || []).forEach((p) => set.add(p)));
+    return { name_prefixes: [...set] };
+  }
+  // Modelo: por id (mais confiável) e, na falta, por task+dpi; senão o default.
+  function resolveModel(rg, info) {
+    if (info) {
+      for (const k in rg.models) if (rg.models[k].id === info.modelId) return rg.models[k];
+      for (const k in rg.models)
+        if (rg.models[k].task === info.task && rg.models[k].dpi === info.dpi) return rg.models[k];
+    }
+    return rg.models[rg.selected_model] || Object.values(rg.models)[0];
+  }
+  // Tamanho: a variante concreta de mesmo tamanho físico (mm) do selecionado, com o
+  // DPI da impressora detectada. Sem detecção, fica no representante selecionado.
+  function resolveSize(rg, info) {
+    const sel = rg.sizes[rg.selected_size]
+      || rg.sizes[(rg.physical_sizes && Object.keys(rg.physical_sizes)[0])]
+      || Object.values(rg.sizes)[0];
+    if (info && info.dpi != null) {
+      for (const k in rg.sizes) {
+        const s = rg.sizes[k];
+        if (s.w_mm === sel.w_mm && s.h_mm === sel.h_mm && s.dpi === info.dpi) return { key: k, size: s };
+      }
+    }
+    return { key: rg.selected_size, size: sel };
+  }
+  function withSize(url, key) {
+    return url + (url.indexOf("?") >= 0 ? "&" : "?") + "size=" + encodeURIComponent(key);
+  }
+
+  // Identifica a impressora e resolve modelo + variante de tamanho. Lança erro
+  // localizado se a impressora for reconhecida pelo protocolo mas não tiver modelo
+  // correspondente no registro (ex.: outra família).
+  async function prepare(rg, onProgress) {
+    onProgress && onProgress(msg(rg, "identifying"));
+    const info = await Niimbot.identify(discoveryModel(rg));
+    const model = resolveModel(rg, info);
+    const sized = resolveSize(rg, info);
+    if (info && info.task && (!model || model.task !== info.task)) {
+      throw new Error(fmt(msg(rg, "unrecognized"),
+        { printer: (info.label || ("id " + info.modelId)) }));
+    }
+    return { model, size: sized.size, sizeKey: sized.key };
+  }
 
   async function printOne(url, onProgress) {
     const rg = await loadRegistry();
-    await Niimbot.printImage(url, { model: activeModel(rg), size: activeSize(rg), onProgress });
+    const { model, size, sizeKey } = await prepare(rg, onProgress);
+    onProgress && onProgress(msg(rg, "printing"));
+    await Niimbot.printImage(withSize(url, sizeKey), { model, size });
   }
   async function printMany(urls, onProgress) {
     const rg = await loadRegistry();
-    await Niimbot.printBatch(urls, { model: activeModel(rg), size: activeSize(rg), onProgress });
+    const { model, size, sizeKey } = await prepare(rg, onProgress);
+    onProgress && onProgress(msg(rg, "printing"));
+    await Niimbot.printBatch(urls.map((u) => withSize(u, sizeKey)), { model, size });
   }
 
-  function wireButton(btn, run) {
+  function wireButton(btn, run, rg) {
     if (!Niimbot.isSupported()) {
       btn.disabled = true;
-      btn.title = "Use Chrome ou Edge em HTTPS para imprimir direto na Niimbot.";
+      btn.title = msg(rg, "unsupported");
       return;
     }
     const original = btn.innerHTML;
@@ -44,25 +119,28 @@
         `<span class="spinner-border spinner-border-sm me-1"></span>${s}`; };
       try {
         await run(status);
-        btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Impresso';
+        btn.innerHTML = `<i class="bi bi-check-lg me-1"></i>${msg(rg, "printed")}`;
         setTimeout(() => { btn.innerHTML = original; btn.disabled = false; }, 2500);
       } catch (err) {
         console.error("[Niimbot]", err);
-        const msg = (err && err.name === "NotFoundError")
-          ? "Nenhuma impressora selecionada." : (err && err.message) || "Falha na impressão.";
+        const m = (err && err.name === "NotFoundError")
+          ? msg(rg, "no_printer") : (err && err.message) || msg(rg, "failed");
         btn.innerHTML = original; btn.disabled = false;
-        alert("Niimbot: " + msg);
+        alert("Niimbot: " + m);
       }
     });
   }
 
-  function init() {
+  async function init() {
+    // Carrega o registro antes de ligar os botões (i18n p/ títulos e mensagens).
+    let rg = null;
+    try { rg = await loadRegistry(); } catch (e) { /* segue com fallback PT */ }
     document.querySelectorAll("[data-niimbot-url]").forEach((btn) =>
-      wireButton(btn, (status) => printOne(btn.dataset.niimbotUrl, status)));
+      wireButton(btn, (status) => printOne(btn.dataset.niimbotUrl, status), rg));
     document.querySelectorAll("[data-niimbot-urls]").forEach((btn) => {
       let urls = [];
       try { urls = JSON.parse(btn.dataset.niimbotUrls); } catch (e) { /* ignore */ }
-      wireButton(btn, (status) => printMany(urls, status));
+      wireButton(btn, (status) => printMany(urls, status), rg);
     });
   }
 

@@ -290,8 +290,18 @@ _EN = {
     "Usado pelo botão":          "Used by the button",
     "(Web Bluetooth, direto do navegador). Requer Chrome/Edge em HTTPS. Não afeta o PDF acima.":
         "(Web Bluetooth, straight from the browser). Requires Chrome/Edge over HTTPS. Does not affect the PDF above.",
-    "Escolha o modelo e um tamanho de mesma resolução — o B1 usa os tamanhos marcados “(B1)”. A impressora é identificada na conexão e recusa um par incompatível.":
-        "Pick a model and a label size of the same resolution — the B1 uses the sizes marked “(B1)”. The printer is identified on connect and rejects a mismatched pair.",
+    "A impressora (B1 ou B1 Pro) é identificada automaticamente na conexão — o app envia a resolução certa sozinho. Escolha só o tamanho físico da etiqueta.":
+        "The printer (B1 or B1 Pro) is identified automatically on connect — the app sends the right resolution by itself. Just pick the physical label size.",
+    # Niimbot — mensagens client-side (driver vendorado é só em inglês; tradução aqui)
+    "identificando impressora…":  "identifying printer…",
+    "imprimindo…":                "printing…",
+    "Impresso":                   "Printed",
+    "Nenhuma impressora selecionada.": "No printer selected.",
+    "Falha na impressão.":        "Print failed.",
+    "Use Chrome ou Edge em HTTPS para imprimir direto na Niimbot.":
+        "Use Chrome or Edge over HTTPS to print straight to the Niimbot.",
+    "Impressora não reconhecida ({printer}). Atualize o app ou reporte.":
+        "Unrecognized printer ({printer}). Update the app or report it.",
     "Salvar Configurações":      "Save Settings",
 
     # ── Error page ───────────────────────────────────────────────────────────
@@ -671,8 +681,18 @@ _ES = {
     "Usado pelo botão":          "Usado por el botón",
     "(Web Bluetooth, direto do navegador). Requer Chrome/Edge em HTTPS. Não afeta o PDF acima.":
         "(Web Bluetooth, directo desde el navegador). Requiere Chrome/Edge en HTTPS. No afecta al PDF de arriba.",
-    "Escolha o modelo e um tamanho de mesma resolução — o B1 usa os tamanhos marcados “(B1)”. A impressora é identificada na conexão e recusa um par incompatível.":
-        "Elige un modelo y un tamaño de la misma resolución — el B1 usa los tamaños marcados “(B1)”. La impresora se identifica al conectar y rechaza un par incompatible.",
+    "A impressora (B1 ou B1 Pro) é identificada automaticamente na conexão — o app envia a resolução certa sozinho. Escolha só o tamanho físico da etiqueta.":
+        "La impresora (B1 o B1 Pro) se identifica automáticamente al conectar — la app envía la resolución correcta por sí sola. Elige solo el tamaño físico de la etiqueta.",
+    # Niimbot — mensajes del cliente (el driver vendorizado es solo en inglés)
+    "identificando impressora…":  "identificando impresora…",
+    "imprimindo…":                "imprimiendo…",
+    "Impresso":                   "Impreso",
+    "Nenhuma impressora selecionada.": "Ninguna impresora seleccionada.",
+    "Falha na impressão.":        "Error al imprimir.",
+    "Use Chrome ou Edge em HTTPS para imprimir direto na Niimbot.":
+        "Usa Chrome o Edge en HTTPS para imprimir directo en la Niimbot.",
+    "Impressora não reconhecida ({printer}). Atualize o app ou reporte.":
+        "Impresora no reconocida ({printer}). Actualiza la app o repórtalo.",
     "Salvar Configurações":      "Guardar Ajustes",
 
     # ── Error page ───────────────────────────────────────────────────────────

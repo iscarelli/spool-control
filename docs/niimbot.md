@@ -9,8 +9,10 @@ Disponível desde a **v1.11.0**. Modelos suportados:
 | **B1** (e B1 SE) | `b1` (protocolo 3) | 203 | validado em hardware |
 | M2-H | `b1` | 300 | *não validado* — oculto até confirmar (ver abaixo) |
 
-O driver identifica a impressora na conexão (B1 e B1 Pro anunciam o mesmo nome BLE)
-e **recusa** um par modelo/tamanho incompatível antes de imprimir.
+A impressora é **identificada automaticamente** na conexão (B1 e B1 Pro anunciam o
+mesmo nome BLE). O usuário escolhe só o **tamanho físico** da etiqueta (50 × 30 mm);
+o app resolve internamente o modelo e a resolução (DPI) certos conforme a impressora
+detectada — não há seleção manual de modelo nem de variante de pixel.
 
 ## Onde mora o quê
 
@@ -45,11 +47,14 @@ a LXC offline).
 
 1. O servidor renderiza a etiqueta como **PNG 1-bit** em `/spools/<id>/label.png`
    (QR + marca/material/família/ID), no tamanho de pixels do modelo selecionado.
-2. O botão **Imprimir Niimbot** (detalhe do spool e fila) chama o adaptador, que pega
-   modelo/tamanho de `/api/niimbot/registry`.
-3. O driver (`static/niimbot.js`) conecta por Web Bluetooth, **identifica** a
-   impressora, faz o threshold do PNG para 1-bit e envia pela variante de task certa
-   (`v4` para B1 Pro, `b1` para B1) — ver `../niimbot-web-bluetooth/docs/protocol-v4.md`.
+2. O botão **Imprimir Niimbot** (detalhe do spool e fila) chama o adaptador, que
+   **identifica a impressora** (`Niimbot.identify`), resolve o modelo (por `id`/`task`)
+   e a variante de pixel (mesmo tamanho físico, DPI da impressora) a partir do
+   `/api/niimbot/registry`, e pede o `label.png` na resolução resolvida (`?size=`).
+3. O driver (`static/niimbot.js`) conecta por Web Bluetooth, faz o threshold do PNG
+   para 1-bit e envia pela variante de task certa (`v4` para B1 Pro, `b1` para B1) —
+   ver `../niimbot-web-bluetooth/docs/protocol-v4.md`. As mensagens visíveis vêm
+   traduzidas do servidor (campo `i18n` do registro); o driver é só em inglês.
 
 ## Requisitos
 

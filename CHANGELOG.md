@@ -10,6 +10,15 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.23.0] — 2026-06-07
+
+### Changed
+- **Impressão Niimbot agora se adapta sozinha à impressora.** A etiqueta física é a mesma (50 × 30 mm) na B1 e na B1 Pro — só muda o DPI. O app **identifica a impressora na conexão** e resolve internamente o modelo (por `id`/`task`) e a resolução em pixels; o usuário escolhe **só o tamanho físico**.
+  - Configurações: removido o seletor "Modelo da impressora" e as variantes de tamanho por impressora; sobra um único "Tamanho da etiqueta" físico.
+  - `static/niimbot-spool.js`: fluxo `identify` → resolve modelo+variante → pede `label.png` na resolução certa (`?size=`).
+- **Mensagens da impressão Niimbot traduzidas** (PT/EN/ES). O driver vendorado é só em inglês; as strings visíveis (alertas, status, "impressora não reconhecida") agora vêm do servidor no idioma da sessão (campo `i18n` do registro) — corrige o alerta que aparecia em inglês.
+- **Layout da etiqueta:** campo *Local* maior e em **negrito**, legível também na menor resolução (B1, 203 dpi). Função única de geração (sem variante por impressora).
+
 ## [1.22.0] — 2026-06-07
 
 ### Added
