@@ -20,7 +20,6 @@ _PATH = os.path.join(os.path.dirname(__file__), "spoolman_catalog.json")
 BRANDS: list = []
 MATERIALS: list = []
 FILAMENTS: list = []
-SOURCE: str = ""
 
 try:
     with open(_PATH, encoding="utf-8") as _fh:
@@ -28,7 +27,6 @@ try:
     BRANDS = list(_DATA.get("brands") or [])
     MATERIALS = list(_DATA.get("materials") or [])
     FILAMENTS = list(_DATA.get("filaments") or [])
-    SOURCE = _DATA.get("_source", "")
 except Exception:
     _log.warning("filament_catalog.load_failed", path=_PATH, exc_info=True)
 
