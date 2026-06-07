@@ -10,6 +10,11 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.23.1] — 2026-06-07
+
+### Changed
+- Configurações Niimbot: o seletor de impressora voltou, agora com **B1 e B1 Pro num único item** ("Niimbot B1 / B1 Pro") — as famílias são derivadas agrupando os modelos pelo prefixo BLE. A detecção continua escolhendo o modelo exato (e o DPI) dentro da família na hora de imprimir. O seletor de tamanho mantém **um único** item (50 × 30 mm). Deixa espaço para outras famílias/tamanhos no futuro.
+
 ## [1.23.0] — 2026-06-07
 
 ### Changed

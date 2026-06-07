@@ -70,6 +70,14 @@
           <h6 class="text-muted text-uppercase fw-semibold mb-3" style="font-size:.75rem">{{ _('Impressão Direta (Niimbot)') }}</h6>
           <div class="row g-3 mb-4">
             <div class="col-6">
+              <label class="form-label fw-semibold">{{ _('Modelo da impressora') }}</label>
+              <select name="niimbot_printer_family" class="form-select">
+                {% for key, f in niimbot_families.items() %}
+                <option value="{{ key }}" {% if key == niimbot_printer_family %}selected{% endif %}>{{ f.label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-6">
               <label class="form-label fw-semibold">{{ _('Tamanho da etiqueta') }}</label>
               <select name="niimbot_label_size" class="form-select">
                 {% for key, s in niimbot_sizes.items() %}
@@ -82,7 +90,7 @@
                 {{ _('Usado pelo botão') }} <strong>{{ _('Imprimir Niimbot') }}</strong> {{ _('(Web Bluetooth, direto do navegador). Requer Chrome/Edge em HTTPS. Não afeta o PDF acima.') }}
               </div>
               <div class="form-text">
-                {{ _('A impressora (B1 ou B1 Pro) é identificada automaticamente na conexão — o app envia a resolução certa sozinho. Escolha só o tamanho físico da etiqueta.') }}
+                {{ _('B1 e B1 Pro são o mesmo item — o app identifica qual está conectada e envia a resolução certa automaticamente.') }}
               </div>
             </div>
           </div>

@@ -290,8 +290,8 @@ _EN = {
     "Usado pelo botão":          "Used by the button",
     "(Web Bluetooth, direto do navegador). Requer Chrome/Edge em HTTPS. Não afeta o PDF acima.":
         "(Web Bluetooth, straight from the browser). Requires Chrome/Edge over HTTPS. Does not affect the PDF above.",
-    "A impressora (B1 ou B1 Pro) é identificada automaticamente na conexão — o app envia a resolução certa sozinho. Escolha só o tamanho físico da etiqueta.":
-        "The printer (B1 or B1 Pro) is identified automatically on connect — the app sends the right resolution by itself. Just pick the physical label size.",
+    "B1 e B1 Pro são o mesmo item — o app identifica qual está conectada e envia a resolução certa automaticamente.":
+        "B1 and B1 Pro are the same item — the app detects which one is connected and sends the right resolution automatically.",
     # Niimbot — mensagens client-side (driver vendorado é só em inglês; tradução aqui)
     "identificando impressora…":  "identifying printer…",
     "imprimindo…":                "printing…",
@@ -681,8 +681,8 @@ _ES = {
     "Usado pelo botão":          "Usado por el botón",
     "(Web Bluetooth, direto do navegador). Requer Chrome/Edge em HTTPS. Não afeta o PDF acima.":
         "(Web Bluetooth, directo desde el navegador). Requiere Chrome/Edge en HTTPS. No afecta al PDF de arriba.",
-    "A impressora (B1 ou B1 Pro) é identificada automaticamente na conexão — o app envia a resolução certa sozinho. Escolha só o tamanho físico da etiqueta.":
-        "La impresora (B1 o B1 Pro) se identifica automáticamente al conectar — la app envía la resolución correcta por sí sola. Elige solo el tamaño físico de la etiqueta.",
+    "B1 e B1 Pro são o mesmo item — o app identifica qual está conectada e envia a resolução certa automaticamente.":
+        "B1 y B1 Pro son el mismo ítem — la app detecta cuál está conectada y envía la resolución correcta automáticamente.",
     # Niimbot — mensajes del cliente (el driver vendorizado es solo en inglés)
     "identificando impressora…":  "identificando impresora…",
     "imprimindo…":                "imprimiendo…",

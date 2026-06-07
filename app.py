@@ -839,10 +839,11 @@ def niimbot_registry():
     tamanho físico, DPI da impressora). `i18n` traz as mensagens já no idioma da
     sessão — o driver vendorado é só em inglês, então a tradução mora aqui."""
     return jsonify({
-        "models": reg.PRINTER_MODELS,
+        "models": reg.PRINTER_MODELS,             # modelos (p/ resolução interna)
+        "families": reg.PRINTER_FAMILIES,         # famílias (item do seletor; B1+B1 Pro juntas)
         "sizes": reg.LABEL_SIZES,                 # variantes concretas (p/ resolução interna)
         "physical_sizes": reg.PHYSICAL_SIZES,     # tamanhos físicos (p/ o dropdown)
-        "selected_model": reg.DEFAULT_MODEL,      # fallback se a detecção falhar
+        "selected_family": db.get_setting("niimbot_printer_family", reg.DEFAULT_FAMILY),
         "selected_size": db.get_setting("niimbot_label_size", reg.DEFAULT_PHYSICAL_SIZE),
         "i18n": {
             "identifying": t("identificando impressora…"),
@@ -1253,8 +1254,11 @@ def admin_settings():
         db.set_setting("low_stock_pct", request.form.get("low_stock_pct", "20").strip())
         db.set_setting("label_width_mm", request.form.get("label_width_mm", "60").strip())
         db.set_setting("label_height_mm", request.form.get("label_height_mm", "40").strip())
-        # Só o tamanho FÍSICO é escolhido; a impressora (e o DPI) é detectada na
-        # impressão e a resolução resolvida internamente (ver niimbot-spool.js).
+        # Escolhe-se a FAMÍLIA da impressora (B1/B1 Pro juntas) e o tamanho FÍSICO;
+        # o modelo exato e o DPI são detectados na impressão (ver niimbot-spool.js).
+        family = request.form.get("niimbot_printer_family", reg.DEFAULT_FAMILY).strip()
+        db.set_setting("niimbot_printer_family",
+                       family if family in reg.PRINTER_FAMILIES else reg.DEFAULT_FAMILY)
         size = request.form.get("niimbot_label_size", reg.DEFAULT_PHYSICAL_SIZE).strip()
         db.set_setting("niimbot_label_size",
                        size if size in reg.PHYSICAL_SIZES else reg.DEFAULT_PHYSICAL_SIZE)
@@ -1267,6 +1271,8 @@ def admin_settings():
         settings["app_base_url"] = public_base_url()
     return render_template(
         "admin/settings.html", settings=settings,
+        niimbot_families=reg.PRINTER_FAMILIES,
+        niimbot_printer_family=db.get_setting("niimbot_printer_family", reg.DEFAULT_FAMILY),
         niimbot_sizes=reg.PHYSICAL_SIZES,
         niimbot_label_size=db.get_setting("niimbot_label_size", reg.DEFAULT_PHYSICAL_SIZE),
     )

@@ -43,21 +43,32 @@
   }
 
   // ── Resolução modelo/tamanho a partir da impressora detectada ────────────────
-  // Filtro BLE de descoberta: união dos name_prefixes de todos os modelos (assim o
-  // seletor lista qualquer Niimbot conhecida; a identificação decide qual é).
+  // O usuário escolhe a FAMÍLIA (ex.: "Niimbot B1 / B1 Pro"); a detecção decide o
+  // modelo exato (e o DPI) dentro dela.
+  function selectedFamily(rg) {
+    return (rg.families && (rg.families[rg.selected_family] || Object.values(rg.families)[0])) || null;
+  }
+  // Filtro BLE de descoberta: prefixos da família escolhida (escopo o seletor de
+  // dispositivos); sem família, cai na união de todos os prefixos conhecidos.
   function discoveryModel(rg) {
+    const fam = selectedFamily(rg);
+    const prefixes = (fam && fam.name_prefixes) || [];
+    if (prefixes.length) return { name_prefixes: prefixes };
     const set = new Set();
     Object.values(rg.models || {}).forEach((m) => (m.name_prefixes || []).forEach((p) => set.add(p)));
     return { name_prefixes: [...set] };
   }
-  // Modelo: por id (mais confiável) e, na falta, por task+dpi; senão o default.
+  // Modelo: entre os membros da família, por id (mais confiável) e, na falta, por
+  // task+dpi; senão o 1º membro da família.
   function resolveModel(rg, info) {
+    const fam = selectedFamily(rg);
+    const members = (fam && fam.models) || Object.keys(rg.models);
     if (info) {
-      for (const k in rg.models) if (rg.models[k].id === info.modelId) return rg.models[k];
-      for (const k in rg.models)
-        if (rg.models[k].task === info.task && rg.models[k].dpi === info.dpi) return rg.models[k];
+      for (const k of members) if (rg.models[k] && rg.models[k].id === info.modelId) return rg.models[k];
+      for (const k of members)
+        if (rg.models[k] && rg.models[k].task === info.task && rg.models[k].dpi === info.dpi) return rg.models[k];
     }
-    return rg.models[rg.selected_model] || Object.values(rg.models)[0];
+    return rg.models[members[0]] || Object.values(rg.models)[0];
   }
   // Tamanho: a variante concreta de mesmo tamanho físico (mm) do selecionado, com o
   // DPI da impressora detectada. Sem detecção, fica no representante selecionado.

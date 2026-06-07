@@ -9,10 +9,12 @@ Disponível desde a **v1.11.0**. Modelos suportados:
 | **B1** (e B1 SE) | `b1` (protocolo 3) | 203 | validado em hardware |
 | M2-H | `b1` | 300 | *não validado* — oculto até confirmar (ver abaixo) |
 
-A impressora é **identificada automaticamente** na conexão (B1 e B1 Pro anunciam o
-mesmo nome BLE). O usuário escolhe só o **tamanho físico** da etiqueta (50 × 30 mm);
-o app resolve internamente o modelo e a resolução (DPI) certos conforme a impressora
-detectada — não há seleção manual de modelo nem de variante de pixel.
+O usuário escolhe a **família** da impressora (item único **"Niimbot B1 / B1 Pro"**,
+já que as duas anunciam o mesmo nome BLE) e o **tamanho físico** da etiqueta
+(50 × 30 mm). Na conexão, a impressora exata é **identificada automaticamente** e o
+app resolve internamente o modelo e a resolução (DPI) certos dentro da família — não
+há seleção manual de B1 vs B1 Pro nem de variante de pixel. O seletor de família
+escopa o seletor Bluetooth e deixa espaço para outras famílias no futuro (ex.: M2-H).
 
 ## Onde mora o quê
 

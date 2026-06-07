@@ -78,6 +78,33 @@ DEFAULT_PHYSICAL_SIZE = _rep_key.get(
     next(iter(PHYSICAL_SIZES)),
 )
 
+# ── Famílias de impressora (item do seletor) ─────────────────────────────────
+# O usuário escolhe a FAMÍLIA (ex.: "Niimbot B1 / B1 Pro"), não o modelo exato —
+# B1 e B1 Pro anunciam o mesmo nome BLE e diferem só no DPI, que o cliente detecta
+# na conexão e resolve sozinho. Agrupamos os modelos visíveis pelo prefixo BLE
+# (`name_prefixes`): mesma família = mesmo prefixo. Isso funde B1+B1 Pro num item e
+# deixa espaço p/ outras famílias (ex.: M2-H) quando saírem do `_untested`. A chave
+# da família é o 1º prefixo; o rótulo é gerado dos modelos membros.
+PRINTER_FAMILIES: dict = {}
+for _mk, _m in PRINTER_MODELS.items():
+    _prefixes = list(_m.get("name_prefixes") or [])
+    _fk = _prefixes[0] if _prefixes else _mk
+    _fam = PRINTER_FAMILIES.setdefault(_fk, {"label": "", "name_prefixes": [], "models": []})
+    _fam["models"].append(_mk)
+    for _p in _prefixes:
+        if _p not in _fam["name_prefixes"]:
+            _fam["name_prefixes"].append(_p)
+for _fk, _fam in PRINTER_FAMILIES.items():
+    _shorts = sorted({PRINTER_MODELS[_mk]["label"].replace("Niimbot ", "")
+                      for _mk in _fam["models"]})
+    _fam["label"] = "Niimbot " + " / ".join(_shorts)
+
+# Família padrão = a que contém o modelo padrão.
+DEFAULT_FAMILY = next(
+    (_fk for _fk, _fam in PRINTER_FAMILIES.items() if DEFAULT_MODEL in _fam["models"]),
+    next(iter(PRINTER_FAMILIES)),
+)
+
 
 def get_model(key: str) -> dict:
     return PRINTER_MODELS.get(key, PRINTER_MODELS[DEFAULT_MODEL])
