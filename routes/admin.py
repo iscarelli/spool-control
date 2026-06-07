@@ -227,18 +227,29 @@ def admin_update():
 @app.route("/admin/update/run", methods=["POST"])
 @admin_required
 def admin_update_run():
-    # Dispara o oneshot systemd como root (sudoers libera só este comando fixo,
-    # sem argumentos vindos da web). --no-block retorna na hora; o update roda
-    # em cgroup próprio e sobrevive ao restart do spool-control que ele aciona.
+    # Mecanismo SEM privilégio: o app (não-root) apenas ESCREVE um flag em data/.
+    # Um systemd .path unit (root) detecta o arquivo via inotify e dispara o oneshot
+    # de update — instantâneo, sem o app ter qualquer poder de root.
+    flag = db.DB_PATH.parent / ".update-requested"
+    try:
+        flag.write_text(
+            f"{db.now_iso()} by {session.get('username', '?')}\n", encoding="utf-8"
+        )
+    except Exception:
+        log.error("admin.update_flag_failed", exc_info=True)
+        return jsonify(ok=False,
+                       error="Não foi possível registrar o pedido de atualização."), 500
+    # Fallback transitório (Seamless): em instalações onde o vigia .path ainda não foi
+    # instalado (ele entra na PRÓXIMA atualização, junto do novo update-lxc.sh), o grant
+    # sudoers legado dispara o oneshot. `-n` evita prompt; falha é ignorada. Vira no-op
+    # assim que o sudoers é removido — aí o flag + .path assumem sozinhos.
     try:
         subprocess.run(
-            ["sudo", "systemctl", "start", "--no-block", "spool-update.service"],
-            check=True, capture_output=True, text=True, timeout=15,
+            ["sudo", "-n", "systemctl", "start", "--no-block", "spool-update.service"],
+            check=False, capture_output=True, text=True, timeout=10,
         )
-    except Exception as e:
-        msg = (getattr(e, "stderr", "") or str(e)).strip()
-        log.error("admin.update_failed", error=msg[:300], exc_info=True)
-        return jsonify(ok=False, error=msg[:300]), 500
+    except Exception:
+        pass  # sem sudoers (ou sem sudo) → tudo bem, o vigia .path cuida do flag
     log.info("admin.update_triggered")
     return jsonify(ok=True)
 

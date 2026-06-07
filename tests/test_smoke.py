@@ -133,3 +133,18 @@ def test_spool_detail_pages_render(auth_client, db):
                 f"/spools/{sid}/label.pdf", f"/spools/{sid}/qr.png"):
         resp = auth_client.get(url)
         assert resp.status_code == 200, f"{url} retornou {resp.status_code}"
+
+
+# ── Autoatualização: o app só escreve o flag (sem privilégio) ────────────────
+
+def test_update_run_writes_flag(auth_client, db):
+    """POST /admin/update/run deve criar o flag que o vigia root (systemd .path)
+    consome — o app não executa nada privilegiado."""
+    flag = db.DB_PATH.parent / ".update-requested"
+    if flag.exists():
+        flag.unlink()
+    resp = auth_client.post("/admin/update/run",
+                            headers={"X-Requested-With": "XMLHttpRequest"})
+    assert resp.status_code == 200
+    assert resp.get_json()["ok"] is True
+    assert flag.exists()

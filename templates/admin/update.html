@@ -75,6 +75,28 @@
 </div>
 
 <script nonce="{{ nonce }}">
+// Toast de confirmação após o reload pós-update (a versão é guardada antes do reload).
+(function () {
+  var v;
+  try { v = sessionStorage.getItem('sc-updated'); } catch (e) { v = null; }
+  if (!v) return;
+  try { sessionStorage.removeItem('sc-updated'); } catch (e) {}
+  v = String(v).replace(/[^0-9.]/g, '');  // só dígitos/pontos (defensivo)
+  var wrap = document.createElement('div');
+  wrap.className = 'position-fixed top-0 start-50 translate-middle-x pt-3';
+  wrap.style.cssText = 'z-index:1090;pointer-events:none';
+  wrap.innerHTML =
+    '<div class="toast align-items-center text-bg-success border-0" role="alert" ' +
+    'data-bs-autohide="true" data-bs-delay="6000" style="pointer-events:auto;min-width:260px">' +
+    '<div class="d-flex"><div class="toast-body fw-semibold">' +
+    '<i class="bi bi-check-circle-fill me-2"></i>' +
+    "{{ _('Atualizado para a v{v} com sucesso') }}".replace('{v}', v) +
+    '</div><button type="button" class="btn-close btn-close-white me-2 m-auto" ' +
+    'data-bs-dismiss="toast"></button></div></div>';
+  document.body.appendChild(wrap);
+  new bootstrap.Toast(wrap.querySelector('.toast')).show();
+})();
+
 (function () {
   var btn = document.getElementById('btnUpdate');
   if (!btn) return;
@@ -98,6 +120,7 @@
       .then(function (d) {
         if (d.done || (d.current && gte(d.current, target))) {
           progressMsg.textContent = "{{ _('Concluído! Recarregando…') }}";
+          try { sessionStorage.setItem('sc-updated', d.current || target); } catch (e) {}
           setTimeout(function () { location.reload(); }, 1500);
         } else {
           setTimeout(poll, 4000);

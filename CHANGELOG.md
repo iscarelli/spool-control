@@ -10,6 +10,16 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.26.0] — 2026-06-07
+
+### Security
+- **Autoatualização sem privilégio para o app.** Antes, o botão "Atualizar" fazia o app (não-root) chamar `sudo` para disparar o update como root — ou seja, uma sessão de admin conseguia acionar execução de código root. Agora o app apenas **escreve um arquivo de pedido** (`data/.update-requested`) e um observador `systemd .path` (root) detecta e executa o update via inotify (instantâneo). O grant `sudo` legado (`/etc/sudoers.d/spool-update`) é **removido**. A aresta admin→root deixa de existir pelo caminho web.
+- **Transição automática e sem console:** durante a migração, o app também tenta o disparo `sudo` legado como fallback (`sudo -n`, ignorado se falhar), então o botão **nunca quebra**. A blindagem total (remoção do sudoers + observador `.path`) se completa sozinha na **próxima atualização** de cada instalação — sem ninguém precisar rodar nada no servidor.
+
+### Added
+- **Comando `update` no console** (padrão Proxmox Helper Scripts): no shell do LXC (root), `update` atualiza para a última release. Caminho de atualização padrão e seguro (root no próprio shell), além do botão web.
+- **Notificação de conclusão:** ao terminar a atualização, a página mostra um **toast** "Atualizado para a v{versão} com sucesso".
+
 ## [1.25.1] — 2026-06-07
 
 ### Changed
