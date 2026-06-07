@@ -10,6 +10,11 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.24.2] — 2026-06-07
+
+### Fixed
+- **Impressão Niimbot na B1 Pro voltou a funcionar no macOS.** Driver re-vendorado para **v1.3.3** (`fix(b1pro): per-model frame bundling`). O driver 1.3.1 empacotava vários frames por escrita BLE para todos os modelos; no macOS a B1 Pro não remontava os frames empacotados e a página nunca terminava de imprimir (`PageEnd`/`0xe3` sem `0xe4`, contador travado em 0%). No Windows funcionava porque o stack BLE tolera o burst. Agora o bundling é **por modelo** (`bundle` em `MODEL_IDS`): B1 Pro (e modelos não validados) enviam **um frame por escrita**; B1 e M2-H seguem com bundling.
+
 ## [1.24.1] — 2026-06-07
 
 ### Changed

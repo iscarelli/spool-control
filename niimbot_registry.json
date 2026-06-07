@@ -1,6 +1,6 @@
 {
   "_comment": "Registry of Niimbot printer models and label sizes. w_px = printhead axis (width), h_px = feed axis (length). `task` selects the print-task variant in niimbot.js: \"v4\" (D110M/B1 Pro/B21 Pro) or \"b1\" (B1/B21/M2-H) — task is the protocol sequence, independent of dpi (B1 is 203 dpi, M2-H is 300 dpi, both task \"b1\"). `dpi` pairs a size with its model(s). `id` = printer model id for auto-detection. All models/sizes here are validated on real hardware; `_note` fields just document how a size's pixels were derived.",
-  "_source": "VENDORED from github.com/iscarelli/niimbot-web-bluetooth registry.json @ v1.3.1 (commit 8a4aaaf). Refresh via deploy/vendor-niimbot.sh — do not hand-edit. niimbot_registry.py loads this file; entries with an `_untested` key are hidden until validated on hardware.",
+  "_source": "VENDORED from github.com/iscarelli/niimbot-web-bluetooth registry.json @ v1.3.3 (commit 068fa69). Refresh via deploy/vendor-niimbot.sh — do not hand-edit. niimbot_registry.py loads this file; entries with an `_untested` key are hidden until validated on hardware.",
   "models": {
     "b1pro": {
       "label": "Niimbot B1 Pro",
