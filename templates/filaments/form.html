@@ -6,6 +6,12 @@
     <div class="d-flex align-items-center mb-3">
       <a href="{{ url_for('filaments_list') }}" class="btn btn-sm btn-outline-secondary me-2"><i class="bi bi-arrow-left"></i></a>
       <h4 class="mb-0 fw-bold">{{ _('Editar Filamento') if filament else _('Novo Filamento') }}</h4>
+      {% if catalog_available %}
+      <button type="button" class="btn btn-sm btn-outline-primary ms-auto" id="catalogBtn"
+              data-bs-toggle="modal" data-bs-target="#catalogModal">
+        <i class="bi bi-database-down me-1"></i>{{ _('Importar do catálogo') }}
+      </button>
+      {% endif %}
     </div>
     <div class="card">
       <div class="card-body">
@@ -72,6 +78,30 @@
     </div>
   </div>
 </div>
+
+{% if catalog_available %}
+<div class="modal fade" id="catalogModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ _('Buscar no catálogo de filamentos') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Fechar') }}"></button>
+      </div>
+      <div class="modal-body">
+        <input type="search" id="catalogSearch" class="form-control mb-3" autocomplete="off"
+               placeholder="{{ _('Buscar por marca, material ou cor...') }}">
+        <div id="catalogResults" class="list-group list-group-flush"
+             data-empty="{{ _('Nenhum filamento encontrado') }}"
+             data-typehint="{{ _('Digite para buscar no catálogo.') }}"
+             data-more="{{ _('Refine a busca para ver mais.') }}"></div>
+      </div>
+      <div class="modal-footer">
+        <small class="text-muted me-auto">{{ _('Fonte: catálogo aberto SpoolmanDB (MIT)') }}</small>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
 {% endblock %}
 {% block scripts %}
 <script nonce="{{ nonce }}">
@@ -80,4 +110,5 @@ const hex = document.getElementById('colorHex');
 picker.addEventListener('input', () => hex.value = picker.value);
 hex.addEventListener('input', () => { if(/^#[0-9a-fA-F]{6}$/.test(hex.value)) picker.value = hex.value; });
 </script>
+{% if catalog_available %}<script nonce="{{ nonce }}" src="{{ url_for('static', filename='filament-catalog.js') }}"></script>{% endif %}
 {% endblock %}
