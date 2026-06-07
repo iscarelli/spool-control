@@ -114,6 +114,10 @@ csrf = CSRFProtect(app)
 LOGIN_MAX_FAILURES = 10
 LOGIN_WINDOW_MIN = 15
 
+# Tamanho mínimo de senha no cadastro/troca de usuário. O rate-limit acima cobre
+# a força-bruta online; isto barra senhas triviais na origem.
+MIN_PASSWORD_LEN = 8
+
 log_cfg.configure_logging(app)
 log = log_cfg.get_logger()
 
@@ -549,7 +553,7 @@ def filaments_new():
             )
             flash(t("Filamento cadastrado com sucesso"), "success")
             return redirect(url_for("filaments_detail", filament_id=fid))
-        except Exception as e:
+        except Exception:
             log.error("filament.create_failed", exc_info=True)
             flash(t("Erro ao processar. Tente novamente."), "danger")
     return render_template("filaments/form.html", filament=None,
@@ -586,7 +590,7 @@ def filaments_edit(filament_id):
             )
             flash(t("Filamento atualizado"), "success")
             return redirect(next_url or url_for("filaments_detail", filament_id=filament_id))
-        except Exception as e:
+        except Exception:
             log.error("filament.update_failed", filament_id=filament_id, exc_info=True)
             flash(t("Erro ao processar. Tente novamente."), "danger")
     return render_template("filaments/form.html", filament=filament,
@@ -645,7 +649,7 @@ def spool_models_new():
             )
             flash(t("Modelo de carretel cadastrado"), "success")
             return redirect(url_for("spool_models_list"))
-        except Exception as e:
+        except Exception:
             log.error("spool_model.create_failed", exc_info=True)
             flash(t("Erro ao processar. Tente novamente."), "danger")
     return render_template("spool_models/form.html", model=None)
@@ -667,7 +671,7 @@ def spool_models_edit(model_id):
             )
             flash(t("Modelo atualizado"), "success")
             return redirect(url_for("spool_models_list"))
-        except Exception as e:
+        except Exception:
             log.error("spool_model.update_failed", model_id=model_id, exc_info=True)
             flash(t("Erro ao processar. Tente novamente."), "danger")
     return render_template("spool_models/form.html", model=model)
@@ -724,7 +728,7 @@ def spools_new():
             )
             flash(t("Rolo cadastrado com sucesso"), "success")
             return redirect(url_for("spools_detail", spool_id=spool_id, queue_prompt="1"))
-        except Exception as e:
+        except Exception:
             log.error("spool.create_failed", exc_info=True)
             flash(t("Erro ao processar. Tente novamente."), "danger")
     filaments = db.list_filaments()
@@ -773,7 +777,7 @@ def spools_edit(spool_id):
             if old_location != new_location:
                 return redirect(url_for("spools_detail", spool_id=spool_id, queue_prompt="1"))
             return redirect(url_for("spools_detail", spool_id=spool_id))
-        except Exception as e:
+        except Exception:
             log.error("spool.update_failed", spool_id=spool_id, exc_info=True)
             flash(t("Erro ao processar. Tente novamente."), "danger")
     filaments = db.list_filaments()
@@ -814,7 +818,7 @@ def spools_weigh(spool_id):
                     return {"ok": True, "net_g": round(net), "pct": pct}
                 flash(t("Peso registrado: {n:.0f}g de filamento").format(n=net), "success")
                 return redirect(url_for("spools_detail", spool_id=spool_id))
-        except ValueError as e:
+        except ValueError:
             log.warning("spool.weigh_invalid_input", exc_info=True)
             if ajax:
                 return {"ok": False, "error": "invalid_input"}
@@ -1200,6 +1204,8 @@ def admin_users_new():
     role = request.form.get("role", "viewer")
     if not username or not password:
         flash(t("Usuário e senha são obrigatórios"), "danger")
+    elif len(password) < MIN_PASSWORD_LEN:
+        flash(t("A senha precisa ter pelo menos {n} caracteres").format(n=MIN_PASSWORD_LEN), "danger")
     elif db.get_user_by_username(username):
         flash(t("Usuário já existe"), "danger")
     else:
@@ -1215,6 +1221,8 @@ def admin_users_password(user_id):
     password = request.form.get("password", "")
     if not password:
         flash(t("Senha não pode ser vazia"), "danger")
+    elif len(password) < MIN_PASSWORD_LEN:
+        flash(t("A senha precisa ter pelo menos {n} caracteres").format(n=MIN_PASSWORD_LEN), "danger")
     else:
         db.update_user_password(user_id, generate_password_hash(password))
         flash(t("Senha atualizada"), "success")
@@ -1500,7 +1508,7 @@ def health():
             checks["db"] = "ok"
         finally:
             conn.close()
-    except Exception as e:
+    except Exception:
         checks["db"] = "error"
         log.error("health.db_failed", exc_info=True)
 

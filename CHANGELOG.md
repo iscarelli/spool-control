@@ -10,6 +10,18 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.25.0] — 2026-06-07
+
+### Added
+- **Suíte de testes automatizados (`tests/`).** Testes de fumaça com `pytest` cobrindo os fluxos principais — login (senha certa/errada + registro de falha), cadastro de filamento, pesagem (peso líquido correto e recusa de bruto < tara), proteção das rotas de admin (anônimo e não-admin) e a nova política de senha mínima. Rede de segurança: pega regressões antes da release, não na máquina do usuário. Rodam contra um banco SQLite temporário (`SPOOL_DB_PATH`), sem tocar nos dados reais. Deps de teste isoladas em `requirements-dev.txt` (não vão para o servidor).
+
+### Security
+- **Senha mínima de 8 caracteres** no cadastro e na troca de senha de usuário (`MIN_PASSWORD_LEN`). Complementa o rate-limit de login: barra senhas triviais na origem.
+
+### Changed
+- **`database.py` blindado contra vazamento de conexão.** Todas as funções passaram a usar `contextlib.closing` — a conexão SQLite é fechada **mesmo se a query lançar exceção** (antes, um erro pulava o `db.close()` e vazava a conexão, podendo travar a escrita em WAL). Sem mudança de comportamento nem de schema. Novo `SPOOL_DB_PATH` (opcional) permite apontar o banco para outro arquivo (usado pelos testes).
+- Limpeza de lint: removido o `as e` em `except` onde a exceção não era usada.
+
 ## [1.24.3] — 2026-06-07
 
 ### Fixed
