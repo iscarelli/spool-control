@@ -58,24 +58,30 @@
     Object.values(rg.models || {}).forEach((m) => (m.name_prefixes || []).forEach((p) => set.add(p)));
     return { name_prefixes: [...set] };
   }
-  // Modelo: entre os membros da família, por id (mais confiável) e, na falta, por
-  // task+dpi; senão o 1º membro da família.
-  function resolveModel(rg, info) {
+  // Chave do modelo: entre os membros da família, por id (mais confiável) e, na
+  // falta, por task+dpi; senão o 1º membro da família.
+  function resolveModelKey(rg, info) {
     const fam = selectedFamily(rg);
     const members = (fam && fam.models) || Object.keys(rg.models);
     if (info) {
-      for (const k of members) if (rg.models[k] && rg.models[k].id === info.modelId) return rg.models[k];
+      for (const k of members) if (rg.models[k] && rg.models[k].id === info.modelId) return k;
       for (const k of members)
-        if (rg.models[k] && rg.models[k].task === info.task && rg.models[k].dpi === info.dpi) return rg.models[k];
+        if (rg.models[k] && rg.models[k].task === info.task && rg.models[k].dpi === info.dpi) return k;
     }
-    return rg.models[members[0]] || Object.values(rg.models)[0];
+    return members[0] || Object.keys(rg.models)[0];
   }
-  // Tamanho: a variante concreta de mesmo tamanho físico (mm) do selecionado, com o
-  // DPI da impressora detectada. Sem detecção, fica no representante selecionado.
-  function resolveSize(rg, info) {
+  // Variante de tamanho: mesmo tamanho FÍSICO (mm) do selecionado, cuja "dona" é o
+  // modelo resolvido — desambigua B1 Pro vs M2-H (ambos 300 dpi, larguras 584 vs 567).
+  // Fallback por DPI da impressora e, por fim, o representante selecionado.
+  function resolveSize(rg, info, modelKey) {
+    const sm = rg.size_model || {};
     const sel = rg.sizes[rg.selected_size]
       || rg.sizes[(rg.physical_sizes && Object.keys(rg.physical_sizes)[0])]
       || Object.values(rg.sizes)[0];
+    for (const k in rg.sizes) {
+      const s = rg.sizes[k];
+      if (s.w_mm === sel.w_mm && s.h_mm === sel.h_mm && sm[k] === modelKey) return { key: k, size: s };
+    }
     if (info && info.dpi != null) {
       for (const k in rg.sizes) {
         const s = rg.sizes[k];
@@ -94,8 +100,9 @@
   async function prepare(rg, onProgress) {
     onProgress && onProgress(msg(rg, "identifying"));
     const info = await Niimbot.identify(discoveryModel(rg));
-    const model = resolveModel(rg, info);
-    const sized = resolveSize(rg, info);
+    const modelKey = resolveModelKey(rg, info);
+    const model = rg.models[modelKey];
+    const sized = resolveSize(rg, info, modelKey);
     if (info && info.task && (!model || model.task !== info.task)) {
       throw new Error(fmt(msg(rg, "unrecognized"),
         { printer: (info.label || ("id " + info.modelId)) }));

@@ -842,6 +842,7 @@ def niimbot_registry():
         "models": reg.PRINTER_MODELS,             # modelos (p/ resolução interna)
         "families": reg.PRINTER_FAMILIES,         # famílias (item do seletor; B1+B1 Pro juntas)
         "sizes": reg.LABEL_SIZES,                 # variantes concretas (p/ resolução interna)
+        "size_model": reg.SIZE_MODEL,             # variante de tamanho -> modelo dono (desambigua DPI igual)
         "physical_sizes": reg.PHYSICAL_SIZES,     # tamanhos físicos (p/ o dropdown)
         "selected_family": db.get_setting("niimbot_printer_family", reg.DEFAULT_FAMILY),
         "selected_size": db.get_setting("niimbot_label_size", reg.DEFAULT_PHYSICAL_SIZE),

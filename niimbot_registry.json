@@ -1,6 +1,6 @@
 {
   "_comment": "Registry of Niimbot printer models and label sizes. w_px = printhead axis (width), h_px = feed axis (length). `task` selects the print-task variant in niimbot.js: \"v4\" (D110M/B1 Pro/B21 Pro) or \"b1\" (B1/B21/M2-H) — task is the protocol sequence, independent of dpi (B1 is 203 dpi, M2-H is 300 dpi, both task \"b1\"). `dpi` pairs a size with its model(s). `id` = printer model id for auto-detection. Entries marked `_untested` are derived from niimbluelib but not validated on hardware.",
-  "_source": "VENDORED from github.com/iscarelli/niimbot-web-bluetooth registry.json @ v1.2.0 (commit cb3a78a). Refresh via deploy/vendor-niimbot.sh — do not hand-edit. niimbot_registry.py loads this file; entries with an `_untested` key are hidden until validated on hardware.",
+  "_source": "VENDORED from github.com/iscarelli/niimbot-web-bluetooth registry.json @ v1.3.0 (commit 150236b). Refresh via deploy/vendor-niimbot.sh — do not hand-edit. niimbot_registry.py loads this file; entries with an `_untested` key are hidden until validated on hardware.",
   "models": {
     "b1pro": {
       "label": "Niimbot B1 Pro",
@@ -11,7 +11,9 @@
       "density": 3,
       "label_type": 1,
       "speed": 1,
-      "name_prefixes": ["B1"]
+      "name_prefixes": [
+        "B1"
+      ]
     },
     "b1": {
       "label": "Niimbot B1",
@@ -22,11 +24,13 @@
       "density": 3,
       "label_type": 1,
       "speed": 1,
-      "name_prefixes": ["B1"]
+      "name_prefixes": [
+        "B1"
+      ]
     },
     "m2h": {
-      "_untested": "Niimbot M2-H — same b1 print task as the B1 but 300 dpi (printhead 567 px). Derived from niimbluelib (model id 4608). NOT validated on hardware: confirm the BLE name prefix (guessed 'M2'; if it doesn't appear in the chooser, clear name_prefixes to list all Niimbot devices) and the real label pixel sizes.",
-      "label": "Niimbot M2-H (untested)",
+      "_note": "Niimbot M2-H — 300 dpi (printhead 567 px), model id 4608, protocol v4, advertised name e.g. 'M2_H-H107060027'. Validated on hardware: identifies and prints. Uses the b1 command sequence (per niimbluelib) with fast unacked writes (B1-Pro-class). The v4 sequence was tested too — it also prints but gives no better distinct-label cadence, so we keep b1. The small pause between distinct labels at 300 dpi is mechanical; for identical labels use copies (continuous).",
+      "label": "Niimbot M2-H",
       "id": 4608,
       "dpi": 300,
       "protocol": "v4",
@@ -34,7 +38,9 @@
       "density": 3,
       "label_type": 1,
       "speed": 1,
-      "name_prefixes": ["M2"]
+      "name_prefixes": [
+        "M2"
+      ]
     }
   },
   "sizes": {

@@ -10,6 +10,16 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.23.2] — 2026-06-07
+
+### Added
+- **Suporte à impressora Niimbot M2-H** (300 dpi). Driver re-vendorado para **v1.3.0** (M2-H validada no upstream). Como anuncia outro nome BLE ("M2…"), aparece como um **item de família próprio** ("Niimbot M2-H") no seletor — mesmo padrão da B1/B1 Pro: escolhe-se a família + o tamanho físico, e a impressora exata/DPI são detectados na conexão.
+
+### Changed
+- Resolução da variante de pixel agora usa o **modelo dono** (`SIZE_MODEL`), não só o DPI — B1 Pro e M2-H são ambos 300 dpi, mas com larguras diferentes (584 vs 567 px), então o DPI sozinho era ambíguo.
+- `LABEL_SIZES` passa a incluir **todas** as variantes concretas (resolução interna por impressora detectada); só o dropdown de tamanho **físico** filtra `_untested`.
+- `deploy/vendor-niimbot.sh`: parsing das respostas da API GitHub via Python (em vez de `curl | grep -m1`, que fechava o pipe cedo e derrubava o `curl` sob `pipefail`); seleção automática de `python3`/`py`/`python`.
+
 ## [1.23.1] — 2026-06-07
 
 ### Changed

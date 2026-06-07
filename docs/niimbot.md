@@ -3,18 +3,23 @@
 Impressão de etiquetas **direto do navegador** numa Niimbot, sem app intermediário.
 Disponível desde a **v1.11.0**. Modelos suportados:
 
-| Modelo | Task / protocolo | DPI | Status |
-|---|---|---|---|
-| **B1 Pro** | `v4` | 300 | validado em hardware |
-| **B1** (e B1 SE) | `b1` (protocolo 3) | 203 | validado em hardware |
-| M2-H | `b1` | 300 | *não validado* — oculto até confirmar (ver abaixo) |
+| Modelo | Família (item do seletor) | Task / protocolo | DPI | Status |
+|---|---|---|---|---|
+| **B1 Pro** | Niimbot B1 / B1 Pro | `v4` | 300 | validado em hardware |
+| **B1** (e B1 SE) | Niimbot B1 / B1 Pro | `b1` (protocolo 3) | 203 | validado em hardware |
+| **M2-H** | Niimbot M2-H | `b1` | 300 | validado em hardware (driver v1.3.0) |
 
-O usuário escolhe a **família** da impressora (item único **"Niimbot B1 / B1 Pro"**,
-já que as duas anunciam o mesmo nome BLE) e o **tamanho físico** da etiqueta
-(50 × 30 mm). Na conexão, a impressora exata é **identificada automaticamente** e o
-app resolve internamente o modelo e a resolução (DPI) certos dentro da família — não
-há seleção manual de B1 vs B1 Pro nem de variante de pixel. O seletor de família
-escopa o seletor Bluetooth e deixa espaço para outras famílias no futuro (ex.: M2-H).
+O usuário escolhe a **família** da impressora e o **tamanho físico** da etiqueta
+(50 × 30 mm). Famílias são derivadas agrupando os modelos pelo **prefixo BLE**: B1 e
+B1 Pro anunciam o mesmo nome ("B1…") → caem num item único **"Niimbot B1 / B1 Pro"**;
+a M2-H anuncia "M2…" → vira o item **"Niimbot M2-H"**. Na conexão, a impressora exata
+é **identificada automaticamente** (model id) e o app resolve internamente, dentro da
+família, o modelo e a resolução (DPI/pixels) certos — sem seleção manual de variante.
+O seletor de família escopa o seletor Bluetooth.
+
+> A variante de pixel é escolhida pelo **modelo dono** (mapa `size_model`), não só
+> pelo DPI: B1 Pro e M2-H são ambos 300 dpi mas com larguras diferentes (584 vs 567
+> px), então o DPI sozinho não basta.
 
 ## Onde mora o quê
 
@@ -76,7 +81,7 @@ deploy/vendor-niimbot.sh v1.2.0     # uma tag específica
 O script baixa `src/niimbot.js` + `registry.json` da tag escolhida, carimba o
 tag/commit de origem nos dois e os grava em `static/niimbot.js` e
 `niimbot_registry.json`. Depois: revisar `git diff`, **bump de versão + CHANGELOG**,
-commit e deploy normal. (Requer `curl` e `python3`.)
+commit e deploy normal. (Requer `curl` e `python3`/`py`.)
 
 ## Adicionar um modelo ou tamanho
 
@@ -86,11 +91,21 @@ commit e deploy normal. (Requer `curl` e `python3`.)
 3. Os dropdowns e o endpoint de bitmap passam a oferecer o novo modelo/tamanho
    automaticamente (sem editar `niimbot_registry.py`).
 
-### Liberar um modelo `_untested` (ex.: M2-H)
+### Entradas `_untested` — modelos vs. tamanhos
 
-Entradas com a chave `_untested` no JSON são **ocultadas** por `niimbot_registry.py`
-(não aparecem nos dropdowns nem na API). Para liberar: valide no hardware (confirme o
-`name_prefix` BLE e os pixels reais), remova a chave `_untested` no `registry.json`
-upstream e re-vendore.
+- **Modelos** com a chave `_untested` ficam **ocultos** (`niimbot_registry.py` só
+  expõe os validados) — não viram família nem aparecem no seletor. Para liberar:
+  valide no hardware, remova `_untested` do modelo no `registry.json` upstream,
+  re-vendore.
+- **Tamanhos** são tratados diferente: a variante de pixel **não é oferecida** ao
+  usuário (é resolvida pelo modelo dono via `size_model`), então um `_untested` num
+  *size* **não** o esconde da resolução — `LABEL_SIZES` inclui todas as variantes
+  concretas; só o dropdown de tamanho **físico** usa as visíveis. Assim a M2-H
+  funciona mesmo com `T50x30_m2h` ainda marcado `_untested` no upstream.
+
+> **Pendência de limpeza:** no upstream v1.3.0 o **modelo** `m2h` já está validado
+> (sem `_untested`, com `_note`), mas o **tamanho** `T50x30_m2h` ainda carrega
+> `_untested` — provável resquício. Recomendado removê-lo no `registry.json` upstream
+> e re-vendorar, para a documentação refletir que o tamanho também foi validado.
 
 [iscarelli/niimbot-web-bluetooth]: https://github.com/iscarelli/niimbot-web-bluetooth

@@ -37,15 +37,36 @@ def _visible(entries: dict) -> dict:
 with open(_REGISTRY_PATH, encoding="utf-8") as _fh:
     _DATA = json.load(_fh)
 
-# Modelos de impressora e tamanhos de etiqueta visíveis (sem metadados/untested).
+# Modelos visíveis (sem metadados/untested) — controlam quais FAMÍLIAS aparecem.
 PRINTER_MODELS = _visible(_DATA.get("models", {}))
-LABEL_SIZES = _visible(_DATA.get("sizes", {}))
 
-# Defaults do JSON; se o default tiver sido filtrado (untested), cai na 1ª chave.
+# Tamanhos: TODAS as variantes concretas (inclusive `_untested`) ficam disponíveis
+# para RESOLUÇÃO interna, render e get_size — a variante NÃO é oferecida ao usuário,
+# é escolhida automaticamente a partir da impressora detectada, então o `_untested`
+# (que serve p/ não oferecer algo não validado num dropdown) não se aplica à
+# resolução. O dropdown de tamanho FÍSICO usa só as visíveis (`_VISIBLE_SIZES`).
+LABEL_SIZES = {k: v for k, v in _DATA.get("sizes", {}).items() if not k.startswith("_")}
+_VISIBLE_SIZES = _visible(_DATA.get("sizes", {}))
+
+# Defaults do JSON; se o default tiver sido filtrado, cai na 1ª chave.
 DEFAULT_MODEL = _DATA.get("default_model") if _DATA.get("default_model") in PRINTER_MODELS \
     else next(iter(PRINTER_MODELS))
 DEFAULT_SIZE = _DATA.get("default_size") if _DATA.get("default_size") in LABEL_SIZES \
     else next(iter(LABEL_SIZES))
+
+
+# Dono (modelo) de cada variante concreta de tamanho — desfaz a ambiguidade quando
+# dois modelos têm o mesmo DPI (ex.: B1 Pro e M2-H, ambos 300 dpi / 50×30, mas
+# larguras 584 vs 567 px). Convenção do upstream: a chave é "<base>" (modelo padrão)
+# ou "<base>_<sufixo>" com o sufixo = chave do modelo (b1 → _b1, m2h → _m2h).
+def _size_owner(size_key: str) -> str:
+    for _mk in sorted(PRINTER_MODELS, key=len, reverse=True):
+        if size_key.endswith("_" + _mk):
+            return _mk
+    return DEFAULT_MODEL
+
+
+SIZE_MODEL = {_sk: _size_owner(_sk) for _sk in LABEL_SIZES}
 
 # ── Tamanhos FÍSICOS (mm), agnósticos de impressora ──────────────────────────
 # A etiqueta física é a mesma (ex.: 50 × 30 mm) na B1 e na B1 Pro; só muda a
@@ -57,7 +78,7 @@ DEFAULT_SIZE = _DATA.get("default_size") if _DATA.get("default_size") in LABEL_S
 _DEFAULT_DPI = PRINTER_MODELS.get(DEFAULT_MODEL, {}).get("dpi")
 
 _rep_key: dict = {}
-for _k, _s in LABEL_SIZES.items():
+for _k, _s in _VISIBLE_SIZES.items():
     _dims = (_s.get("w_mm"), _s.get("h_mm"))
     if _dims not in _rep_key or _s.get("dpi") == _DEFAULT_DPI:
         _rep_key[_dims] = _k

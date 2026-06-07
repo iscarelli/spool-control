@@ -25,19 +25,30 @@ JSON_DEST="$ROOT/niimbot_registry.json"
 
 api() { curl -fsSL -H "Accept: application/vnd.github+json" "$@"; }
 
+# Pick a Python that actually runs (Linux/Mac: python3; Windows dev: py — the
+# WindowsApps python3/python are Store stubs that don't execute).
+PY=""
+for _c in python3 py python; do
+  if command -v "$_c" >/dev/null 2>&1 && "$_c" --version >/dev/null 2>&1; then PY="$_c"; break; fi
+done
+[ -n "$PY" ] || { echo "Python 3 required (python3/py/python)." >&2; exit 1; }
+
+# Parse a field from a GitHub API JSON response. Pipe curl INTO python (which reads
+# the whole stream) — never `curl | grep -m1`, which closes the pipe early and makes
+# curl fail with error 23 under `set -o pipefail`.
+json_field() { api "$1" | "$PY" -c "import sys,json; print(json.load(sys.stdin).get('$2',''))"; }
+
 TAG="${1:-}"
 if [[ -z "$TAG" ]]; then
   echo "Resolving latest release of $REPO…"
-  TAG="$(api "https://api.github.com/repos/$REPO/releases/latest" \
-    | grep -m1 '"tag_name"' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/')"
+  TAG="$(json_field "https://api.github.com/repos/$REPO/releases/latest" tag_name)"
   [[ -n "$TAG" ]] || { echo "Could not resolve latest release tag." >&2; exit 1; }
 fi
 echo "Vendoring $REPO @ $TAG"
 
 # Resolve the tag to a commit sha (annotated or lightweight) for the provenance stamp.
-SHA="$(api "https://api.github.com/repos/$REPO/commits/$TAG" \
-  | grep -m1 '"sha"' | sed -E 's/.*"sha": *"([0-9a-f]+)".*/\1/' | cut -c1-7)"
-[[ -n "$SHA" ]] || SHA="unknown"
+SHA="$(json_field "https://api.github.com/repos/$REPO/commits/$TAG" sha)"
+SHA="${SHA:0:7}"; [[ -n "$SHA" ]] || SHA="unknown"
 echo "  commit $SHA"
 
 RAW="https://raw.githubusercontent.com/$REPO/$TAG"
@@ -63,7 +74,7 @@ EOF
 
 # ── Registry: inject a `_source` provenance field, write deterministically ─────
 SRC_NOTE="VENDORED from github.com/$REPO registry.json @ $TAG (commit $SHA). Refresh via deploy/vendor-niimbot.sh — do not hand-edit. niimbot_registry.py loads this file; entries with an \`_untested\` key are hidden until validated on hardware."
-python3 - "$TMP/registry.json" "$JSON_DEST" "$SRC_NOTE" <<'PY'
+"$PY" - "$TMP/registry.json" "$JSON_DEST" "$SRC_NOTE" <<'PY'
 import json, sys
 src, dest, note = sys.argv[1], sys.argv[2], sys.argv[3]
 with open(src, encoding="utf-8") as fh:
