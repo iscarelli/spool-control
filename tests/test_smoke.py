@@ -102,3 +102,34 @@ def test_new_user_accepts_valid_password(auth_client, db):
         "username": "valido", "password": "12345678", "role": "viewer",  # 8 ok
     })
     assert db.get_user_by_username("valido") is not None
+
+
+# ── Renderização das páginas (pega url_for/endpoint quebrado nos templates) ───
+
+# Páginas sem parâmetro de URL. /admin/update fica de fora (consulta a API do
+# GitHub na renderização — não queremos rede nos testes).
+SIMPLE_PAGES = [
+    "/", "/filaments", "/filaments/new", "/spool-models", "/spool-models/new",
+    "/spools", "/spools/new", "/weigh", "/search", "/label-queue",
+    "/reports/stats", "/reports/inventory", "/reports/by-material",
+    "/reports/by-location", "/reports/low-stock", "/reports/weight-history",
+    "/admin/users", "/admin/brands", "/admin/settings", "/admin/backup",
+]
+
+
+def test_simple_pages_render(auth_client):
+    for url in SIMPLE_PAGES:
+        resp = auth_client.get(url)
+        assert resp.status_code == 200, f"{url} retornou {resp.status_code}"
+
+
+def test_spool_detail_pages_render(auth_client, db):
+    """Páginas que dependem de um spool existente (detalhe, edição, pesagem,
+    etiquetas) — cobrem os templates que usam url_for de várias rotas."""
+    sid = _make_spool(db)
+    fid = db.get_spool(sid)["filament_id"]
+    for url in (f"/spools/{sid}", f"/spools/{sid}/edit", f"/spools/{sid}/weigh",
+                f"/filaments/{fid}", f"/filaments/{fid}/edit",
+                f"/spools/{sid}/label.pdf", f"/spools/{sid}/qr.png"):
+        resp = auth_client.get(url)
+        assert resp.status_code == 200, f"{url} retornou {resp.status_code}"
