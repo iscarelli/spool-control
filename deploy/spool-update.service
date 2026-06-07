@@ -6,8 +6,10 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 # Roda como root: resolve a última release publicada no GitHub e atualiza.
-# Disparado pela UI web via `sudo systemctl start --no-block spool-update.service`
-# (regra sudoers em /etc/sudoers.d/spool-update). Nenhum argumento vem da web.
+# Disparado pelo spool-update.path (o app, não-root, só escreve o flag
+# /opt/spool-control/data/.update-requested). Apaga o flag ANTES de atualizar —
+# isso re-arma o .path observer e evita loop. Nenhum argumento vem da web.
+ExecStartPre=/bin/rm -f /opt/spool-control/data/.update-requested
 ExecStart=/usr/bin/env bash /opt/spool-control/deploy/update-lxc.sh --latest-release
 StandardOutput=journal
 StandardError=journal

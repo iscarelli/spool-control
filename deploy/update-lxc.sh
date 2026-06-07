@@ -113,19 +113,24 @@ EOF
         || warn "Falha ao buscar alguns logos — sem impacto no funcionamento."
     chown -R spool:spool "${APP_DIR}/static/brands" 2>/dev/null || true
 
-    # ── Aparato de autoatualizacao pela web (oneshot + sudoers) ──────────────
-    info "Configurando autoatualizacao (systemd oneshot + sudoers)..."
-    command -v sudo >/dev/null 2>&1 || { apt-get update -qq && apt-get install -y -q sudo; }
+    # ── Aparato de autoatualizacao pela web (flag-file + vigia root) ─────────
+    # Mecanismo SEM privilegio para o app: a UI escreve data/.update-requested e um
+    # systemd .path unit (root) dispara o oneshot. Remove o grant sudoers legado — o
+    # app nao chama mais sudo (encolhe a aresta admin->root). Tambem instala o comando
+    # `update` (padrao Proxmox Helper Scripts) para uso no console.
+    info "Configurando autoatualizacao (flag-file + systemd .path)..."
+    rm -f /etc/sudoers.d/spool-update   # remove grant root legado (se existir)
     ln -sf "${APP_DIR}/deploy/spool-update.service" /etc/systemd/system/spool-update.service
-    install -m 0440 "${APP_DIR}/deploy/sudoers-spool-update" /etc/sudoers.d/spool-update
-    if ! visudo -cf /etc/sudoers.d/spool-update >/dev/null 2>&1; then
-        rm -f /etc/sudoers.d/spool-update
-        warn "sudoers de autoatualizacao invalido — removido (update via web indisponivel)."
-    fi
+    ln -sf "${APP_DIR}/deploy/spool-update.path"    /etc/systemd/system/spool-update.path
+    chmod +x "${APP_DIR}/deploy/update-cli.sh"
+    ln -sf "${APP_DIR}/deploy/update-cli.sh" /usr/local/bin/update
 
     info "Reiniciando servico..."
     ln -sf "${APP_DIR}/deploy/spool-control.service" /etc/systemd/system/spool-control.service
     systemctl daemon-reload
+    # Habilita o observador do flag de update (inotify; dispara o oneshot na hora).
+    systemctl enable --now spool-update.path 2>/dev/null \
+        || warn "Nao foi possivel habilitar spool-update.path (update via web pode usar fallback)."
     systemctl restart spool-control
     sleep 2
     systemctl is-active spool-control || error "Servico nao iniciou. Veja: journalctl -u spool-control -n 30"

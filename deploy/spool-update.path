@@ -1,0 +1,12 @@
+[Unit]
+Description=Spool Control — observa pedido de autoatualização (flag-file)
+
+[Path]
+# Quando o app (não-root) escreve este arquivo, o systemd (root) dispara o
+# spool-update.service via inotify — instantâneo, sem o app ter qualquer sudo.
+# O serviço apaga o flag no início (ExecStartPre), o que re-arma este observador.
+PathExists=/opt/spool-control/data/.update-requested
+Unit=spool-update.service
+
+[Install]
+WantedBy=multi-user.target
