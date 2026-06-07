@@ -254,13 +254,11 @@ def render_release_notes(md):
                    r'<a href="\2" target="_blank" rel="noopener">\1</a>', s)
         return s
 
-    out, in_ul, tbl = [], False, []
+    out, tbl, ul = [], [], []   # `ul` = pilha de <ul> abertas (suporta aninhamento)
 
-    def close_ul():
-        nonlocal in_ul
-        if in_ul:
-            out.append("</ul>")
-            in_ul = False
+    def close_ul(to=0):
+        while len(ul) > to:
+            out.append("</ul>"); ul.pop()
 
     def flush_tbl():
         if not tbl:
@@ -293,11 +291,15 @@ def render_release_notes(md):
             close_ul(); out.append(f"<div class='fw-bold mt-2'>{inline(stripped[3:])}</div>")
         elif stripped.startswith("# "):
             close_ul(); out.append(f"<div class='fw-bold mt-2'>{inline(stripped[2:])}</div>")
-        elif re.match(r"^[-*] ", stripped) or stripped.startswith("> "):
-            if not in_ul:
-                out.append("<ul class='mb-2 ps-3'>"); in_ul = True
-            item = re.sub(r"^([-*]|>) ", "", stripped)
-            out.append(f"<li>{inline(item)}</li>")
+        elif re.match(r"^[-*] ", stripped):
+            # Nível pela indentação (cada ~2 espaços = um nível) → sub-listas aninhadas.
+            level = (len(line) - len(stripped)) // 2 + 1
+            while len(ul) < level:
+                out.append("<ul class='mb-2 ps-3'>"); ul.append(True)
+            close_ul(level)
+            out.append(f"<li>{inline(re.sub(r'^[-*] ', '', stripped))}</li>")
+        elif stripped.startswith("> "):
+            close_ul(); out.append(f"<p class='text-muted border-start ps-2 mb-1'>{inline(stripped[2:])}</p>")
         else:
             close_ul(); out.append(f"<p class='mb-1'>{inline(line)}</p>")
     close_ul(); flush_tbl()

@@ -10,6 +10,11 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.24.1] — 2026-06-07
+
+### Changed
+- "Ver novidades" (box inline): o renderer passou a suportar **sub-listas (bullets aninhados)** e blocos de citação (`>`), além de títulos, **negrito**, `código`, links e tabelas.
+
 ## [1.24.0] — 2026-06-07
 
 ### Added
