@@ -290,6 +290,8 @@ _EN = {
     "Usado pelo botão":          "Used by the button",
     "(Web Bluetooth, direto do navegador). Requer Chrome/Edge em HTTPS. Não afeta o PDF acima.":
         "(Web Bluetooth, straight from the browser). Requires Chrome/Edge over HTTPS. Does not affect the PDF above.",
+    "Escolha o modelo e um tamanho de mesma resolução — o B1 usa os tamanhos marcados “(B1)”. A impressora é identificada na conexão e recusa um par incompatível.":
+        "Pick a model and a label size of the same resolution — the B1 uses the sizes marked “(B1)”. The printer is identified on connect and rejects a mismatched pair.",
     "Salvar Configurações":      "Save Settings",
 
     # ── Error page ───────────────────────────────────────────────────────────
@@ -669,6 +671,8 @@ _ES = {
     "Usado pelo botão":          "Usado por el botón",
     "(Web Bluetooth, direto do navegador). Requer Chrome/Edge em HTTPS. Não afeta o PDF acima.":
         "(Web Bluetooth, directo desde el navegador). Requiere Chrome/Edge en HTTPS. No afecta al PDF de arriba.",
+    "Escolha o modelo e um tamanho de mesma resolução — o B1 usa os tamanhos marcados “(B1)”. A impressora é identificada na conexão e recusa um par incompatível.":
+        "Elige un modelo y un tamaño de la misma resolución — el B1 usa los tamaños marcados “(B1)”. La impresora se identifica al conectar y rechaza un par incompatible.",
     "Salvar Configurações":      "Guardar Ajustes",
 
     # ── Error page ───────────────────────────────────────────────────────────

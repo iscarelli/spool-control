@@ -10,6 +10,19 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.22.0] — 2026-06-07
+
+### Added
+- **Suporte à impressora Niimbot B1** (e B1 SE) na impressão direta via Web Bluetooth, ao lado da B1 Pro. O driver identifica a impressora na conexão (B1 e B1 Pro anunciam o mesmo nome BLE) e recusa um par modelo/tamanho incompatível antes de imprimir.
+  - Novo tamanho de etiqueta `50 × 30 mm (B1)` (384 × 240 px @ 203 dpi); a B1 Pro segue em 584 × 354 px @ 300 dpi.
+  - Driver atualizado para v1.2.0 (variante de task `b1`/protocolo 3, streaming contínuo, cópias, frame bundling, auto-identificação).
+- `deploy/vendor-niimbot.sh` — re-vendora driver + `registry.json` do repo upstream público numa **tag fixa** (pinned), carimbando tag/commit. Sem download em runtime/deploy nem CDN.
+
+### Changed
+- Sourcing do driver Niimbot: o repo upstream [`iscarelli/niimbot-web-bluetooth`](https://github.com/iscarelli/niimbot-web-bluetooth) agora é **público**. O registro `registry.json` passou a ser **vendorado** e carregado por `niimbot_registry.py` (fonte única para JS e Python) — acaba o espelhamento manual.
+- M2-H presente no registro mas **oculto** (`_untested`) até validação em hardware; entradas `_untested` não aparecem nos dropdowns nem na API.
+- Hint nas Configurações: parear modelo e tamanho de mesma resolução (i18n PT/EN/ES).
+
 ## [1.21.0] — 2026-06-06
 
 ### Added

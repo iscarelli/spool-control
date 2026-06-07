@@ -1,7 +1,7 @@
 /* ── niimbot-spool.js — adaptador do driver Niimbot para o spool-control ──────
  * Cola específica deste app sobre o driver genérico (static/niimbot.js, vendorado
- * de iscarelli/niimbot). Aqui mora tudo que é do spool-control: busca o registro
- * em /api/niimbot/registry e liga os botões da UI.
+ * de iscarelli/niimbot-web-bluetooth). Aqui mora tudo que é do spool-control: busca
+ * o registro em /api/niimbot/registry e liga os botões da UI.
  *
  * Botões:
  *   [data-niimbot-url="/spools/<id>/label.png"]  → imprime 1 etiqueta
