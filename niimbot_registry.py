@@ -100,31 +100,27 @@ DEFAULT_PHYSICAL_SIZE = _rep_key.get(
 )
 
 # ── Famílias de impressora (item do seletor) ─────────────────────────────────
-# O usuário escolhe a FAMÍLIA (ex.: "Niimbot B1 / B1 Pro"), não o modelo exato —
-# B1 e B1 Pro anunciam o mesmo nome BLE e diferem só no DPI, que o cliente detecta
-# na conexão e resolve sozinho. Agrupamos os modelos visíveis pelo prefixo BLE
-# (`name_prefixes`): mesma família = mesmo prefixo. Isso funde B1+B1 Pro num item e
-# deixa espaço p/ outras famílias (ex.: M2-H) quando saírem do `_untested`. A chave
-# da família é o 1º prefixo; o rótulo é gerado dos modelos membros.
-PRINTER_FAMILIES: dict = {}
-for _mk, _m in PRINTER_MODELS.items():
-    _prefixes = list(_m.get("name_prefixes") or [])
-    _fk = _prefixes[0] if _prefixes else _mk
-    _fam = PRINTER_FAMILIES.setdefault(_fk, {"label": "", "name_prefixes": [], "models": []})
-    _fam["models"].append(_mk)
-    for _p in _prefixes:
-        if _p not in _fam["name_prefixes"]:
-            _fam["name_prefixes"].append(_p)
-for _fk, _fam in PRINTER_FAMILIES.items():
-    _shorts = sorted({PRINTER_MODELS[_mk]["label"].replace("Niimbot ", "")
-                      for _mk in _fam["models"]})
-    _fam["label"] = "Niimbot " + " / ".join(_shorts)
+# UM único item cobre todas as impressoras suportadas — a impressora exata é
+# identificada na conexão (model id) e o app acerta modelo + resolução (DPI/pixels)
+# sozinho. Como as 3 (B1, B1 Pro, M2-H) detectam de forma confiável, não vale separar
+# por prefixo BLE: unificamos num item só (facilidade pro usuário). O filtro BLE usa a
+# UNIÃO dos prefixos, então o seletor de dispositivos lista qualquer Niimbot suportada.
+# O rótulo lista os modelos cobertos (cresce sozinho ao adicionar modelos).
+_ALL_PREFIXES: list = []
+for _m in PRINTER_MODELS.values():
+    for _p in (_m.get("name_prefixes") or []):
+        if _p not in _ALL_PREFIXES:
+            _ALL_PREFIXES.append(_p)
+_ALL_SHORTS = sorted({_m["label"].replace("Niimbot ", "") for _m in PRINTER_MODELS.values()})
 
-# Família padrão = a que contém o modelo padrão.
-DEFAULT_FAMILY = next(
-    (_fk for _fk, _fam in PRINTER_FAMILIES.items() if DEFAULT_MODEL in _fam["models"]),
-    next(iter(PRINTER_FAMILIES)),
-)
+PRINTER_FAMILIES = {
+    "auto": {
+        "label": "Niimbot " + " / ".join(_ALL_SHORTS),
+        "name_prefixes": _ALL_PREFIXES,
+        "models": list(PRINTER_MODELS),
+    }
+}
+DEFAULT_FAMILY = "auto"
 
 
 def get_model(key: str) -> dict:

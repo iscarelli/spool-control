@@ -1,21 +1,31 @@
 # Impressão direta Niimbot (Web Bluetooth)
 
 Impressão de etiquetas **direto do navegador** numa Niimbot, sem app intermediário.
-Disponível desde a **v1.11.0**. Modelos suportados:
+Disponível desde a **v1.11.0**.
 
-| Modelo | Família (item do seletor) | Task / protocolo | DPI | Status |
-|---|---|---|---|---|
-| **B1 Pro** | Niimbot B1 / B1 Pro | `v4` | 300 | validado em hardware |
-| **B1** (e B1 SE) | Niimbot B1 / B1 Pro | `b1` (protocolo 3) | 203 | validado em hardware |
-| **M2-H** | Niimbot M2-H | `b1` | 300 | validado em hardware (driver v1.3.0) |
+## Validado em hardware
 
-O usuário escolhe a **família** da impressora e o **tamanho físico** da etiqueta
-(50 × 30 mm). Famílias são derivadas agrupando os modelos pelo **prefixo BLE**: B1 e
-B1 Pro anunciam o mesmo nome ("B1…") → caem num item único **"Niimbot B1 / B1 Pro"**;
-a M2-H anuncia "M2…" → vira o item **"Niimbot M2-H"**. Na conexão, a impressora exata
-é **identificada automaticamente** (model id) e o app resolve internamente, dentro da
-família, o modelo e a resolução (DPI/pixels) certos — sem seleção manual de variante.
-O seletor de família escopa o seletor Bluetooth.
+Combinações de **modelo + tamanho** confirmadas imprimindo em impressora real:
+
+| Modelo | model id | Task / protocolo | DPI | Tamanho | Pixels | Status |
+|---|---|---|---|---|---|---|
+| **Niimbot B1** (e B1 SE) | 4096 | `b1` (protocolo 3) | 203 | 50 × 30 mm | 384 × 240 | ✅ validado |
+| **Niimbot B1 Pro** | 4097 | `v4` | 300 | 50 × 30 mm | 584 × 354 | ✅ validado |
+| **Niimbot M2-H** | 4608 | `b1` | 300 | 50 × 30 mm | 567 × 354 | ✅ validado |
+
+> **Apenas estes modelos são aceitos.** Na conexão, o app identifica o `model id` da
+> impressora; se não for um dos validados acima, a impressão é **recusada com aviso**
+> — para nunca imprimir errado numa Niimbot não suportada. Outros **tamanhos** de
+> etiqueta além de 50 × 30 mm ainda não foram validados (no roadmap).
+
+## Como o usuário usa
+
+O seletor de impressora é **um item só** — **"Niimbot B1 / B1 Pro / M2-H"** (rótulo
+gerado dos modelos validados) — e o usuário escolhe apenas o **tamanho físico** da
+etiqueta. Na conexão, a impressora exata é **identificada automaticamente** (model id)
+e o app resolve internamente o modelo e a resolução (DPI/pixels) certos — sem escolher
+modelo nem variante. O filtro Bluetooth usa a **união** dos nomes anunciados (B1 + M2),
+listando as Niimbot validadas; a confirmação final é pelo `model id`.
 
 > A variante de pixel é escolhida pelo **modelo dono** (mapa `size_model`), não só
 > pelo DPI: B1 Pro e M2-H são ambos 300 dpi mas com larguras diferentes (584 vs 567

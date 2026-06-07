@@ -58,17 +58,16 @@
     Object.values(rg.models || {}).forEach((m) => (m.name_prefixes || []).forEach((p) => set.add(p)));
     return { name_prefixes: [...set] };
   }
-  // Chave do modelo: entre os membros da família, por id (mais confiável) e, na
-  // falta, por task+dpi; senão o 1º membro da família.
+  // Chave do modelo: SÓ por `model id` confirmado contra os modelos validados — é a
+  // identificação confiável (4096/4097/4608). Sem casar um id validado, devolve null e
+  // a impressão é recusada (não imprime "no chute" numa Niimbot não suportada).
   function resolveModelKey(rg, info) {
     const fam = selectedFamily(rg);
     const members = (fam && fam.models) || Object.keys(rg.models);
-    if (info) {
+    if (info && info.modelId != null) {
       for (const k of members) if (rg.models[k] && rg.models[k].id === info.modelId) return k;
-      for (const k of members)
-        if (rg.models[k] && rg.models[k].task === info.task && rg.models[k].dpi === info.dpi) return k;
     }
-    return members[0] || Object.keys(rg.models)[0];
+    return null;
   }
   // Variante de tamanho: mesmo tamanho FÍSICO (mm) do selecionado, cuja "dona" é o
   // modelo resolvido — desambigua B1 Pro vs M2-H (ambos 300 dpi, larguras 584 vs 567).
@@ -94,19 +93,20 @@
     return url + (url.indexOf("?") >= 0 ? "&" : "?") + "size=" + encodeURIComponent(key);
   }
 
-  // Identifica a impressora e resolve modelo + variante de tamanho. Lança erro
-  // localizado se a impressora for reconhecida pelo protocolo mas não tiver modelo
-  // correspondente no registro (ex.: outra família).
+  // Identifica a impressora e resolve modelo + variante de tamanho. Só prossegue se o
+  // `model id` for de um modelo VALIDADO; caso contrário recusa com aviso localizado
+  // (evita imprimir errado numa Niimbot não suportada/não identificada).
   async function prepare(rg, onProgress) {
     onProgress && onProgress(msg(rg, "identifying"));
     const info = await Niimbot.identify(discoveryModel(rg));
     const modelKey = resolveModelKey(rg, info);
+    if (!modelKey) {
+      const who = (info && (info.deviceName
+        || (info.modelId != null ? "id " + info.modelId : null))) || "?";
+      throw new Error(fmt(msg(rg, "unrecognized"), { printer: who }));
+    }
     const model = rg.models[modelKey];
     const sized = resolveSize(rg, info, modelKey);
-    if (info && info.task && (!model || model.task !== info.task)) {
-      throw new Error(fmt(msg(rg, "unrecognized"),
-        { printer: (info.label || ("id " + info.modelId)) }));
-    }
     return { model, size: sized.size, sizeKey: sized.key };
   }
 

@@ -290,8 +290,8 @@ _EN = {
     "Usado pelo botão":          "Used by the button",
     "(Web Bluetooth, direto do navegador). Requer Chrome/Edge em HTTPS. Não afeta o PDF acima.":
         "(Web Bluetooth, straight from the browser). Requires Chrome/Edge over HTTPS. Does not affect the PDF above.",
-    "B1 e B1 Pro são o mesmo item — o app identifica qual está conectada e envia a resolução certa automaticamente.":
-        "B1 and B1 Pro are the same item — the app detects which one is connected and sends the right resolution automatically.",
+    "Um item só para todas as Niimbot — o app identifica o modelo conectado (B1, B1 Pro ou M2-H) e envia a resolução certa automaticamente.":
+        "One item for all Niimbots — the app detects the connected model (B1, B1 Pro or M2-H) and sends the right resolution automatically.",
     # Niimbot — mensagens client-side (driver vendorado é só em inglês; tradução aqui)
     "identificando impressora…":  "identifying printer…",
     "imprimindo…":                "printing…",
@@ -681,8 +681,8 @@ _ES = {
     "Usado pelo botão":          "Usado por el botón",
     "(Web Bluetooth, direto do navegador). Requer Chrome/Edge em HTTPS. Não afeta o PDF acima.":
         "(Web Bluetooth, directo desde el navegador). Requiere Chrome/Edge en HTTPS. No afecta al PDF de arriba.",
-    "B1 e B1 Pro são o mesmo item — o app identifica qual está conectada e envia a resolução certa automaticamente.":
-        "B1 y B1 Pro son el mismo ítem — la app detecta cuál está conectada y envía la resolución correcta automáticamente.",
+    "Um item só para todas as Niimbot — o app identifica o modelo conectado (B1, B1 Pro ou M2-H) e envia a resolução certa automaticamente.":
+        "Un solo ítem para todas las Niimbot — la app detecta el modelo conectado (B1, B1 Pro o M2-H) y envía la resolución correcta automáticamente.",
     # Niimbot — mensajes del cliente (el driver vendorizado es solo en inglés)
     "identificando impressora…":  "identificando impresora…",
     "imprimindo…":                "imprimiendo…",

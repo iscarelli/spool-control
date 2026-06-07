@@ -10,6 +10,13 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.23.3] — 2026-06-07
+
+### Changed
+- **Seletor de impressora Niimbot virou um item só** ("Niimbot B1 / B1 Pro / M2-H") — o usuário escolhe apenas o tamanho físico. Na conexão, o modelo exato é identificado e a resolução resolvida sozinha (B1, B1 Pro e M2-H validados).
+- **Só modelos validados são aceitos:** a impressão prossegue apenas se o `model id` for um dos validados (B1 4096, B1 Pro 4097, M2-H 4608); qualquer outra impressora é **recusada com aviso** — evita imprimir errado numa Niimbot não suportada.
+- `docs/niimbot.md`: tabela de **modelos + tamanhos validados em hardware** (com pixels) no topo.
+
 ## [1.23.2] — 2026-06-07
 
 ### Added
