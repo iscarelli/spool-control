@@ -10,6 +10,18 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.24.0] — 2026-06-07
+
+### Added
+- **Novidades da atualização exibidas no próprio site.** Na página `/admin/update`, o "Ver novidades" agora **expande um box inline** com as notas da última release (renderizadas a partir do Markdown do GitHub), em vez de abrir um link externo. Renderer Markdown→HTML próprio e seguro (escapa tudo antes de formatar; sem nova dependência). Fallback para o link do GitHub se a API não trouxer o texto.
+
+### Changed
+- Driver Niimbot re-vendorado para **v1.3.1** (upstream removeu o `_untested` obsoleto do tamanho da M2-H, agora validada).
+- Ao recusar uma impressora não suportada, a conexão BLE é encerrada (`disconnect`) para a próxima tentativa re-listar os dispositivos.
+
+### Fixed
+- Representante do tamanho físico agora é **estável** (a variante do modelo padrão), evitando que o item do dropdown "pule" quando há duas variantes de mesmo DPI (ex.: B1 Pro e M2-H a 300 dpi).
+
 ## [1.23.3] — 2026-06-07
 
 ### Changed

@@ -72,15 +72,16 @@ SIZE_MODEL = {_sk: _size_owner(_sk) for _sk in LABEL_SIZES}
 # A etiqueta física é a mesma (ex.: 50 × 30 mm) na B1 e na B1 Pro; só muda a
 # resolução em pixels conforme o DPI da impressora. O usuário escolhe só o tamanho
 # físico; o `static/niimbot-spool.js` identifica a impressora na conexão e resolve
-# a variante concreta de `LABEL_SIZES` com o DPI certo. Aqui deduplicamos as
-# variantes por (w_mm, h_mm) — o representante é a variante com o DPI do modelo
-# padrão (p/ o render server-side default ficar coerente).
-_DEFAULT_DPI = PRINTER_MODELS.get(DEFAULT_MODEL, {}).get("dpi")
-
+# a variante concreta de `LABEL_SIZES`. Aqui deduplicamos as variantes por (w_mm,
+# h_mm) — o representante é, de forma estável, a variante do MODELO PADRÃO (e não "a
+# de DPI igual ao padrão", que seria ambígua quando dois modelos têm o mesmo DPI,
+# ex.: B1 Pro e M2-H a 300 dpi). Como o cliente resolve a variante real pelo modelo
+# detectado, o representante só precisa fornecer as dimensões (mm) — mas mantê-lo
+# estável evita que o item do dropdown "pule" entre variantes ao mudar o registro.
 _rep_key: dict = {}
 for _k, _s in _VISIBLE_SIZES.items():
     _dims = (_s.get("w_mm"), _s.get("h_mm"))
-    if _dims not in _rep_key or _s.get("dpi") == _DEFAULT_DPI:
+    if _dims not in _rep_key or SIZE_MODEL.get(_k) == DEFAULT_MODEL:
         _rep_key[_dims] = _k
 
 

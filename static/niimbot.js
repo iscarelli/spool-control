@@ -1,6 +1,6 @@
 /* ── VENDORED — do not edit here ──────────────────────────────────────────────
- * Source: github.com/iscarelli/niimbot-web-bluetooth  src/niimbot.js @ v1.3.0
- *         (commit 150236b). The upstream repo is the canonical source of truth.
+ * Source: github.com/iscarelli/niimbot-web-bluetooth  src/niimbot.js @ v1.3.1
+ *         (commit 8a4aaaf). The upstream repo is the canonical source of truth.
  * The production server clones the PUBLIC spool-control repo anonymously, so the
  * driver must live in this repo. To refresh, run deploy/vendor-niimbot.sh (it
  * re-downloads this file + niimbot_registry.json at a pinned tag) — never hand-edit.
@@ -38,7 +38,7 @@
 (function (root) {
   "use strict";
 
-  const VERSION = "1.3.0";   // shown in the demo/console; bump on each release (or dev change)
+  const VERSION = "1.3.1";   // shown in the demo/console; bump on each release (or dev change)
   const SVC_UUID = "e7810a71-73ae-499d-8c15-faa9aef0c3f2";
   const CHAR_UUID = "bef8d6c9-9c21-4c9e-b632-bd58c1009f9f";
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

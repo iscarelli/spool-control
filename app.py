@@ -17,6 +17,7 @@ from flask import (
     Flask, render_template, request, redirect, url_for,
     session, flash, Response, abort, jsonify, g,
 )
+from markupsafe import Markup, escape
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_wtf import CSRFProtect
@@ -190,7 +191,7 @@ RELEASES_URL = "https://github.com/iscarelli/spool-control/releases"
 # Cache em memória (por worker): evita martelar a API do GitHub (limite de 60/h
 # sem token). Sucesso vale 6h; falha re-tenta em 15min. Fail-open: erro nunca
 # quebra a página, apenas não mostra atualização.
-_release_cache = {"tag": None, "ts": 0.0, "ok": False}
+_release_cache = {"tag": None, "notes": "", "ts": 0.0, "ok": False}
 _RELEASE_TTL_OK = 6 * 3600
 _RELEASE_TTL_FAIL = 15 * 60
 
@@ -225,13 +226,82 @@ def check_latest_release(force=False):
             data = json.loads(resp.read().decode())
         tag = (data.get("tag_name") or "").lstrip("v").strip()
         if tag:
-            _release_cache.update(tag=tag, ts=now, ok=True)
+            _release_cache.update(tag=tag, notes=(data.get("body") or "").strip(),
+                                  ts=now, ok=True)
         else:
             _release_cache.update(ts=now, ok=False)
     except Exception:
         _release_cache.update(ts=now, ok=False)
         log.warning("github_release.check_failed", exc_info=True)
     return _release_cache["tag"]
+
+
+def latest_release_notes():
+    """Notas (Markdown) da última release em cache — preenchidas por
+    check_latest_release(). Vazio se a consulta nunca teve sucesso."""
+    return _release_cache.get("notes") or ""
+
+
+# Subconjunto de Markdown usado nas release notes → HTML seguro, sem dependência
+# externa. Escapa TUDO primeiro (anti-XSS) e só então insere as tags de formatação,
+# então um `body` malicioso vindo do GitHub não consegue injetar HTML.
+def render_release_notes(md):
+    def inline(s):
+        s = str(escape(s))
+        s = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", s)
+        s = re.sub(r"`([^`]+)`", r"<code>\1</code>", s)
+        s = re.sub(r"\[([^\]]+)\]\((https?://[^)\s]+)\)",
+                   r'<a href="\2" target="_blank" rel="noopener">\1</a>', s)
+        return s
+
+    out, in_ul, tbl = [], False, []
+
+    def close_ul():
+        nonlocal in_ul
+        if in_ul:
+            out.append("</ul>")
+            in_ul = False
+
+    def flush_tbl():
+        if not tbl:
+            return
+        rows = [[c.strip() for c in r.strip().strip("|").split("|")] for r in tbl]
+        body = [r for r in rows if not all(c and set(c) <= set("-: ") for c in r)]
+        tbl.clear()
+        if not body:
+            return
+        head, rest = body[0], body[1:]
+        out.append('<table class="table table-sm small mb-2">')
+        out.append("<thead><tr>" + "".join(f"<th>{inline(c)}</th>" for c in head) + "</tr></thead>")
+        if rest:
+            out.append("<tbody>" + "".join(
+                "<tr>" + "".join(f"<td>{inline(c)}</td>" for c in r) + "</tr>" for r in rest
+            ) + "</tbody>")
+        out.append("</table>")
+
+    for raw in (md or "").replace("\r\n", "\n").split("\n"):
+        line = raw.rstrip()
+        stripped = line.lstrip()
+        if stripped.startswith("|") and "|" in stripped[1:]:
+            close_ul(); tbl.append(line); continue
+        flush_tbl()
+        if not stripped:
+            close_ul(); continue
+        if stripped.startswith("### "):
+            close_ul(); out.append(f"<div class='fw-semibold mt-2'>{inline(stripped[4:])}</div>")
+        elif stripped.startswith("## "):
+            close_ul(); out.append(f"<div class='fw-bold mt-2'>{inline(stripped[3:])}</div>")
+        elif stripped.startswith("# "):
+            close_ul(); out.append(f"<div class='fw-bold mt-2'>{inline(stripped[2:])}</div>")
+        elif re.match(r"^[-*] ", stripped) or stripped.startswith("> "):
+            if not in_ul:
+                out.append("<ul class='mb-2 ps-3'>"); in_ul = True
+            item = re.sub(r"^([-*]|>) ", "", stripped)
+            out.append(f"<li>{inline(item)}</li>")
+        else:
+            close_ul(); out.append(f"<p class='mb-1'>{inline(line)}</p>")
+    close_ul(); flush_tbl()
+    return Markup("\n".join(out))
 
 
 def is_update_available():
@@ -1292,6 +1362,7 @@ def admin_update():
         latest=latest,
         update_available=bool(latest) and _version_tuple(latest) > _version_tuple(cur),
         releases_url=RELEASES_URL,
+        release_notes=render_release_notes(latest_release_notes()) if latest else "",
     )
 
 

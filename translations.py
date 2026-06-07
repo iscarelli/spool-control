@@ -51,6 +51,7 @@ _EN = {
         "Could not check the latest version on GitHub. Try again later.",
     "Atualização disponível": "Update available",
     "Ver novidades":        "See what's new",
+    "Novidades da v{v}":    "What's new in v{v}",
     "Atualizar agora":      "Update now",
     "Sistema atualizado":   "System up to date",
     "Atualizando… o serviço será reiniciado, aguarde.":
@@ -442,6 +443,7 @@ _ES = {
         "No se pudo verificar la última versión en GitHub. Inténtalo de nuevo más tarde.",
     "Atualização disponível": "Actualización disponible",
     "Ver novidades":        "Ver novedades",
+    "Novidades da v{v}":    "Novedades de la v{v}",
     "Atualizar agora":      "Actualizar ahora",
     "Sistema atualizado":   "Sistema actualizado",
     "Atualizando… o serviço será reiniciado, aguarde.":

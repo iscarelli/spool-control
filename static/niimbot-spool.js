@@ -103,6 +103,7 @@
     if (!modelKey) {
       const who = (info && (info.deviceName
         || (info.modelId != null ? "id " + info.modelId : null))) || "?";
+      try { await Niimbot.disconnect(); } catch (e) { /* ignora */ }  // solta p/ a próxima tentativa re-listar
       throw new Error(fmt(msg(rg, "unrecognized"), { printer: who }));
     }
     const model = rg.models[modelKey];

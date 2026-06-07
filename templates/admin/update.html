@@ -30,9 +30,25 @@
         <div class="alert alert-info d-flex align-items-center mb-3">
           <i class="bi bi-arrow-up-circle-fill me-2"></i>
           <div>{{ _('Atualização disponível') }}: <strong>v{{ latest }}</strong>.
+            {% if release_notes %}
+            <a data-bs-toggle="collapse" href="#releaseNotes" role="button"
+               aria-expanded="false" aria-controls="releaseNotes">{{ _('Ver novidades') }}</a>
+            {% else %}
             <a href="{{ releases_url }}" target="_blank" rel="noopener">{{ _('Ver novidades') }}</a>
+            {% endif %}
           </div>
         </div>
+        {% if release_notes %}
+        <div class="collapse mb-3" id="releaseNotes">
+          <div class="border rounded p-3 bg-body-tertiary release-notes"
+               style="max-height:50vh;overflow:auto;font-size:.85rem">
+            <div class="text-muted mb-2" style="font-size:.8rem">
+              <i class="bi bi-stars me-1"></i>{{ _('Novidades da v{v}').replace('{v}', latest) }}
+            </div>
+            {{ release_notes }}
+          </div>
+        </div>
+        {% endif %}
         <button class="btn btn-primary w-100" id="btnUpdate">
           <i class="bi bi-arrow-up-circle me-1"></i>{{ _('Atualizar agora') }}
         </button>
