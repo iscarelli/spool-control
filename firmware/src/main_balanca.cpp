@@ -4,6 +4,9 @@
 //   OLED   SDA=4   SCL=5  (SW I2C)
 //   WS2812 DIN=6
 //
+// LED WS2812 (status): amarelo=iniciando · azul=calibrando · verde piscando=medindo/vazio
+//   · verde fixo=peso estabilizado (acima de 0) · vermelho=erro do HX711 (sem leitura)
+//
 // Serial: 115200. Comandos no modo normal:
 //   c  — entra no modo de calibração
 //   t  — zera (tare) sem calibrar
@@ -24,6 +27,12 @@
 #define BOOT_BTN    9  // provisório — trocar por botão dedicado
 
 #define CAL_FACTOR_DEFAULT  437.4f
+
+// Faixas / limiares (ajuste fino aqui)
+#define ZERO_BAND_G       0.3f    // abaixo disso (em módulo) o peso é tratado como 0
+#define STABLE_DELTA_G    0.5f    // variação máx. p/ considerar o peso "parado"
+#define STABLE_MS         800     // tempo dentro do delta p/ confirmar estabilização
+#define HX711_TIMEOUT_MS  1500    // sem leitura do HX711 por isso → estado de ERRO
 
 static U8G2_SH1106_128X64_NONAME_F_SW_I2C u8g2(U8G2_R0, OLED_SCL, OLED_SDA, U8X8_PIN_NONE);
 static HX711      scale;
@@ -257,6 +266,13 @@ void loop() {
     static bool     fInit       = false;
     static bool     btnLast     = HIGH;
     static uint32_t btnDebounce = 0;
+    static uint32_t notReadySince = 0;   // quando o HX711 começou a não responder
+    static bool     errState      = false;
+    static float    stableRef     = 0;   // referência da janela de estabilidade
+    static uint32_t stableSince   = 0;
+    static bool     stable        = false;
+    static bool     prevStable    = false;
+    static uint32_t lastBlink     = 0;
 
     uint32_t now = millis();
 
@@ -278,7 +294,25 @@ void loop() {
     // Lê a cada ~120ms (get_units(1) = 1 amostra HX711 ≈ 100ms)
     if (now - lastRead < 120) return;
     lastRead = now;
-    if (!scale.is_ready()) return;
+
+    // ── Erro do HX711 (sem leitura por HX711_TIMEOUT_MS) → VERMELHO ────────────
+    // Um not-ready isolado é normal (HX711 ~10 amostras/s); só vira erro se persistir.
+    if (!scale.is_ready()) {
+        if (notReadySince == 0) notReadySince = now;
+        if (!errState && now - notReadySince >= HX711_TIMEOUT_MS) {
+            errState = true;
+            setLed(CRGB::Red);
+            dispLines("ERRO HX711", "Sem leitura", "Verifique a celula");
+            Serial.println("ERRO: HX711 sem resposta.");
+        }
+        return;
+    }
+    if (errState || notReadySince) {     // voltou a responder → sai do erro
+        errState      = false;
+        notReadySince = 0;
+        prevStable    = false;           // força o LED a re-sincronizar abaixo
+        setLed(CRGB::Green);
+    }
 
     float raw = scale.get_units(1);
 
@@ -290,14 +324,36 @@ void loop() {
         filtered = 0.4f * raw + 0.6f * filtered;
     }
 
-    float display = fabsf(filtered) < 0.3f ? 0.0f : filtered;
+    float display = fabsf(filtered) < ZERO_BAND_G ? 0.0f : filtered;
     dispWeight(display);
 
-    // Serial e LED a cada 500ms para não spammar
+    // ── Estabilização: peso "parado" por STABLE_MS, SÓ acima da faixa de zero ──
+    // Vazio (≤ ZERO_BAND_G) nunca conta como estabilizado.
+    if (display <= ZERO_BAND_G) {
+        stable = false; stableRef = display; stableSince = now;
+    } else if (fabsf(display - stableRef) > STABLE_DELTA_G) {
+        stableRef = display; stableSince = now;   // mudou demais → reinicia a janela
+        stable = false;
+    } else if (now - stableSince >= STABLE_MS) {
+        stable = true;                            // ficou parado tempo suficiente
+    }
+
+    // Serial a cada 500ms (marca [estavel] quando aplicável)
     if (now - lastPrint >= 500) {
         lastPrint = now;
-        Serial.printf("%.2f g\r\n", display);
-        setLed(ledOn ? CRGB::Green : CRGB::Black);
-        ledOn = !ledOn;
+        Serial.printf("%.2f g%s\r\n", display, stable ? "  [estavel]" : "");
+    }
+
+    // LED: VERDE FIXO = peso estabilizado (acima de 0); senão heartbeat verde
+    // piscando (vazio/medindo). Atualiza só na transição p/ estável e no piscar.
+    if (stable) {
+        if (!prevStable) { setLed(CRGB::Green); prevStable = true; }
+    } else {
+        prevStable = false;
+        if (now - lastBlink >= 500) {
+            lastBlink = now;
+            setLed(ledOn ? CRGB::Green : CRGB::Black);
+            ledOn = !ledOn;
+        }
     }
 }
