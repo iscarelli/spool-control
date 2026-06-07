@@ -1,0 +1,30 @@
+name: CI
+
+# Roda a suíte de testes automaticamente a cada push na main e em todo Pull Request.
+# É a "rede de segurança automática": se um teste quebrar, o PR fica marcado como
+# falho no GitHub e você vê antes de mesclar — sem depender de lembrar de rodar local.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Instalar dependências (app + testes)
+        run: pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Rodar os testes
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: pytest tests -v
