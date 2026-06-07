@@ -18,10 +18,13 @@ def app_module(tmp_path):
     os.environ["SPOOL_DB_PATH"] = str(db_file)
     os.environ["SECRET_KEY"] = "test-secret-key"
     os.environ["ADMIN_DEFAULT_PASS"] = ADMIN_PASS
-    # Reimporta app + database para que o caminho do banco (lido no import) e o
-    # bootstrap valham contra o arquivo temporário deste teste.
-    for m in ("app", "database"):
-        sys.modules.pop(m, None)
+    # Reimporta app + database + routes para que o caminho do banco (lido no import) e
+    # o bootstrap valham contra o arquivo temporário deste teste. Os módulos routes.*
+    # também precisam ser descartados: senão ficam registrados no objeto `app` antigo
+    # (efeito colateral do @app.route) e o novo `app` sobe sem rotas.
+    for name in [m for m in sys.modules
+                 if m in ("app", "database", "routes") or m.startswith("routes.")]:
+        sys.modules.pop(name, None)
     import app as app_module
     # CSRF desligado nos testes: simplifica os POST (a proteção em si é coberta em prod).
     app_module.app.config.update(TESTING=True, WTF_CSRF_ENABLED=False)

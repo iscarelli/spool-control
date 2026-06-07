@@ -10,6 +10,11 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.25.1] — 2026-06-07
+
+### Changed
+- **`app.py` reorganizado em módulos por assunto** (Release 2 do code review). As rotas saíram do `app.py` (que tinha ~1570 linhas) para o pacote `routes/` — `main`, `filaments`, `spool_models`, `spools`, `label_queue`, `reports`, `admin`, `api`. O `app.py` virou o "núcleo" (~580 linhas: app, segurança, helpers, decorators, login/logout, error handlers) e importa os módulos no final. Os módulos compartilham o mesmo objeto `app` e **mantêm os nomes de endpoint idênticos** — nenhum `url_for()` de template mudou, nenhuma URL mudou. Refactor interno puro: **sem mudança de comportamento, telas ou banco**. Cobertura de testes ampliada (13 testes, incluindo renderização de todas as páginas) para garantir a equivalência.
+
 ## [1.25.0] — 2026-06-07
 
 ### Added
