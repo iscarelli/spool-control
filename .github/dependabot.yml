@@ -1,0 +1,19 @@
+version: 2
+# Dependabot: abre PRs automáticos quando uma dependência sai (ou tem correção de
+# segurança). Combinado com os alertas de vulnerabilidade do repo, vigia o que ninguém
+# vigia manualmente. Os PRs passam pelo CI (testes) antes de mesclar.
+updates:
+  # Dependências Python da aplicação (requirements.txt / requirements-dev.txt).
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels: ["dependencies"]
+
+  # As próprias GitHub Actions usadas nos workflows (actions/checkout, setup-python…).
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels: ["dependencies", "ci"]

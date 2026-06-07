@@ -1,0 +1,35 @@
+name: CodeQL
+
+# Varredura de segurança do código (CodeQL) — procura padrões inseguros (injeção,
+# XSS, etc.) a cada push/PR na main e semanalmente. Resultados aparecem na aba
+# Security > Code scanning do repositório. Grátis em repositório público.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "27 4 * * 1"   # toda segunda, 04:27 UTC
+
+jobs:
+  analyze:
+    name: Analyze (python)
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Inicializar CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python
+          queries: security-and-quality
+
+      - name: Analisar
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:python"
