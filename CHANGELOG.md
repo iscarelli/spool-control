@@ -10,10 +10,15 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.24.3] — 2026-06-07
+
+### Fixed
+- **Impressão Niimbot na B1 Pro/M2-H no macOS (correção definitiva).** Driver re-vendorado para **v1.3.4** (`fix(macos): pace unacked writes`). O macOS descarta escritas BLE não confirmadas (`writeValueWithoutResponse`) numa rajada densa: numa etiqueta com QR (~200 linhas) a impressora recebia só ~150, a imagem chegava truncada e a página nunca concluía (`PageEnd`/`0xe3` sem `0xe4`, contador em 0%). No Windows o stack BLE segura a rajada; etiquetas leves (poucas linhas) passavam mesmo no Mac, o que mascarava o bug. Agora o driver detecta o macOS (`IS_MAC`) e **paceia** as escritas dos modelos "fast" (B1 Pro/M2-H) — uma pausa curta entre linhas evita o descarte. `Niimbot.PACE_MS` é ajustável em runtime. (A v1.24.2 / driver 1.3.3 só desligou o bundling, o que sozinho **não** resolvia.)
+
 ## [1.24.2] — 2026-06-07
 
 ### Fixed
-- **Impressão Niimbot na B1 Pro voltou a funcionar no macOS.** Driver re-vendorado para **v1.3.3** (`fix(b1pro): per-model frame bundling`). O driver 1.3.1 empacotava vários frames por escrita BLE para todos os modelos; no macOS a B1 Pro não remontava os frames empacotados e a página nunca terminava de imprimir (`PageEnd`/`0xe3` sem `0xe4`, contador travado em 0%). No Windows funcionava porque o stack BLE tolera o burst. Agora o bundling é **por modelo** (`bundle` em `MODEL_IDS`): B1 Pro (e modelos não validados) enviam **um frame por escrita**; B1 e M2-H seguem com bundling.
+- Driver Niimbot re-vendorado para **v1.3.3** (`fix(b1pro): per-model frame bundling`) — bundling de frames BLE passou a ser por modelo. Não resolveu sozinho o travamento da B1 Pro no macOS; ver **1.24.3**.
 
 ## [1.24.1] — 2026-06-07
 
