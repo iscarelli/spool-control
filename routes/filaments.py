@@ -1,10 +1,22 @@
 """Rotas de filamentos (cadastro, edição, duplicação, remoção)."""
-from flask import render_template, request, redirect, url_for, flash, abort
+from flask import render_template, request, redirect, url_for, flash, abort, jsonify
 import database as db
+import filament_catalog as catalog
 import logger as log_cfg
 from app import app, login_required, t, _safe_next, get_ordered_materials
 
 log = log_cfg.get_logger()
+
+
+@app.route("/api/filament-catalog")
+@login_required
+def filament_catalog_api():
+    """Catálogo de filamentos (SpoolmanDB, vendorado) para o picker do formulário."""
+    return jsonify({
+        "brands": catalog.BRANDS,
+        "materials": catalog.MATERIALS,
+        "filaments": catalog.FILAMENTS,
+    })
 
 
 @app.route("/filaments")
@@ -48,7 +60,8 @@ def filaments_new():
             log.error("filament.create_failed", exc_info=True)
             flash(t("Erro ao processar. Tente novamente."), "danger")
     return render_template("filaments/form.html", filament=None,
-                           materials=get_ordered_materials(), brands=db.list_brands_ordered())
+                           materials=get_ordered_materials(), brands=db.list_brands_ordered(),
+                           catalog_available=catalog.available())
 
 
 @app.route("/filaments/<int:filament_id>")
@@ -86,7 +99,7 @@ def filaments_edit(filament_id):
             flash(t("Erro ao processar. Tente novamente."), "danger")
     return render_template("filaments/form.html", filament=filament,
                            materials=get_ordered_materials(), brands=db.list_brands_ordered(),
-                           next_url=next_url)
+                           next_url=next_url, catalog_available=catalog.available())
 
 
 @app.route("/filaments/<int:filament_id>/duplicate", methods=["POST"])

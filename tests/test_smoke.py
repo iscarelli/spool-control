@@ -148,3 +148,27 @@ def test_update_run_writes_flag(auth_client, db):
     assert resp.status_code == 200
     assert resp.get_json()["ok"] is True
     assert flag.exists()
+
+
+# ── Catálogo de filamentos (SpoolmanDB vendorado) ────────────────────────────
+
+def test_filament_catalog_loaded():
+    """O snapshot vendorado carrega e tem conteúdo."""
+    import filament_catalog as catalog
+    assert catalog.available() is True
+    assert catalog.BRANDS and catalog.MATERIALS and catalog.FILAMENTS
+    e = catalog.FILAMENTS[0]
+    assert {"brand", "material", "color_hex", "diameter"} <= set(e)
+
+
+def test_filament_catalog_api(auth_client):
+    resp = auth_client.get("/api/filament-catalog")
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert isinstance(data["filaments"], list) and data["filaments"]
+    assert isinstance(data["brands"], list) and isinstance(data["materials"], list)
+
+
+def test_filament_catalog_api_requires_login(client):
+    resp = client.get("/api/filament-catalog")
+    assert resp.status_code in (302, 401)

@@ -10,6 +10,13 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.27.0] — 2026-06-07
+
+### Added
+- **Importar do catálogo de filamentos.** No cadastro de filamento, o botão "Importar do catálogo" abre uma busca (por marca, material ou cor) sobre uma base aberta de ~4.200 filamentos de dezenas de marcas e **pré-preenche** o formulário (marca, material, família, cor e diâmetro) — é só revisar e salvar. Os campos de marca/material também passam a sugerir o catálogo no autocomplete.
+  - Fonte: **[SpoolmanDB](https://github.com/Donkie/SpoolmanDB)** (licença MIT). Os dados são **vendorados** num snapshot no próprio app (`spoolman_catalog.json`, atualizado por `deploy/vendor-spoolmandb.sh`) — **sem download em runtime/deploy**, preservando o deploy à prova de falhas, o CSP e a operação offline.
+  - **Fail-safe:** se o catálogo faltar/corromper, o app sobe normal e o recurso só fica oculto — nada quebra. Ver `docs/spoolmandb.md`.
+
 ## [1.26.1] — 2026-06-07
 
 ### Changed

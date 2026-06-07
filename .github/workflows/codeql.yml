@@ -27,7 +27,11 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: python
-          queries: security-and-quality
+          # security-extended: foco em SEGURANÇA. Evitamos "security-and-quality"
+          # porque o lint de qualidade dele gera falsos positivos de "unused global"
+          # no nosso padrão de módulos que expõem constantes p/ outros arquivos
+          # (ex.: niimbot_registry, filament_catalog) — uso entre módulos não é visto.
+          queries: security-extended
 
       - name: Analisar
         uses: github/codeql-action/analyze@v4
