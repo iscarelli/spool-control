@@ -1,0 +1,31 @@
+name: Dependabot auto-merge
+
+# Auto-mescla as atualizações de ROTINA do Dependabot quando o CI (tests) passar —
+# só patch e minor (as menores/mais seguras). Atualizações MAJOR ficam abertas para
+# revisão manual (podem trazer breaking changes). Você só é incomodado se algo falhar.
+#
+# Requer: "Allow auto-merge" ligado no repo + branch protection com o check `tests`
+# obrigatório (o --auto espera o check ficar verde antes de mesclar).
+
+on: pull_request_target
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  automerge:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ler metadados do Dependabot
+        id: meta
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Habilitar auto-merge (patch e minor)
+        if: steps.meta.outputs.update-type == 'version-update:semver-patch' || steps.meta.outputs.update-type == 'version-update:semver-minor'
+        run: gh pr merge --auto --squash "${{ github.event.pull_request.html_url }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
