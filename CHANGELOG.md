@@ -10,6 +10,11 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.26.1] — 2026-06-07
+
+### Changed
+- **Conclui a blindagem da autoatualização (v1.26.0).** Release de transição: ao atualizar para ela, o `update-lxc.sh` da v1.26.0 roda e **finaliza o novo mecanismo** em cada instalação — instala o observador `systemd .path`, instala o comando `update` (`/usr/local/bin/update`) e **remove o grant `sudoers` legado** (`/etc/sudoers.d/spool-update`). A partir daqui o botão "Atualizar" funciona pelo flag-file + vigia root, sem nenhum `sudo` do app. Sem mudança de telas/banco.
+
 ## [1.26.0] — 2026-06-07
 
 ### Security
