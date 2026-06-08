@@ -1,5 +1,6 @@
 import sqlite3
 import os
+import secrets
 import colorsys
 from contextlib import closing
 from pathlib import Path
@@ -160,6 +161,16 @@ def init_db():
                 updated_at TEXT NOT NULL DEFAULT ''
             );
 
+            CREATE TABLE IF NOT EXISTS api_keys (
+                integration  TEXT PRIMARY KEY,              -- 'scale' | 'homeassistant'
+                label        TEXT NOT NULL DEFAULT '',
+                key          TEXT NOT NULL,
+                scope        TEXT NOT NULL DEFAULT 'read',  -- 'read' | 'write' (write inclui read)
+                enabled      INTEGER NOT NULL DEFAULT 1,
+                created_at   TEXT NOT NULL,
+                last_used_at TEXT NOT NULL DEFAULT ''
+            );
+
             INSERT OR IGNORE INTO brands (name)
             SELECT DISTINCT brand FROM filaments WHERE brand != '';
 
@@ -316,6 +327,89 @@ def get_all_settings():
     with closing(get_db()) as db:
         rows = db.execute("SELECT key, value FROM settings ORDER BY key").fetchall()
     return {r["key"]: r["value"] for r in rows}
+
+
+# ── API keys (integrações: balança, Home Assistant, …) ───────────────────────
+# Uma chave por integração (slug). Chaves independentes: rotacionar uma não afeta
+# as outras. scope 'write' (balança, grava pesagem) inclui 'read'; 'read' (HA) só lê.
+
+def new_api_token():
+    return secrets.token_urlsafe(32)
+
+
+def list_api_keys():
+    with closing(get_db()) as db:
+        return db.execute("SELECT * FROM api_keys ORDER BY integration").fetchall()
+
+
+def get_api_key(integration):
+    with closing(get_db()) as db:
+        return db.execute(
+            "SELECT * FROM api_keys WHERE integration=?", (integration,)
+        ).fetchone()
+
+
+def ensure_api_key(integration, scope="read", label="", key=None, enabled=True):
+    """Cria a chave da integração se ainda não existir (idempotente). Usado no seed."""
+    with closing(get_db()) as db:
+        db.execute(
+            """INSERT OR IGNORE INTO api_keys
+               (integration, label, key, scope, enabled, created_at)
+               VALUES (?,?,?,?,?,?)""",
+            (integration, label, key or new_api_token(), scope,
+             1 if enabled else 0, now_iso()),
+        )
+        db.commit()
+
+
+def regenerate_api_key(integration):
+    """Gera um novo token SÓ para esta integração (não toca nas outras)."""
+    token = new_api_token()
+    with closing(get_db()) as db:
+        db.execute(
+            "UPDATE api_keys SET key=?, created_at=? WHERE integration=?",
+            (token, now_iso(), integration),
+        )
+        db.commit()
+    return token
+
+
+def set_api_key_enabled(integration, enabled):
+    with closing(get_db()) as db:
+        db.execute(
+            "UPDATE api_keys SET enabled=? WHERE integration=?",
+            (1 if enabled else 0, integration),
+        )
+        db.commit()
+
+
+def touch_api_key(integration):
+    with closing(get_db()) as db:
+        db.execute(
+            "UPDATE api_keys SET last_used_at=? WHERE integration=?",
+            (now_iso(), integration),
+        )
+        db.commit()
+
+
+def verify_api_key(presented, need_write=False):
+    """Slug da integração cuja chave (habilitada) casa com `presented`, ou None.
+    Timing-safe; se need_write, exige scope='write'. Fallback: aceita a env
+    SPOOL_API_KEY legada (escopo write) p/ não quebrar installs antigos."""
+    presented = presented or ""
+    with closing(get_db()) as db:
+        rows = db.execute(
+            "SELECT integration, key, scope FROM api_keys WHERE enabled=1"
+        ).fetchall()
+    for r in rows:
+        if secrets.compare_digest(presented, r["key"]):
+            if need_write and r["scope"] != "write":
+                continue
+            return r["integration"]
+    env_key = os.environ.get("SPOOL_API_KEY", "").strip()
+    if env_key and secrets.compare_digest(presented, env_key):
+        return "scale"   # legado: env sempre tratada como balança (write)
+    return None
 
 
 # ── Brands ─────────────────────────────────────────────────────────────────

@@ -271,6 +271,12 @@ def bootstrap():
     # aleatória vai para o journal). No DEMO_MODE a senha é fixa e a troca é desabilitada.
     db.ensure_admin_user("admin", generate_password_hash(default_pass),
                          must_change=not DEMO_MODE)
+    # Chaves de API por integração (independentes — rotacionar uma não afeta a outra).
+    # A da balança herda a SPOOL_API_KEY do ambiente p/ NÃO quebrar installs existentes;
+    # a do Home Assistant nasce gerada (read-only). Geridas em Admin → Integrações.
+    db.ensure_api_key("scale", scope="write", label="Balança / estação de pesagem",
+                      key=os.environ.get("SPOOL_API_KEY", "").strip() or None)
+    db.ensure_api_key("homeassistant", scope="read", label="Home Assistant")
 
 
 bootstrap()
@@ -679,6 +685,7 @@ def err_unhandled(e):
 # é o que "liga" as rotas ao app. Importar aqui (e não no topo) evita import circular.
 from routes import (  # noqa: E402
     main, filaments, spool_models, spools, label_queue, reports, admin, api, account,  # noqa: F401
+    integrations,  # noqa: F401
 )
 
 

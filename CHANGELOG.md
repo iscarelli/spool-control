@@ -10,6 +10,14 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.30.0] — 2026-06-08
+
+### Added
+- **Integração com Home Assistant (API de leitura).** Novos endpoints **somente leitura** para o HA acompanhar o estoque: `GET /api/summary` (totais + estoque baixo + por material), `GET /api/low-stock` (o que está acabando) e `GET /api/stock` (por material e por local). Usam a plataforma REST nativa do HA — sem MQTT/add-on. Passo a passo (sensores, automações, exemplos de `configuration.yaml`) em **[`docs/home-assistant.md`](docs/home-assistant.md)**.
+- **Gestão de chaves de API por integração (Admin → Integrações).** Cada integração tem a **sua** chave, independente: rotacionar a do Home Assistant **não** afeta a da balança e vice-versa. A página permite **revelar/copiar**, **gerar nova chave** e **habilitar/desabilitar**. Escopo **least-privilege**: a chave do HA é **somente leitura** (não grava pesagem); a da balança é leitura+escrita.
+  - A chave da balança herda a `SPOOL_API_KEY` existente (installs atuais não quebram); a do HA nasce gerada. A autenticação aceita qualquer chave habilitada (com escopo) e mantém o fallback da `SPOOL_API_KEY` legada.
+  - A integração da **balança fica pronta mas oculta** por enquanto (gerenciável quando quiser exibir).
+
 ## [1.29.1] — 2026-06-08
 
 ### Changed

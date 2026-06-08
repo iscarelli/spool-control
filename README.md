@@ -111,6 +111,21 @@ curl -X POST https://your.domain/api/weigh \
 The station reads the QR, extracts the spool id (anchored on `/spools/(\d+)`) and POSTs.
 The full flow can be validated without hardware via `tools/validate_qr_autoweigh.py`.
 
+> **API keys** are managed per integration in **Admin → Integrations** (the scale's
+> write key and the Home Assistant read key are independent — rotating one does not
+> affect the other). On existing installs the scale key is seeded from `SPOOL_API_KEY`.
+
+## Home Assistant
+
+Read-only endpoints let Home Assistant track your filament stock (total kg, what's
+running low, breakdown by material/location) via its native REST platform — no MQTT,
+no custom component. Get the read-only key in **Admin → Integrations** and follow the
+step-by-step (sensors, automations) in [`docs/home-assistant.md`](docs/home-assistant.md).
+
+- `GET /api/summary` — totals + low-stock count + by material
+- `GET /api/low-stock` — spools below the configured threshold
+- `GET /api/stock` — stock aggregated by material and by location
+
 ## Deploy — Proxmox LXC
 
 ### Automatic install (recommended)
