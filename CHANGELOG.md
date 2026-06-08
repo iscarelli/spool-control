@@ -10,6 +10,14 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.28.1] — 2026-06-08
+
+### Fixed
+- **Instalação quebrada pela referência a um arquivo apagado.** `setup-inside.sh` (e o installer do proxmox-helper) ainda tentavam instalar `deploy/sudoers-spool-update`, apagado na v1.26.0 — com `set -euo pipefail`, isso abortava a instalação nova. O arquivo foi **restaurado**, mantendo a autoatualização via sudo funcionando nas instalações que ainda não migraram para o vigia `.path` (sem privilégio). Ver `routes/admin.py`.
+
+### Security
+- **Guard-rail de `DEMO_MODE`.** Para evitar que o modo demonstrativo vaze para uma instalação real, agora há: aviso gritado no journal no boot (`demo_mode.enabled`), exposição de `demo_mode` no `/health` (monitores externos detectam o vazamento) e `DEMO_MODE=0` documentado no `spool.env.example`.
+
 ## [1.28.0] — 2026-06-08
 
 ### Added

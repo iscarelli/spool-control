@@ -253,6 +253,15 @@ def handle_csrf_error(e):
 
 def bootstrap():
     db.init_db()
+    if DEMO_MODE:
+        # Guard-rail: MODO DEMO desabilita troca de senha/criação de usuários e os dados
+        # podem ser reiniciados. Nunca deve estar ligado numa instalação real — gritamos
+        # no journal (além do banner em toda página e do /health) p/ flagrar um vazamento.
+        log.warning(
+            "demo_mode.enabled",
+            note="Instância em MODO DEMONSTRATIVO — NÃO use em produção. "
+                 "Defina DEMO_MODE=0 em spool.env para uma instalação real.",
+        )
     default_pass = os.environ.get("ADMIN_DEFAULT_PASS")
     if not default_pass:
         default_pass = secrets.token_urlsafe(12)

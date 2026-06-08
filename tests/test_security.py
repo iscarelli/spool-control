@@ -132,3 +132,11 @@ def test_csp_has_no_external_cdn(client):
     csp = client.get("/login").headers.get("Content-Security-Policy", "")
     assert "jsdelivr" not in csp
     assert "default-src 'self'" in csp
+
+
+def test_health_exposes_demo_mode(client):
+    """O /health expõe demo_mode p/ monitores detectarem vazamento (rec 4).
+    No ambiente de teste não é demo, então deve vir False."""
+    data = client.get("/health").get_json()
+    assert "demo_mode" in data
+    assert data["demo_mode"] is False
