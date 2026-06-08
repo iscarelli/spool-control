@@ -52,8 +52,8 @@ a LXC offline).
 | `niimbot_registry.py` | **Carrega** o JSON acima; oculta entradas `_untested`; expõe `PRINTER_MODELS`, `LABEL_SIZES`, defaults e helpers às rotas. |
 | `static/niimbot-spool.js` | Adaptador deste app: busca o registro e liga os botões da UI. |
 | `labels.py` → `generate_label_png()` | Renderiza a etiqueta 1-bit (PNG) no tamanho de pixels do modelo escolhido. |
-| Rotas em `app.py` | `GET /spools/<id>/label.png` e `GET /api/niimbot/registry`. |
-| Configurações (admin) | Seleção de modelo e tamanho (`niimbot_model`, `niimbot_label_size`). |
+| Rotas em `routes/spools.py` | `GET /spools/<id>/label.png` e `GET /api/niimbot/registry`. |
+| Configurações (admin) | Seleção de família de impressora e tamanho (`niimbot_printer_family`, `niimbot_label_size`). |
 | `deploy/vendor-niimbot.sh` | Atualiza as duas cópias vendoradas a partir de uma tag fixa. |
 
 > JS e Python compartilham **um único** arquivo de registro (`niimbot_registry.json`):

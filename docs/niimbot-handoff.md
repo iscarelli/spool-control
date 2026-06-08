@@ -1,7 +1,9 @@
 # Niimbot — memória de trabalho / handoff
 
 > Estado consolidado para retomar o desenvolvimento em **qualquer máquina**.
-> Última atualização: **2026-06-03**. Doc de uso (separado): [`docs/niimbot.md`](niimbot.md).
+> Snapshot de **2026-06-03** (referências de repo/arquivos/processo atualizadas em 2026-06-08).
+> A versão/URL de produção abaixo são daquele momento; o doc canônico de uso é
+> [`docs/niimbot.md`](niimbot.md).
 
 ## O que foi feito
 
@@ -24,20 +26,20 @@ etiquetas, ao lado do PDF (que continua intacto).
 | Repo | Visibilidade | Papel |
 |---|---|---|
 | **iscarelli/spool-control** | público | App. Integra a impressão (rotas, templates, render PNG) + **cópia vendorada** do driver. |
-| **iscarelli/niimbot** (`../niimbot`) | **privado** | **Upstream** do driver: `src/niimbot.js`, `docs/protocol-v4.md`, `registry.json`, `demo/index.html`. |
+| **iscarelli/niimbot-web-bluetooth** (`../niimbot-web-bluetooth`) | **público** | **Upstream** do driver: `src/niimbot.js`, `docs/protocol-v4.md`, `registry.json`, `demo/index.html`. |
 
-**Por que vendorar:** o deploy clona o repo **público anonimamente** no servidor,
-então o repo privado não pode ser puxado lá — o driver precisa estar versionado
-dentro do spool-control. `static/niimbot.js` é cópia verbatim de
-`../niimbot/src/niimbot.js` (só o cabeçalho difere, marcando "VENDORADO").
+**Por que vendorar:** o servidor clona o spool-control **anonimamente** e não há download em
+runtime nem CDN (deploy à prova de falhas, CSP estrito, LXC offline) — então o driver precisa
+estar versionado aqui. `static/niimbot.js` é cópia **vendorada** de
+`../niimbot-web-bluetooth/src/niimbot.js`, atualizada por `deploy/vendor-niimbot.sh`.
 
 ## Mapa de arquivos (spool-control)
 
 | Arquivo | Papel |
 |---|---|
 | `labels.py` → `generate_label_png()` | Renderiza etiqueta **PNG 1-bit** (PIL): QR + marca/material/família/ID. |
-| `niimbot_registry.py` | Registro de modelos/tamanhos (espelha `../niimbot/registry.json`). |
-| `app.py` | Rotas `GET /spools/<id>/label.png` e `GET /api/niimbot/registry`. Settings salvam `niimbot_model` / `niimbot_label_size`. |
+| `niimbot_registry.py` | **Carrega** `niimbot_registry.json` (cópia vendorada do `registry.json` upstream); oculta entradas `_untested`. |
+| `routes/spools.py` | Rotas `GET /spools/<id>/label.png` e `GET /api/niimbot/registry`. Settings (admin) salvam `niimbot_printer_family` / `niimbot_label_size`. |
 | `static/niimbot.js` | Driver Web Bluetooth **vendorado** — não editar aqui. |
 | `static/niimbot-spool.js` | Adaptador deste app: busca o registro + liga os botões. |
 | `templates/spools/detail.html` | Botão "Imprimir Niimbot" (`data-niimbot-url`) + carrega os 2 scripts. |
@@ -45,7 +47,7 @@ dentro do spool-control. `static/niimbot.js` é cópia verbatim de
 | `templates/admin/settings.html` | Selects de modelo + tamanho. |
 | `deploy/update-lxc.sh` | **Já corrigido** p/ copiar `niimbot_registry.py` (linha de cp). |
 
-## Protocolo V4 (resumo — detalhes em `../niimbot/docs/protocol-v4.md`)
+## Protocolo V4 (resumo — detalhes em `../niimbot-web-bluetooth/docs/protocol-v4.md`)
 
 - **BLE:** Service `e7810a71-73ae-499d-8c15-faa9aef0c3f2`, Characteristic
   `bef8d6c9-9c21-4c9e-b632-bd58c1009f9f`. Conexão inicial: `03 55 55 C1 01 01 C1 AA AA`.
@@ -78,12 +80,12 @@ dentro do spool-control. `static/niimbot.js` é cópia verbatim de
 
 ## Manutenção
 
-- **Re-sincronizar o driver:** ao mudar o protocolo no repo privado,
-  `cp ../niimbot/src/niimbot.js static/niimbot.js` e recolocar o cabeçalho
-  "VENDORADO". Refletir mudanças de `registry.json` em `niimbot_registry.py`.
-- **Novo modelo/tamanho:** editar `../niimbot/registry.json` (canônico) →
-  espelhar em `niimbot_registry.py`. Se o protocolo diferir do V4, adicionar ramo
-  no driver e re-sincronizar.
+- **Re-sincronizar o driver:** `deploy/vendor-niimbot.sh [tag]` baixa `src/niimbot.js` +
+  `registry.json` da tag escolhida e grava em `static/niimbot.js` + `niimbot_registry.json`
+  (sem `cp` manual nem espelhamento). Depois: revisar `git diff`, bump + deploy.
+- **Novo modelo/tamanho:** editar o `registry.json` **upstream** e re-vendorar — o
+  `niimbot_registry.py` só **carrega** o JSON, não precisa editá-lo. Protocolo novo:
+  adicionar o ramo no driver upstream antes de re-vendorar. Ver `docs/niimbot.md`.
 
 ## Pendências / próximos passos (niimbot)
 
