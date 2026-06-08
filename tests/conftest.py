@@ -23,7 +23,7 @@ def app_module(tmp_path):
     # também precisam ser descartados: senão ficam registrados no objeto `app` antigo
     # (efeito colateral do @app.route) e o novo `app` sobe sem rotas.
     for name in [m for m in sys.modules
-                 if m in ("app", "database", "routes") or m.startswith("routes.")]:
+                 if m in ("app", "database", "backup", "routes") or m.startswith("routes.")]:
         sys.modules.pop(name, None)
     import app as app_module
     # CSRF desligado nos testes: simplifica os POST (a proteção em si é coberta em prod).

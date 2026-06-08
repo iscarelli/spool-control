@@ -16,8 +16,10 @@ def _mask_sensitive(_, __, event_dict: dict) -> dict:
     return event_dict
 
 
-def configure_logging(app) -> None:
-    level = logging.DEBUG if app.debug else logging.INFO
+def configure_logging(app=None) -> None:
+    # app é opcional: processos fora do Flask (ex.: deploy/backup-cron.py) chamam
+    # sem app e ganham os mesmos logs JSON com mascaramento de segredos.
+    level = logging.DEBUG if (app is not None and app.debug) else logging.INFO
 
     logging.basicConfig(
         format="%(message)s",

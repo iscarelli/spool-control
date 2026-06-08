@@ -95,6 +95,15 @@
             </div>
           </div>
 
+          <hr class="my-4">
+          <h6 class="text-muted text-uppercase fw-semibold mb-3" style="font-size:.75rem">{{ _('Backup') }}</h6>
+          <div class="mb-4">
+            <label class="form-label fw-semibold">{{ _('Pasta de backup externa') }} <span class="text-muted fw-normal">({{ _('opcional') }})</span></label>
+            <input type="text" name="backup_external_dir" class="form-control"
+                   value="{{ settings.backup_external_dir or '' }}" placeholder="/mnt/backups">
+            <div class="form-text">{{ _('Caminho no servidor (ex.: disco/rede montado). O backup diário sempre grava localmente; se esta pasta estiver definida, uma cópia também é gravada aqui. Se não for possível gravar, um alerta aparece na página de Backup.') }}</div>
+          </div>
+
           <button type="submit" class="btn btn-dark">{{ _('Salvar Configurações') }}</button>
         </form>
       </div>

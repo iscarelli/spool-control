@@ -1,12 +1,7 @@
 """Rotas administrativas (só admin): usuários, marcas, configurações, atualização
 do sistema e backup/restauração."""
-import io
-import os
 import re
-import json
 import time
-import zipfile
-import tempfile
 import subprocess
 from pathlib import Path
 from flask import (
@@ -14,20 +9,17 @@ from flask import (
 )
 from werkzeug.security import generate_password_hash
 import database as db
+import backup
 import niimbot_registry as reg
 import logger as log_cfg
 from app import (
     app, admin_required, demo_blocked, t, MIN_PASSWORD_LEN, DEMO_MODE,
-    BRANDS_DIR, _fetch_brand_logo, _clean_domain, public_base_url, APP_VERSION,
+    BRANDS_DIR, _fetch_brand_logo, _clean_domain, public_base_url,
     RELEASES_URL, check_latest_release, current_version, _version_tuple,
     latest_release_notes, render_release_notes,
 )
 
 log = log_cfg.get_logger()
-
-# Extensões de logo aceitas no restore — espelha o upload de marcas; SVG fica de
-# fora de propósito (pode embutir <script> e virar XSS servido same-origin).
-BACKUP_LOGO_EXTS = ('.png', '.jpg', '.jpeg', '.webp')
 
 
 # ── Usuários ─────────────────────────────────────────────────────────────────
@@ -197,6 +189,14 @@ def admin_settings():
         size = request.form.get("niimbot_label_size", reg.DEFAULT_PHYSICAL_SIZE).strip()
         db.set_setting("niimbot_label_size",
                        size if size in reg.PHYSICAL_SIZES else reg.DEFAULT_PHYSICAL_SIZE)
+        # Pasta externa do backup agendado (opcional). Testa a gravação na hora
+        # p/ avisar já; o backup diário sempre grava local independente disto.
+        ext_dir = request.form.get("backup_external_dir", "").strip()
+        db.set_setting("backup_external_dir", ext_dir)
+        if ext_dir:
+            werr = backup.test_external_writable(ext_dir)
+            if werr:
+                flash(t("Pasta de backup externa não é gravável: {e}").format(e=werr), "warning")
         flash(t("Configurações salvas"), "success")
         return redirect(url_for("admin_settings"))
     settings = db.get_all_settings()
@@ -274,38 +274,44 @@ def admin_update_status():
 @app.route("/admin/backup")
 @admin_required
 def admin_backup():
-    return render_template("admin/backup.html")
+    # Tabela da rotação diária: o número é o slot (dia da semana ISO); a data
+    # mostrada vem do mtime real de cada arquivo (ver backup.list_local_backups).
+    return render_template(
+        "admin/backup.html",
+        local_backups=backup.list_local_backups(),
+        external_dir=db.get_setting("backup_external_dir", ""),
+        last_run=db.get_setting("backup_last_run", ""),
+        last_result=db.get_setting("backup_last_result", ""),
+        last_error=db.get_setting("backup_last_error", ""),
+        external_error=db.get_setting("backup_external_error", ""),
+    )
 
 
 @app.route("/admin/backup/download")
 @admin_required
 def admin_backup_download():
-    # Snapshot consistente do DB para um temp e empacota com os logos num zip.
-    mem = io.BytesIO()
-    tmp_db = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
-    tmp_db.close()
-    try:
-        db.backup_to(tmp_db.name)
-        with zipfile.ZipFile(mem, "w", zipfile.ZIP_DEFLATED) as z:
-            z.write(tmp_db.name, "spool.db")
-            if BRANDS_DIR.is_dir():
-                for p in sorted(BRANDS_DIR.iterdir()):
-                    if p.is_file() and p.suffix.lower() in BACKUP_LOGO_EXTS:
-                        z.write(p, f"brands/{p.name}")
-            z.writestr("manifest.json", json.dumps({
-                "app": "spool-control",
-                "version": APP_VERSION,
-                "created": time.strftime("%Y-%m-%dT%H:%M:%S"),
-            }, indent=2))
-    finally:
-        os.remove(tmp_db.name)
-    mem.seek(0)
+    # Backup manual = download on-demand. Mantém o nome com timestamp p/ NÃO
+    # interferir na rotação diária (que usa nomes numerados por dia da semana).
+    data = backup.make_backup_bytes()
     fname = "spool-backup-" + time.strftime("%Y%m%d-%H%M%S") + ".zip"
     return Response(
-        mem.read(),
+        data,
         mimetype="application/zip",
         headers={"Content-Disposition": f'attachment; filename="{fname}"'},
     )
+
+
+def _flash_restore_result(ok, n_logos, err):
+    if ok:
+        flash(t("Backup restaurado com sucesso ({n} logo(s)). Recomendado sair e entrar novamente.").format(n=n_logos), "success")
+    else:
+        msgs = {
+            "not_zip": t("Arquivo inválido — não é um .zip de backup"),
+            "no_db": t("Backup inválido: spool.db ausente no arquivo"),
+            "invalid_db": t("Backup inválido: o banco não tem a estrutura do Spool Control"),
+        }
+        flash(msgs.get(err, t("Falha ao restaurar o backup")), "danger")
+    return redirect(url_for("admin_backup"))
 
 
 @app.route("/admin/backup/restore", methods=["POST"])
@@ -316,40 +322,18 @@ def admin_backup_restore():
     if not f or not f.filename:
         flash(t("Selecione um arquivo de backup (.zip)"), "danger")
         return redirect(url_for("admin_backup"))
-    try:
-        zf = zipfile.ZipFile(io.BytesIO(f.read()))
-    except Exception:
-        flash(t("Arquivo inválido — não é um .zip de backup"), "danger")
+    ok, n, err = backup.restore_from_zip_bytes(f.read())
+    return _flash_restore_result(ok, n, err)
+
+
+@app.route("/admin/backup/restore-local", methods=["POST"])
+@admin_required
+@demo_blocked
+def admin_backup_restore_local():
+    """Restaura a partir de um backup da rotação diária (sem upload)."""
+    data = backup.read_local_backup_bytes(request.form.get("slot", ""))
+    if data is None:
+        flash(t("Backup local não encontrado"), "danger")
         return redirect(url_for("admin_backup"))
-
-    names = zf.namelist()
-    if "spool.db" not in names:
-        flash(t("Backup inválido: spool.db ausente no arquivo"), "danger")
-        return redirect(url_for("admin_backup"))
-
-    # Grava o DB do backup num temp e valida antes de tocar no banco ativo.
-    tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
-    try:
-        tmp.write(zf.read("spool.db"))
-        tmp.close()
-        if not db.is_valid_backup_db(tmp.name):
-            flash(t("Backup inválido: o banco não tem a estrutura do Spool Control"), "danger")
-            return redirect(url_for("admin_backup"))
-        db.restore_from(tmp.name)
-    finally:
-        os.remove(tmp.name)
-
-    # Restaura os logos (apenas o basename, extensões de imagem — anti zip-slip).
-    BRANDS_DIR.mkdir(exist_ok=True)
-    restored_logos = 0
-    for name in names:
-        if not name.startswith("brands/") or name.endswith("/"):
-            continue
-        base = os.path.basename(name)
-        if not base or Path(base).suffix.lower() not in BACKUP_LOGO_EXTS:
-            continue
-        (BRANDS_DIR / base).write_bytes(zf.read(name))
-        restored_logos += 1
-
-    flash(t("Backup restaurado com sucesso ({n} logo(s)). Recomendado sair e entrar novamente.").format(n=restored_logos), "success")
-    return redirect(url_for("admin_backup"))
+    ok, n, err = backup.restore_from_zip_bytes(data)
+    return _flash_restore_result(ok, n, err)

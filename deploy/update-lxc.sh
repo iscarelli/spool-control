@@ -125,12 +125,18 @@ EOF
     chmod +x "${APP_DIR}/deploy/update-cli.sh"
     ln -sf "${APP_DIR}/deploy/update-cli.sh" /usr/local/bin/update
 
+    # Backup diario rotativo (entra/atualiza junto; instalacoes antigas ganham aqui).
+    ln -sf "${APP_DIR}/deploy/spool-backup.service" /etc/systemd/system/spool-backup.service
+    ln -sf "${APP_DIR}/deploy/spool-backup.timer"   /etc/systemd/system/spool-backup.timer
+
     info "Reiniciando servico..."
     ln -sf "${APP_DIR}/deploy/spool-control.service" /etc/systemd/system/spool-control.service
     systemctl daemon-reload
     # Habilita o observador do flag de update (inotify; dispara o oneshot na hora).
     systemctl enable --now spool-update.path 2>/dev/null \
         || warn "Nao foi possivel habilitar spool-update.path (update via web pode usar fallback)."
+    systemctl enable --now spool-backup.timer 2>/dev/null \
+        || warn "Nao foi possivel habilitar spool-backup.timer (backup automatico indisponivel)."
     systemctl restart spool-control
     sleep 2
     systemctl is-active spool-control || error "Servico nao iniciou. Veja: journalctl -u spool-control -n 30"

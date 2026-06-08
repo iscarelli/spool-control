@@ -863,6 +863,43 @@ _ES["Senha alterada com sucesso"] = "Contraseña cambiada con éxito"
 _ES["Por segurança, defina uma senha própria antes de continuar."] = \
     "Por seguridad, establezca su propia contraseña antes de continuar."
 
+# ── Backup agendado ──────────────────────────────────────────────────────────
+_EN["Backup"] = "Backup"
+_EN["Pasta de backup externa"] = "External backup folder"
+_EN["Caminho no servidor (ex.: disco/rede montado). O backup diário sempre grava localmente; se esta pasta estiver definida, uma cópia também é gravada aqui. Se não for possível gravar, um alerta aparece na página de Backup."] = \
+    "Path on the server (e.g. a mounted disk/network share). The daily backup always writes locally; if this folder is set, a copy is also written here. If writing fails, an alert appears on the Backup page."
+_EN["Pasta de backup externa não é gravável: {e}"] = "External backup folder is not writable: {e}"
+_EN["Backups automáticos (diários)"] = "Automatic backups (daily)"
+_EN["O sistema mantém um backup por dia da semana (7 no total), sobrescrevendo o do mesmo dia a cada semana."] = \
+    "The system keeps one backup per weekday (7 total), overwriting the same weekday each week."
+_EN["Cópia externa em:"] = "External copy at:"
+_EN["Data"] = "Date"
+_EN["Tamanho"] = "Size"
+_EN["ainda não gerado"] = "not generated yet"
+_EN["Restaurar"] = "Restore"
+_EN["Backup local não encontrado"] = "Local backup not found"
+_EN["Falha ao restaurar o backup"] = "Failed to restore the backup"
+_EN["O último backup automático falhou."] = "The last automatic backup failed."
+_EN["Backup local OK, mas a cópia para a pasta externa falhou."] = "Local backup OK, but the copy to the external folder failed."
+
+_ES["Backup"] = "Copia de seguridad"
+_ES["Pasta de backup externa"] = "Carpeta de backup externa"
+_ES["Caminho no servidor (ex.: disco/rede montado). O backup diário sempre grava localmente; se esta pasta estiver definida, uma cópia também é gravada aqui. Se não for possível gravar, um alerta aparece na página de Backup."] = \
+    "Ruta en el servidor (p. ej. un disco/red montado). El backup diario siempre se guarda localmente; si esta carpeta está definida, también se guarda una copia aquí. Si no se puede escribir, aparece una alerta en la página de Backup."
+_ES["Pasta de backup externa não é gravável: {e}"] = "La carpeta de backup externa no es escribible: {e}"
+_ES["Backups automáticos (diários)"] = "Backups automáticos (diarios)"
+_ES["O sistema mantém um backup por dia da semana (7 no total), sobrescrevendo o do mesmo dia a cada semana."] = \
+    "El sistema mantiene un backup por día de la semana (7 en total), sobrescribiendo el del mismo día cada semana."
+_ES["Cópia externa em:"] = "Copia externa en:"
+_ES["Data"] = "Fecha"
+_ES["Tamanho"] = "Tamaño"
+_ES["ainda não gerado"] = "aún no generado"
+_ES["Restaurar"] = "Restaurar"
+_ES["Backup local não encontrado"] = "Backup local no encontrado"
+_ES["Falha ao restaurar o backup"] = "No se pudo restaurar el backup"
+_ES["O último backup automático falhou."] = "El último backup automático falló."
+_ES["Backup local OK, mas a cópia para a pasta externa falhou."] = "Backup local OK, pero la copia a la carpeta externa falló."
+
 _TABLES = {"en": _EN, "es": _ES, "pt": _PT}
 
 

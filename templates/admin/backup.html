@@ -5,6 +5,24 @@
   <div class="col-md-7 col-lg-6">
     <h4 class="fw-bold mb-4">{{ _('Backup e restauração') }}</h4>
 
+    {% if last_result == 'error' %}
+    <div class="alert alert-danger d-flex align-items-start gap-2">
+      <i class="bi bi-x-octagon-fill mt-1"></i>
+      <div>
+        <strong>{{ _('O último backup automático falhou.') }}</strong>
+        {% if last_error %}<div class="small mt-1">{{ last_error }}</div>{% endif %}
+      </div>
+    </div>
+    {% elif external_error %}
+    <div class="alert alert-warning d-flex align-items-start gap-2">
+      <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+      <div>
+        <strong>{{ _('Backup local OK, mas a cópia para a pasta externa falhou.') }}</strong>
+        <div class="small mt-1">{{ external_error }}</div>
+      </div>
+    </div>
+    {% endif %}
+
     <div class="card mb-3">
       <div class="card-body">
         <h6 class="text-muted text-uppercase fw-semibold mb-3" style="font-size:.75rem">{{ _('Fazer backup') }}</h6>
@@ -12,6 +30,44 @@
         <a class="btn btn-primary w-100" href="{{ url_for('admin_backup_download') }}">
           <i class="bi bi-download me-1"></i>{{ _('Baixar backup') }}
         </a>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-body">
+        <h6 class="text-muted text-uppercase fw-semibold mb-3" style="font-size:.75rem">{{ _('Backups automáticos (diários)') }}</h6>
+        <p class="mb-3" style="font-size:.85rem">{{ _('O sistema mantém um backup por dia da semana (7 no total), sobrescrevendo o do mesmo dia a cada semana.') }}
+          {% if external_dir %}<br><i class="bi bi-hdd-network me-1"></i>{{ _('Cópia externa em:') }} <code>{{ external_dir }}</code>{% endif %}
+        </p>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>#</th><th>{{ _('Data') }}</th><th class="text-end">{{ _('Tamanho') }}</th><th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for b in local_backups %}
+              <tr>
+                <td class="text-muted">{{ b.slot }}</td>
+                {% if b.exists %}
+                <td>{{ b.mtime | localdt }}</td>
+                <td class="text-end text-muted">{{ b.size_kb }} KB</td>
+                <td class="text-end">
+                  <form method="post" action="{{ url_for('admin_backup_restore_local') }}" class="d-inline"
+                        data-sc-confirm="{{ _('Tem certeza? Todos os dados atuais serão substituídos.') }}">
+                    <input type="hidden" name="slot" value="{{ b.slot }}">
+                    <button class="btn btn-sm btn-outline-danger">{{ _('Restaurar') }}</button>
+                  </form>
+                </td>
+                {% else %}
+                <td class="text-muted fst-italic" colspan="3">{{ _('ainda não gerado') }}</td>
+                {% endif %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
