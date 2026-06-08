@@ -10,6 +10,16 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.28.0] — 2026-06-08
+
+### Added
+- **Troca de senha obrigatória no 1º login.** O admin inicial (cuja senha é gerada na instalação) e qualquer usuário criado ou com a senha resetada por um admin são levados a definir uma senha própria antes de usar o sistema. Há também uma página de **troca de senha self-service** (menu do usuário → "Trocar senha"). Não afeta instalações existentes (a coluna nasce com default 0). Desativado no `DEMO_MODE`.
+
+### Security
+- **SSRF na busca de logos mitigada.** Downloads externos (logos de marca, checagem de release no GitHub) passam por uma guarda que resolve o host, recusa endereços não-públicos (loopback, privados, link-local/metadata, reservados) e revalida cada redirect — bloqueia rebind para IPs internos.
+- **Frontend vendorado (sem CDN).** Bootstrap e Bootstrap Icons agora são servidos same-origin a partir de `static/vendor/` (atualizados por `deploy/vendor-frontend.sh`), e o **CSP foi apertado** para remover `cdn.jsdelivr.net` (`default-src 'self'`). Sem dependência de terceiros no carregamento de assets; operação offline.
+- **Hardening do serviço systemd.** `deploy/spool-control.service` ganhou sandbox (`ProtectSystem=strict` + `ReadWritePaths`, `PrivateTmp`, `Protect*`, `MemoryDenyWriteExecute`, `RestrictAddressFamilies`…). `NoNewPrivileges`/`RestrictSUIDSGID` ficam para depois da remoção do sudoers legado (manteriam o fallback de update quebrado).
+
 ## [1.27.0] — 2026-06-07
 
 ### Added

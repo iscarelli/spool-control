@@ -840,6 +840,29 @@ _ES["Os dados são reiniciados diariamente. Senha e criação de usuários não 
     "Los datos se reinician diariamente. El cambio de contraseña y la creación de usuarios no están disponibles."
 _ES["Função desabilitada na versão demonstrativa."] = "Esta función está deshabilitada en la versión de demostración."
 
+# ── Troca de senha (self-service / obrigatória no 1º login) ──────────────────
+_EN["Trocar senha"] = "Change password"
+_EN["Senha atual"] = "Current password"
+_EN["Confirmar nova senha"] = "Confirm new password"
+_EN["Salvar nova senha"] = "Save new password"
+_EN["Senha atual incorreta"] = "Current password is incorrect"
+_EN["As senhas não coincidem"] = "Passwords do not match"
+_EN["A nova senha deve ser diferente da atual"] = "The new password must be different from the current one"
+_EN["Senha alterada com sucesso"] = "Password changed successfully"
+_EN["Por segurança, defina uma senha própria antes de continuar."] = \
+    "For security, set your own password before continuing."
+
+_ES["Trocar senha"] = "Cambiar contraseña"
+_ES["Senha atual"] = "Contraseña actual"
+_ES["Confirmar nova senha"] = "Confirmar nueva contraseña"
+_ES["Salvar nova senha"] = "Guardar nueva contraseña"
+_ES["Senha atual incorreta"] = "La contraseña actual es incorrecta"
+_ES["As senhas não coincidem"] = "Las contraseñas no coinciden"
+_ES["A nova senha deve ser diferente da atual"] = "La nueva contraseña debe ser diferente de la actual"
+_ES["Senha alterada com sucesso"] = "Contraseña cambiada con éxito"
+_ES["Por segurança, defina uma senha própria antes de continuar."] = \
+    "Por seguridad, establezca su propia contraseña antes de continuar."
+
 _TABLES = {"en": _EN, "es": _ES, "pt": _PT}
 
 

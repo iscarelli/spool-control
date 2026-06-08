@@ -3,8 +3,11 @@ import re
 import json
 import time
 import uuid
+import socket
 import secrets
+import ipaddress
 import urllib.request
+from urllib.parse import urlsplit
 from functools import wraps
 from pathlib import Path
 from datetime import datetime
@@ -45,10 +48,62 @@ def _logo_sources(domain: str) -> list[str]:
     ]
 
 
+# ── Proteção anti-SSRF para downloads externos (logos, release check) ────────
+# As URLs de logo embutem um domínio fornecido pelo admin. Os hosts são fixos
+# (Clearbit/gstatic/DuckDuckGo), mas urlopen segue redirects por padrão — um 3xx
+# poderia levar a um IP interno (169.254.169.254, 10.x, localhost…). Resolvemos o
+# host e recusamos qualquer endereço não-público, inclusive a cada redirect.
+
+def _is_public_host(host: str) -> bool:
+    """True só se TODOS os IPs resolvidos de `host` forem públicos roteáveis.
+    Falha fechada (qualquer erro → False)."""
+    if not host:
+        return False
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except Exception:
+        return False
+    if not infos:
+        return False
+    for info in infos:
+        ip_str = info[4][0]
+        try:
+            ip = ipaddress.ip_address(ip_str)
+        except ValueError:
+            return False
+        if (ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved
+                or ip.is_multicast or ip.is_unspecified):
+            return False
+    return True
+
+
+class _NoRedirectValidating(urllib.request.HTTPRedirectHandler):
+    """Revalida o host de destino de cada redirect — bloqueia rebind p/ IP interno."""
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        parts = urlsplit(newurl)
+        if parts.scheme not in ("http", "https") or not _is_public_host(parts.hostname):
+            return None  # aborta o redirect
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+_safe_opener = urllib.request.build_opener(_NoRedirectValidating())
+
+
+def _safe_urlopen(url: str, timeout: int = 10):
+    """urlopen com guarda anti-SSRF: só http/https, host público, e cada redirect
+    revalidado. Levanta em esquema/host inválido — chame dentro de try/except."""
+    parts = urlsplit(url)
+    if parts.scheme not in ("http", "https"):
+        raise ValueError(f"esquema não permitido: {parts.scheme!r}")
+    if not _is_public_host(parts.hostname):
+        raise ValueError(f"host não-público recusado: {parts.hostname!r}")
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    return _safe_opener.open(req, timeout=timeout)
+
+
 def _try_fetch_image(url: str) -> bytes | None:
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        with _safe_urlopen(url, timeout=10) as resp:
             ct = resp.headers.get('Content-Type', '')
             if resp.status == 200 and ('image' in ct or 'octet' in ct):
                 return resp.read()
@@ -137,18 +192,41 @@ def _req_start():
     g._t0 = time.perf_counter()
 
 
+# Endpoints liberados mesmo com troca de senha pendente (o próprio formulário,
+# trocar idioma, sair, assets e o health-check).
+_PWCHANGE_ALLOWED = {"account_password", "logout", "set_lang", "static", "health"}
+
+
+@app.before_request
+def _force_password_change():
+    """Se o usuário logado tem senha temporária pendente, prende-o no formulário de
+    troca até definir uma senha própria. Desligado no DEMO_MODE."""
+    if DEMO_MODE or "user_id" not in session:
+        return
+    if not session.get("must_change_password"):
+        return
+    if request.endpoint in _PWCHANGE_ALLOWED:
+        return
+    if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return jsonify(error="password_change_required"), 403
+    return redirect(url_for("account_password"))
+
+
 @app.after_request
 def set_security_headers(resp):
     resp.headers["X-Content-Type-Options"] = "nosniff"
     resp.headers["X-Frame-Options"] = "DENY"
     resp.headers["Referrer-Policy"] = "same-origin"
     nonce = getattr(g, "_nonce", "")
+    # Assets do Bootstrap/Bootstrap Icons são servidos same-origin (static/vendor/),
+    # então o CSP não confia em nenhum CDN externo. 'unsafe-inline' em style-src
+    # permanece pelos estilos inline dos templates.
     resp.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
         "img-src 'self' data:; "
-        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
-        f"script-src 'self' 'nonce-{nonce}' https://cdn.jsdelivr.net; "
-        "font-src 'self' https://cdn.jsdelivr.net; "
+        "style-src 'self' 'unsafe-inline'; "
+        f"script-src 'self' 'nonce-{nonce}'; "
+        "font-src 'self'; "
         "frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
     )
     if request.is_secure:
@@ -180,7 +258,10 @@ def bootstrap():
         default_pass = secrets.token_urlsafe(12)
         log.warning("admin.ephemeral_password", password=default_pass,
                     note="Define ADMIN_DEFAULT_PASS em spool.env para suprimir este aviso")
-    db.ensure_admin_user("admin", generate_password_hash(default_pass))
+    # Em produção o admin é obrigado a trocar a senha inicial no 1º login (a senha
+    # aleatória vai para o journal). No DEMO_MODE a senha é fixa e a troca é desabilitada.
+    db.ensure_admin_user("admin", generate_password_hash(default_pass),
+                         must_change=not DEMO_MODE)
 
 
 bootstrap()
@@ -221,11 +302,13 @@ def check_latest_release(force=False):
     if not force and _release_cache["ts"] and now - _release_cache["ts"] < ttl:
         return _release_cache["tag"]
     try:
+        if not _is_public_host(urlsplit(GITHUB_RELEASES_API).hostname):
+            raise ValueError("host da API do GitHub não-público")
         req = urllib.request.Request(
             GITHUB_RELEASES_API,
             headers={"User-Agent": "spool-control", "Accept": "application/vnd.github+json"},
         )
-        with urllib.request.urlopen(req, timeout=3) as resp:
+        with _safe_opener.open(req, timeout=3) as resp:
             data = json.loads(resp.read().decode())
         tag = (data.get("tag_name") or "").lstrip("v").strip()
         if tag:
@@ -484,6 +567,7 @@ def login():
             session["user_id"] = user["id"]
             session["username"] = user["username"]
             session["role"] = user["role"]
+            session["must_change_password"] = bool(user["must_change_password"])
             db.log_login(username, ip)
             # Evita open redirect: só aceita next relativo ao próprio site.
             nxt = request.args.get("next") or ""
@@ -578,7 +662,7 @@ def err_unhandled(e):
 # `from app import app, ...` e registra suas rotas com @app.route — então este import
 # é o que "liga" as rotas ao app. Importar aqui (e não no topo) evita import circular.
 from routes import (  # noqa: E402
-    main, filaments, spool_models, spools, label_queue, reports, admin, api,  # noqa: F401
+    main, filaments, spool_models, spools, label_queue, reports, admin, api, account,  # noqa: F401
 )
 
 

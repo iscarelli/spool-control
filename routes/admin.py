@@ -68,7 +68,13 @@ def admin_users_password(user_id):
     elif len(password) < MIN_PASSWORD_LEN:
         flash(t("A senha precisa ter pelo menos {n} caracteres").format(n=MIN_PASSWORD_LEN), "danger")
     else:
-        db.update_user_password(user_id, generate_password_hash(password))
+        # Senha definida por um admin é temporária: o dono troca no próximo login.
+        # Exceção: o admin alterando a PRÓPRIA senha já a define como definitiva.
+        is_self = (user_id == session["user_id"])
+        db.update_user_password(user_id, generate_password_hash(password),
+                                must_change=not is_self)
+        if is_self:
+            session.pop("must_change_password", None)
         flash(t("Senha atualizada"), "success")
     return redirect(url_for("admin_users"))
 
