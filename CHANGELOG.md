@@ -10,6 +10,11 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.29.1] — 2026-06-08
+
+### Changed
+- **Configuração da pasta de backup externa movida para a aba Backup** (antes ficava em Configurações). Tudo relacionado a backup agora fica num lugar só. Sem mudança de comportamento — a pasta continua opcional e o backup diário sempre grava local.
+
 ## [1.29.0] — 2026-06-08
 
 ### Added
