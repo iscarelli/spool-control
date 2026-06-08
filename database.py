@@ -154,6 +154,15 @@ def init_db():
                 added_at  TEXT    NOT NULL
             );
 
+            -- Códigos de recuperação do 2FA: 8 one-time por usuário, guardados
+            -- HASHEADOS (generate_password_hash). used_at != '' marca consumido.
+            CREATE TABLE IF NOT EXISTS recovery_codes (
+                id        INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id   INTEGER NOT NULL REFERENCES users(id),
+                code_hash TEXT    NOT NULL,
+                used_at   TEXT    NOT NULL DEFAULT ''
+            );
+
             CREATE TABLE IF NOT EXISTS brands (
                 name       TEXT PRIMARY KEY,
                 domain     TEXT NOT NULL DEFAULT '',
@@ -198,6 +207,10 @@ def init_db():
             # para instalações existentes — só vale p/ admins do bootstrap e usuários
             # criados/resetados por um admin a partir desta versão.
             "ALTER TABLE users ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 0",
+            # 2FA opcional (TOTP) por usuário. Segredo em texto (precisa do plaintext
+            # p/ validar, mesmo precedente das API keys); off por padrão.
+            "ALTER TABLE users ADD COLUMN totp_secret  TEXT    NOT NULL DEFAULT ''",
+            "ALTER TABLE users ADD COLUMN totp_enabled INTEGER NOT NULL DEFAULT 0",
         ]:
             try:
                 db.execute(sql)
@@ -276,6 +289,73 @@ def log_login(username, ip):
             (now_iso(), username, ip),
         )
         db.commit()
+
+
+# ── 2FA (TOTP opcional por usuário) ──────────────────────────────────────────
+# Segredo TOTP em texto (igual às API keys; preciso p/ validar). Códigos de
+# recuperação ficam HASHEADOS na tabela recovery_codes. Tudo opt-in: off até o
+# usuário ativar em /account/2fa.
+
+def set_totp_secret(user_id, secret):
+    with closing(get_db()) as db:
+        db.execute("UPDATE users SET totp_secret=? WHERE id=?", (secret, user_id))
+        db.commit()
+
+
+def enable_totp(user_id):
+    with closing(get_db()) as db:
+        db.execute("UPDATE users SET totp_enabled=1 WHERE id=?", (user_id,))
+        db.commit()
+
+
+def disable_totp(user_id):
+    """Desliga o 2FA: zera o segredo, o flag e apaga TODOS os códigos de recuperação."""
+    with closing(get_db()) as db:
+        db.execute(
+            "UPDATE users SET totp_secret='', totp_enabled=0 WHERE id=?", (user_id,)
+        )
+        db.execute("DELETE FROM recovery_codes WHERE user_id=?", (user_id,))
+        db.commit()
+
+
+def store_recovery_codes(user_id, code_hashes):
+    """Substitui os códigos de recuperação do usuário pelos novos (já hasheados)."""
+    with closing(get_db()) as db:
+        db.execute("DELETE FROM recovery_codes WHERE user_id=?", (user_id,))
+        db.executemany(
+            "INSERT INTO recovery_codes (user_id, code_hash) VALUES (?,?)",
+            [(user_id, h) for h in code_hashes],
+        )
+        db.commit()
+
+
+def consume_recovery_code(user_id, code):
+    """Acha um código não-usado cujo hash bate com `code`, marca como usado e
+    retorna True. Retorna False se nenhum bate (ou todos já foram usados).
+    O check é feito em Python (hashes são por-código, não dá p/ comparar em SQL)."""
+    from werkzeug.security import check_password_hash
+    with closing(get_db()) as db:
+        rows = db.execute(
+            "SELECT id, code_hash FROM recovery_codes WHERE user_id=? AND used_at=''",
+            (user_id,),
+        ).fetchall()
+        for r in rows:
+            if check_password_hash(r["code_hash"], code):
+                db.execute(
+                    "UPDATE recovery_codes SET used_at=? WHERE id=?",
+                    (now_iso(), r["id"]),
+                )
+                db.commit()
+                return True
+    return False
+
+
+def count_recovery_codes_remaining(user_id):
+    with closing(get_db()) as db:
+        return db.execute(
+            "SELECT COUNT(*) FROM recovery_codes WHERE user_id=? AND used_at=''",
+            (user_id,),
+        ).fetchone()[0]
 
 
 # ── Login throttle (anti força-bruta) ──────────────────────────────────────

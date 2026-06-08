@@ -10,6 +10,12 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.31.0] — 2026-06-08
+
+### Added
+- **Verificação em duas etapas (2FA / TOTP), opcional por usuário.** Cada usuário pode ativar em **Conta → Verificação em duas etapas**: escaneia um QR com qualquer app autenticador (Google Authenticator, Authy, FreeOTP…) — padrão aberto (RFC 6238), grátis e offline, sem serviço externo. **Off por padrão** (zero atrito na LAN; disponível para quem expõe à internet). Na ativação são gerados **8 códigos de recuperação** one-time (mostrados uma vez, hasheados no banco) e é possível regenerá-los. Com o 2FA ligado, o login passa a ter duas etapas (senha → código de 6 dígitos ou código de recuperação), com o mesmo throttle por IP anti força-bruta. Bloqueado no `DEMO_MODE`. Requer relógio sincronizado (NTP — o Debian 12 já roda `systemd-timesyncd`).
+- **Válvula de escape para lockout:** `deploy/reset-2fa.py <usuario>` zera o 2FA de um usuário a partir do servidor (acesso ao servidor = fator de recuperação final desta app self-hosted).
+
 ## [1.30.3] — 2026-06-08
 
 ### Security

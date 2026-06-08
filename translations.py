@@ -387,6 +387,39 @@ _EN = {
     "Backup inválido: o banco não tem a estrutura do Spool Control": "Invalid backup: the database doesn't have the Spool Control structure",
     "Backup restaurado com sucesso ({n} logo(s)). Recomendado sair e entrar novamente.": "Backup restored successfully ({n} logo(s)). It's recommended to log out and back in.",
 
+    # ── 2FA (verificação em duas etapas) ─────────────────────────────────────
+    "Verificação em duas etapas":     "Two-factor authentication",
+    "Verificar":                      "Verify",
+    "Cancelar":                       "Cancel",
+    "Código de verificação":          "Verification code",
+    "Código inválido":                "Invalid code",
+    "Digite o código de 6 dígitos do seu app autenticador, ou um código de recuperação.":
+        "Enter the 6-digit code from your authenticator app, or a recovery code.",
+    "Verificação em duas etapas ativada":   "Two-factor authentication enabled",
+    "Verificação em duas etapas desativada": "Two-factor authentication disabled",
+    "Novos códigos de recuperação gerados": "New recovery codes generated",
+    "Sessão expirada. Tente novamente.":    "Session expired. Please try again.",
+    "Códigos de recuperação":               "Recovery codes",
+    "Guarde estes códigos em local seguro. Cada um serve UMA vez se você perder o acesso ao app autenticador. Eles NÃO serão mostrados novamente.":
+        "Store these codes somewhere safe. Each works ONCE if you lose access to your authenticator app. They will NOT be shown again.",
+    "A verificação em duas etapas está ativa nesta conta.":
+        "Two-factor authentication is active on this account.",
+    "Códigos de recuperação restantes:":    "Recovery codes remaining:",
+    "Regenerar códigos de recuperação":     "Regenerate recovery codes",
+    "Gera 8 códigos novos e invalida os antigos. Use se acabaram ou se você os perdeu.":
+        "Generates 8 new codes and invalidates the old ones. Use if you ran out or lost them.",
+    "Regenerar":                            "Regenerate",
+    "Desativar 2FA":                        "Disable 2FA",
+    "Adicione uma camada extra de segurança ao login: além da senha, será pedido um código gerado por um app autenticador (Google Authenticator, Authy, FreeOTP…).":
+        "Add an extra layer of login security: besides your password, you'll be asked for a code from an authenticator app (Google Authenticator, Authy, FreeOTP…).",
+    "Ativar verificação em duas etapas":    "Enable two-factor authentication",
+    "Escaneie o QR Code abaixo com o seu app autenticador.":
+        "Scan the QR code below with your authenticator app.",
+    "Digite o código de 6 dígitos exibido pelo app para confirmar.":
+        "Enter the 6-digit code shown by the app to confirm.",
+    "Não consegue escanear? Use esta chave:": "Can't scan? Use this key:",
+    "Ativar":                               "Enable",
+
     # ── Color buckets (stats) ────────────────────────────────────────────────
     "Preto":    "Black",
     "Branco":   "White",
@@ -788,6 +821,39 @@ _ES = {
     "Backup inválido: spool.db ausente no arquivo": "Copia inválida: falta spool.db en el archivo",
     "Backup inválido: o banco não tem a estrutura do Spool Control": "Copia inválida: la base no tiene la estructura de Spool Control",
     "Backup restaurado com sucesso ({n} logo(s)). Recomendado sair e entrar novamente.": "Copia restaurada con éxito ({n} logo(s)). Se recomienda cerrar sesión y volver a entrar.",
+
+    # ── 2FA (verificación en dos pasos) ──────────────────────────────────────
+    "Verificação em duas etapas":     "Verificación en dos pasos",
+    "Verificar":                      "Verificar",
+    "Cancelar":                       "Cancelar",
+    "Código de verificação":          "Código de verificación",
+    "Código inválido":                "Código inválido",
+    "Digite o código de 6 dígitos do seu app autenticador, ou um código de recuperação.":
+        "Introduce el código de 6 dígitos de tu app autenticadora, o un código de recuperación.",
+    "Verificação em duas etapas ativada":   "Verificación en dos pasos activada",
+    "Verificação em duas etapas desativada": "Verificación en dos pasos desactivada",
+    "Novos códigos de recuperação gerados": "Nuevos códigos de recuperación generados",
+    "Sessão expirada. Tente novamente.":    "Sesión expirada. Inténtalo de nuevo.",
+    "Códigos de recuperação":               "Códigos de recuperación",
+    "Guarde estes códigos em local seguro. Cada um serve UMA vez se você perder o acesso ao app autenticador. Eles NÃO serão mostrados novamente.":
+        "Guarda estos códigos en un lugar seguro. Cada uno sirve UNA vez si pierdes el acceso a tu app autenticadora. NO se mostrarán de nuevo.",
+    "A verificação em duas etapas está ativa nesta conta.":
+        "La verificación en dos pasos está activa en esta cuenta.",
+    "Códigos de recuperação restantes:":    "Códigos de recuperación restantes:",
+    "Regenerar códigos de recuperação":     "Regenerar códigos de recuperación",
+    "Gera 8 códigos novos e invalida os antigos. Use se acabaram ou se você os perdeu.":
+        "Genera 8 códigos nuevos e invalida los anteriores. Úsalo si se agotaron o los perdiste.",
+    "Regenerar":                            "Regenerar",
+    "Desativar 2FA":                        "Desactivar 2FA",
+    "Adicione uma camada extra de segurança ao login: além da senha, será pedido um código gerado por um app autenticador (Google Authenticator, Authy, FreeOTP…).":
+        "Añade una capa extra de seguridad al inicio de sesión: además de la contraseña, se pedirá un código generado por una app autenticadora (Google Authenticator, Authy, FreeOTP…).",
+    "Ativar verificação em duas etapas":    "Activar verificación en dos pasos",
+    "Escaneie o QR Code abaixo com o seu app autenticador.":
+        "Escanea el código QR de abajo con tu app autenticadora.",
+    "Digite o código de 6 dígitos exibido pelo app para confirmar.":
+        "Introduce el código de 6 dígitos que muestra la app para confirmar.",
+    "Não consegue escanear? Use esta chave:": "¿No puedes escanear? Usa esta clave:",
+    "Ativar":                               "Activar",
 
     # ── Color buckets (stats) ────────────────────────────────────────────────
     "Preto":    "Negro",

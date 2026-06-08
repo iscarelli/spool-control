@@ -150,6 +150,7 @@
         </button>
         <ul class="dropdown-menu dropdown-menu-end" style="min-width:0">
           <li><a class="dropdown-item" href="{{ url_for('account_password') }}"><i class="bi bi-key me-2"></i>{{ _('Trocar senha') }}</a></li>
+          <li><a class="dropdown-item" href="{{ url_for('account_2fa') }}"><i class="bi bi-shield-lock me-2"></i>{{ _('Verificação em duas etapas') }}</a></li>
         </ul>
       </div>
       <form method="post" action="{{ url_for('logout') }}" class="d-inline">

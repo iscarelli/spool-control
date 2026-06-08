@@ -20,6 +20,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_wtf import CSRFProtect
 from flask_wtf.csrf import CSRFError
+import pyotp
 import database as db
 import translations as i18n
 import logger as log_cfg
@@ -568,6 +569,19 @@ def demo_blocked(f):
 
 # ── Auth ───────────────────────────────────────────────────────────────────
 
+def _promote_session(user, remember, ip, next_url=""):
+    """Abre a sessão completa após autenticação bem-sucedida (senha + 2FA, se houver).
+    Centraliza o que login() e login_2fa() precisam gravar."""
+    session.permanent = bool(remember)
+    session["user_id"] = user["id"]
+    session["username"] = user["username"]
+    session["role"] = user["role"]
+    session["must_change_password"] = bool(user["must_change_password"])
+    db.log_login(user["username"], ip)
+    nxt = _safe_next(next_url)
+    return redirect(nxt or url_for("dashboard"))
+
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -583,22 +597,58 @@ def login():
         user = db.get_user_by_username(username)
         if user and check_password_hash(user["password_hash"], password):
             db.clear_login_failures(ip)
+            remember = bool(request.form.get("remember"))
+            nxt = request.args.get("next") or ""
+            # 2FA ligado: NÃO abre sessão ainda — guarda estado pré-auth e manda
+            # para o segundo passo. O estado "pré-2FA" não é sessão válida, então
+            # qualquer outra rota continua caindo no login_required.
+            if user["totp_enabled"]:
+                session["pre2fa_user_id"] = user["id"]
+                session["pre2fa_remember"] = remember
+                session["pre2fa_next"] = _safe_next(nxt)
+                return redirect(url_for("login_2fa"))
             # "Manter conectado": cookie persistente (30 dias). Sem marcar,
             # cookie de sessão que expira ao fechar o navegador.
-            session.permanent = bool(request.form.get("remember"))
-            session["user_id"] = user["id"]
-            session["username"] = user["username"]
-            session["role"] = user["role"]
-            session["must_change_password"] = bool(user["must_change_password"])
-            db.log_login(username, ip)
-            # Evita open redirect: só aceita next relativo ao próprio site.
-            nxt = request.args.get("next") or ""
-            if not nxt.startswith("/") or nxt.startswith("//"):
-                nxt = url_for("dashboard")
-            return redirect(nxt)
+            return _promote_session(user, remember, ip, nxt)
         db.record_login_failure(ip, username)
         flash(t("Usuário ou senha incorretos"), "danger")
     return render_template("login.html")
+
+
+@app.route("/login/2fa", methods=["GET", "POST"])
+def login_2fa():
+    """Segundo passo do login quando o usuário tem 2FA ativo. Aceita um código TOTP
+    (6 dígitos) OU um código de recuperação one-time. Sem estado pré-2FA → volta ao login."""
+    uid = session.get("pre2fa_user_id")
+    if not uid:
+        return redirect(url_for("login"))
+    user = db.get_user_by_id(uid)
+    if not user or not user["totp_enabled"]:
+        session.pop("pre2fa_user_id", None)
+        return redirect(url_for("login"))
+    if request.method == "POST":
+        ip = request.remote_addr or ""
+        # Mesmo throttle por IP da senha — barra brute-force dos 6 dígitos.
+        if db.count_recent_login_failures(ip, LOGIN_WINDOW_MIN) >= LOGIN_MAX_FAILURES:
+            flash(
+                t("Muitas tentativas. Aguarde {min} minutos e tente novamente.").format(min=LOGIN_WINDOW_MIN),
+                "danger",
+            )
+            return render_template("login_2fa.html"), 429
+        code = request.form.get("code", "").strip().replace(" ", "")
+        totp = pyotp.TOTP(user["totp_secret"])
+        ok = totp.verify(code, valid_window=1) or db.consume_recovery_code(uid, code)
+        if ok:
+            db.clear_login_failures(ip)
+            remember = bool(session.pop("pre2fa_remember", False))
+            nxt = session.pop("pre2fa_next", "") or ""
+            session.pop("pre2fa_user_id", None)
+            log.info("auth.2fa_ok")
+            return _promote_session(user, remember, ip, nxt)
+        db.record_login_failure(ip, user["username"])
+        log.warning("auth.2fa_fail")
+        flash(t("Código inválido"), "danger")
+    return render_template("login_2fa.html")
 
 
 @app.route("/logout", methods=["POST"])

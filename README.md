@@ -244,6 +244,31 @@ generated one is temporary. The same forced change applies to any user created o
 password-reset by an admin. You can change your password anytime later via the user menu →
 **Change password**.
 
+## Two-factor authentication (optional)
+
+Each user can enable **TOTP-based 2FA** from the user menu → **Two-factor authentication**.
+It is **opt-in and off by default** — zero friction for typical LAN deployments, available
+for instances exposed to the internet.
+
+- Scan the QR code with any standard authenticator app (Google Authenticator, Authy,
+  FreeOTP…). No external service, works offline.
+- On enabling you get **8 one-time recovery codes** — store them safely; each works once if
+  you lose your authenticator. They are shown only once (regenerate anytime from the same page).
+- After 2FA is on, login is two steps: password, then the 6-digit code (or a recovery code).
+
+> **Clock sync (NTP) required.** TOTP depends on the server clock. Debian 12 already runs
+> `systemd-timesyncd`, so this works out of the box; a large clock skew breaks code validation.
+
+**Lost authenticator *and* recovery codes (lockout)?** From the server (the `spool` user on
+the LXC) run the escape-hatch script — server access is the ultimate recovery factor for this
+self-hosted app:
+
+```bash
+cd /opt/spool-control && python3 deploy/reset-2fa.py <username>
+```
+
+It clears 2FA for that user; they can then log in with just the password and re-enable it.
+
 ## Environment variables (`spool.env`)
 
 Generated automatically by `setup-inside.sh`. Example:
