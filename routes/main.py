@@ -2,7 +2,7 @@
 from flask import render_template, request, jsonify
 import database as db
 import logger as log_cfg
-from app import app, login_required, APP_VERSION
+from app import app, login_required, APP_VERSION, DEMO_MODE
 
 log = log_cfg.get_logger()
 
@@ -51,8 +51,11 @@ def health():
     checks["data_dir"] = "ok" if db.DB_PATH.parent.is_dir() else "missing"
 
     ok = all(v == "ok" for v in checks.values())
+    # demo_mode exposto p/ monitores externos detectarem um vazamento de DEMO_MODE
+    # numa instalação real (não afeta o status do health — é informativo).
     return jsonify(
         status="ok" if ok else "degraded",
         version=APP_VERSION,
+        demo_mode=DEMO_MODE,
         checks=checks,
     ), 200 if ok else 503

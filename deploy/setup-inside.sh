@@ -114,16 +114,17 @@ chown -R spool:spool "$APP_DIR"
 info "Configurando servico systemd..."
 ln -sf "${APP_DIR}/deploy/spool-control.service" /etc/systemd/system/spool-control.service
 
-# Autoatualizacao pela web: oneshot (root) + regra sudoers minima p/ o user 'spool'.
+# Autoatualizacao pela web SEM privilegio: a UI escreve data/.update-requested e um
+# systemd .path unit (root) dispara o oneshot de update — o app nao usa sudo. (Instala-
+# coes antigas migraram para isto via update-lxc.sh, que tambem remove o sudoers legado.)
 ln -sf "${APP_DIR}/deploy/spool-update.service" /etc/systemd/system/spool-update.service
-install -m 0440 "${APP_DIR}/deploy/sudoers-spool-update" /etc/sudoers.d/spool-update
-if ! visudo -cf /etc/sudoers.d/spool-update >/dev/null 2>&1; then
-    rm -f /etc/sudoers.d/spool-update
-    warn "sudoers de autoatualizacao invalido — removido (update via web indisponivel)."
-fi
+ln -sf "${APP_DIR}/deploy/spool-update.path"    /etc/systemd/system/spool-update.path
 
 systemctl daemon-reload
 systemctl enable spool-control
+# Habilita o observador do flag de update (inotify; dispara o oneshot na hora).
+systemctl enable --now spool-update.path 2>/dev/null \
+    || warn "Nao foi possivel habilitar spool-update.path (autoatualizacao via web indisponivel)."
 systemctl restart spool-control
 
 # ── 11. Verificação ───────────────────────────────────────────────────────────
