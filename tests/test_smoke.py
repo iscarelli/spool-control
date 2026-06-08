@@ -83,7 +83,10 @@ def test_admin_route_blocks_anonymous(client):
 
 def test_admin_route_forbids_non_admin(client, db):
     from werkzeug.security import generate_password_hash
-    db.create_user("comum", generate_password_hash("senha-viewer"), role="viewer")
+    # must_change=False isola o teste de AUTORIZAÇÃO do gate de troca de senha
+    # (que, se ativo, redirecionaria antes do 403).
+    db.create_user("comum", generate_password_hash("senha-viewer"), role="viewer",
+                   must_change=False)
     client.post("/login", data={"username": "comum", "password": "senha-viewer"})
     assert client.get("/admin/users").status_code == 403
 

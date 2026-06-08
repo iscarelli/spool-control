@@ -28,6 +28,12 @@ def app_module(tmp_path):
     import app as app_module
     # CSRF desligado nos testes: simplifica os POST (a proteção em si é coberta em prod).
     app_module.app.config.update(TESTING=True, WTF_CSRF_ENABLED=False)
+    # O bootstrap cria o admin com troca de senha obrigatória (senha inicial). Para os
+    # testes gerais, neutralizamos o flag para usar o admin direto; o fluxo de troca
+    # forçada é coberto explicitamente em test_security.py.
+    import database
+    admin = database.get_user_by_username(ADMIN_USER)
+    database.set_must_change_password(admin["id"], False)
     return app_module
 
 

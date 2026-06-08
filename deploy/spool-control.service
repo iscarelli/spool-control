@@ -15,5 +15,30 @@ RestartSec=5
 StandardOutput=journal
 StandardError=journal
 
+# ── Sandbox / hardening (moderado) ───────────────────────────────────────────
+# Isola o processo do resto do sistema. ProtectSystem=strict torna TUDO read-only
+# exceto os caminhos em ReadWritePaths — o app só escreve no DB (data/, inclui o
+# flag .update-requested) e nos logos (static/brands/). PrivateTmp cobre o /tmp do
+# gunicorn e o HOME=/tmp acima.
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/opt/spool-control/data /opt/spool-control/static/brands
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictRealtime=true
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+# TODO: apertar (NoNewPrivileges=true, RestrictSUIDSGID=true, SystemCallFilter=@system-service,
+# CapabilityBoundingSet=) APÓS remover o grant sudoers legado de todas as instalações —
+# hoje eles quebrariam o fallback `sudo -n systemctl start spool-update.service`
+# (routes/admin.py). O mecanismo principal de update (systemd .path watcher) não usa sudo.
+
 [Install]
 WantedBy=multi-user.target

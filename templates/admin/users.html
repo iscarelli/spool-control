@@ -17,7 +17,7 @@
           </div>
           <div class="mb-3">
             <label class="form-label">{{ _('Senha') }}</label>
-            <input type="password" name="password" class="form-control" required minlength="6">
+            <input type="password" name="password" class="form-control" required minlength="8">
           </div>
           <div class="mb-3">
             <label class="form-label">{{ _('Perfil') }}</label>
@@ -65,7 +65,7 @@
                   </div>
                   <form method="post" action="{{ url_for('admin_users_password', user_id=u.id) }}">
                     <div class="modal-body">
-                      <input type="password" name="password" class="form-control" placeholder="{{ _('Nova senha') }}" required minlength="6">
+                      <input type="password" name="password" class="form-control" placeholder="{{ _('Nova senha') }}" required minlength="8">
                     </div>
                     <div class="modal-footer">
                       <button type="submit" class="btn btn-dark btn-sm">{{ _('Salvar') }}</button>

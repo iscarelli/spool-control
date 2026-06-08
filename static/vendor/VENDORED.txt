@@ -1,0 +1,4 @@
+Vendored frontend assets (served same-origin, no CDN at runtime).
+  bootstrap        5.3.3   (MIT, getbootstrap.com)
+  bootstrap-icons  1.11.3   (MIT, icons.getbootstrap.com)
+Refresh via deploy/vendor-frontend.sh — do not hand-edit.

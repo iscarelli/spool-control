@@ -183,6 +183,10 @@ def init_db():
         for sql in [
             "ALTER TABLE brands ADD COLUMN domain     TEXT NOT NULL DEFAULT ''",
             "ALTER TABLE brands ADD COLUMN updated_at TEXT NOT NULL DEFAULT ''",
+            # Força troca de senha no próximo login (senha inicial/temporária). Default 0
+            # para instalações existentes — só vale p/ admins do bootstrap e usuários
+            # criados/resetados por um admin a partir desta versão.
+            "ALTER TABLE users ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 0",
         ]:
             try:
                 db.execute(sql)
@@ -212,27 +216,39 @@ def list_users():
         return db.execute("SELECT * FROM users ORDER BY username").fetchall()
 
 
-def ensure_admin_user(username, password_hash):
+def ensure_admin_user(username, password_hash, must_change=True):
     with closing(get_db()) as db:
         db.execute(
-            "INSERT OR IGNORE INTO users (username, password_hash, role, created_at) VALUES (?,?,?,?)",
-            (username, password_hash, "admin", now_iso()),
+            "INSERT OR IGNORE INTO users (username, password_hash, role, created_at, must_change_password) VALUES (?,?,?,?,?)",
+            (username, password_hash, "admin", now_iso(), 1 if must_change else 0),
         )
         db.commit()
 
 
-def create_user(username, password_hash, role="viewer"):
+def create_user(username, password_hash, role="viewer", must_change=True):
     with closing(get_db()) as db:
         db.execute(
-            "INSERT INTO users (username, password_hash, role, created_at) VALUES (?,?,?,?)",
-            (username, password_hash, role, now_iso()),
+            "INSERT INTO users (username, password_hash, role, created_at, must_change_password) VALUES (?,?,?,?,?)",
+            (username, password_hash, role, now_iso(), 1 if must_change else 0),
         )
         db.commit()
 
 
-def update_user_password(user_id, password_hash):
+def update_user_password(user_id, password_hash, must_change=False):
     with closing(get_db()) as db:
-        db.execute("UPDATE users SET password_hash=? WHERE id=?", (password_hash, user_id))
+        db.execute(
+            "UPDATE users SET password_hash=?, must_change_password=? WHERE id=?",
+            (password_hash, 1 if must_change else 0, user_id),
+        )
+        db.commit()
+
+
+def set_must_change_password(user_id, must_change):
+    with closing(get_db()) as db:
+        db.execute(
+            "UPDATE users SET must_change_password=? WHERE id=?",
+            (1 if must_change else 0, user_id),
+        )
         db.commit()
 
 
