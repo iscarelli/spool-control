@@ -128,3 +128,12 @@ def test_restore_local_missing_slot(auth_client):
 
 def test_backup_page_renders(auth_client):
     assert auth_client.get("/admin/backup").status_code == 200
+
+
+def test_backup_config_saves_external_dir(auth_client, db, tmp_path):
+    """A pasta externa é configurada na aba Backup (não nas Configurações)."""
+    ext = str(tmp_path / "ext")
+    resp = auth_client.post("/admin/backup/config", data={"backup_external_dir": ext})
+    assert resp.status_code == 302
+    assert "/admin/backup" in resp.headers["Location"]
+    assert db.get_setting("backup_external_dir") == ext

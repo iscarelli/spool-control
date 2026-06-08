@@ -189,14 +189,6 @@ def admin_settings():
         size = request.form.get("niimbot_label_size", reg.DEFAULT_PHYSICAL_SIZE).strip()
         db.set_setting("niimbot_label_size",
                        size if size in reg.PHYSICAL_SIZES else reg.DEFAULT_PHYSICAL_SIZE)
-        # Pasta externa do backup agendado (opcional). Testa a gravação na hora
-        # p/ avisar já; o backup diário sempre grava local independente disto.
-        ext_dir = request.form.get("backup_external_dir", "").strip()
-        db.set_setting("backup_external_dir", ext_dir)
-        if ext_dir:
-            werr = backup.test_external_writable(ext_dir)
-            if werr:
-                flash(t("Pasta de backup externa não é gravável: {e}").format(e=werr), "warning")
         flash(t("Configurações salvas"), "success")
         return redirect(url_for("admin_settings"))
     settings = db.get_all_settings()
@@ -285,6 +277,22 @@ def admin_backup():
         last_error=db.get_setting("backup_last_error", ""),
         external_error=db.get_setting("backup_external_error", ""),
     )
+
+
+@app.route("/admin/backup/config", methods=["POST"])
+@admin_required
+@demo_blocked
+def admin_backup_config():
+    """Pasta externa do backup agendado (opcional). Testa a gravação na hora p/
+    avisar já; o backup diário sempre grava local independente disto."""
+    ext_dir = request.form.get("backup_external_dir", "").strip()
+    db.set_setting("backup_external_dir", ext_dir)
+    if ext_dir:
+        werr = backup.test_external_writable(ext_dir)
+        if werr:
+            flash(t("Pasta de backup externa não é gravável: {e}").format(e=werr), "warning")
+    flash(t("Configurações salvas"), "success")
+    return redirect(url_for("admin_backup"))
 
 
 @app.route("/admin/backup/download")

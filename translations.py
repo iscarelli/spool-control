@@ -866,8 +866,8 @@ _ES["Por segurança, defina uma senha própria antes de continuar."] = \
 # ── Backup agendado ──────────────────────────────────────────────────────────
 _EN["Backup"] = "Backup"
 _EN["Pasta de backup externa"] = "External backup folder"
-_EN["Caminho no servidor (ex.: disco/rede montado). O backup diário sempre grava localmente; se esta pasta estiver definida, uma cópia também é gravada aqui. Se não for possível gravar, um alerta aparece na página de Backup."] = \
-    "Path on the server (e.g. a mounted disk/network share). The daily backup always writes locally; if this folder is set, a copy is also written here. If writing fails, an alert appears on the Backup page."
+_EN["Caminho no servidor (ex.: disco/rede montado). O backup diário sempre grava localmente; se esta pasta estiver definida, uma cópia também é gravada aqui. Se não for possível gravar, um alerta aparece nesta página."] = \
+    "Path on the server (e.g. a mounted disk/network share). The daily backup always writes locally; if this folder is set, a copy is also written here. If writing fails, an alert appears on this page."
 _EN["Pasta de backup externa não é gravável: {e}"] = "External backup folder is not writable: {e}"
 _EN["Backups automáticos (diários)"] = "Automatic backups (daily)"
 _EN["O sistema mantém um backup por dia da semana (7 no total), sobrescrevendo o do mesmo dia a cada semana."] = \
@@ -884,8 +884,8 @@ _EN["Backup local OK, mas a cópia para a pasta externa falhou."] = "Local backu
 
 _ES["Backup"] = "Copia de seguridad"
 _ES["Pasta de backup externa"] = "Carpeta de backup externa"
-_ES["Caminho no servidor (ex.: disco/rede montado). O backup diário sempre grava localmente; se esta pasta estiver definida, uma cópia também é gravada aqui. Se não for possível gravar, um alerta aparece na página de Backup."] = \
-    "Ruta en el servidor (p. ej. un disco/red montado). El backup diario siempre se guarda localmente; si esta carpeta está definida, también se guarda una copia aquí. Si no se puede escribir, aparece una alerta en la página de Backup."
+_ES["Caminho no servidor (ex.: disco/rede montado). O backup diário sempre grava localmente; se esta pasta estiver definida, uma cópia também é gravada aqui. Se não for possível gravar, um alerta aparece nesta página."] = \
+    "Ruta en el servidor (p. ej. un disco/red montado). El backup diario siempre se guarda localmente; si esta carpeta está definida, también se guarda una copia aquí. Si no se puede escribir, aparece una alerta en esta página."
 _ES["Pasta de backup externa não é gravável: {e}"] = "La carpeta de backup externa no es escribible: {e}"
 _ES["Backups automáticos (diários)"] = "Backups automáticos (diarios)"
 _ES["O sistema mantém um backup por dia da semana (7 no total), sobrescrevendo o do mesmo dia a cada semana."] = \

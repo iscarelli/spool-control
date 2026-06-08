@@ -36,9 +36,7 @@
     <div class="card mb-3">
       <div class="card-body">
         <h6 class="text-muted text-uppercase fw-semibold mb-3" style="font-size:.75rem">{{ _('Backups automáticos (diários)') }}</h6>
-        <p class="mb-3" style="font-size:.85rem">{{ _('O sistema mantém um backup por dia da semana (7 no total), sobrescrevendo o do mesmo dia a cada semana.') }}
-          {% if external_dir %}<br><i class="bi bi-hdd-network me-1"></i>{{ _('Cópia externa em:') }} <code>{{ external_dir }}</code>{% endif %}
-        </p>
+        <p class="mb-3" style="font-size:.85rem">{{ _('O sistema mantém um backup por dia da semana (7 no total), sobrescrevendo o do mesmo dia a cada semana.') }}</p>
         <div class="table-responsive">
           <table class="table table-sm align-middle mb-0">
             <thead class="table-light">
@@ -68,6 +66,17 @@
             </tbody>
           </table>
         </div>
+
+        <hr class="my-3">
+        <form method="post" action="{{ url_for('admin_backup_config') }}">
+          <label class="form-label fw-semibold">{{ _('Pasta de backup externa') }} <span class="text-muted fw-normal">({{ _('opcional') }})</span></label>
+          <div class="input-group">
+            <input type="text" name="backup_external_dir" class="form-control"
+                   value="{{ external_dir or '' }}" placeholder="/mnt/backups">
+            <button type="submit" class="btn btn-outline-secondary">{{ _('Salvar') }}</button>
+          </div>
+          <div class="form-text">{{ _('Caminho no servidor (ex.: disco/rede montado). O backup diário sempre grava localmente; se esta pasta estiver definida, uma cópia também é gravada aqui. Se não for possível gravar, um alerta aparece nesta página.') }}</div>
+        </form>
       </div>
     </div>
 
