@@ -1,0 +1,25 @@
+[Unit]
+Description=Spool Control daily backup (oneshot)
+After=network.target
+
+[Service]
+Type=oneshot
+User=spool
+WorkingDirectory=/opt/spool-control
+EnvironmentFile=-/opt/spool-control/spool.env
+ExecStart=/opt/spool-control/.venv/bin/python /opt/spool-control/deploy/backup-cron.py
+
+# Sandbox brando. ProtectSystem=true (NÃO strict) deixa /usr,/boot read-only mas
+# mantém /opt (data/) e pontos de montagem (ex.: /mnt p/ a pasta externa) graváveis
+# — a escrita externa é limitada pelas permissões Unix do usuário 'spool'.
+# Este serviço NÃO usa sudo, então NoNewPrivileges pode ser aplicado aqui.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictRealtime=true
+LockPersonality=true
+StandardOutput=journal
+StandardError=journal

@@ -467,12 +467,19 @@ def _safe_next(url, default=""):
 def inject_globals():
     count = db.queue_count() if "user_id" in session else 0
     lang = session.get("lang", "pt")
+    is_admin = session.get("role") == "admin"
+    # Alerta de backup (só admin): última rotação diária falhou ou a cópia externa falhou.
+    backup_alert = bool(is_admin and (
+        db.get_setting("backup_last_result", "") == "error"
+        or db.get_setting("backup_external_error", "")
+    ))
     return {
         "label_queue_count": count,
         "app_version": APP_VERSION,
         "lang": lang,
         "_": i18n.get_translator(lang),
-        "update_available": is_update_available() if session.get("role") == "admin" else False,
+        "update_available": is_update_available() if is_admin else False,
+        "backup_alert": backup_alert,
         "nonce": getattr(g, "_nonce", ""),
         "demo_mode": DEMO_MODE,
     }

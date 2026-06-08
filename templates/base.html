@@ -90,13 +90,18 @@
           <a class="nav-link dropdown-toggle {% if ep in ('admin_users','admin_brands','admin_settings','admin_backup','admin_update') %}sc-active{% endif %}"
              href="#" data-bs-toggle="dropdown">
             <i class="bi bi-gear-fill me-1"></i>{{ _('Admin') }}
-            {% if update_available %}<span class="badge rounded-pill text-bg-danger ms-1" style="font-size:.55rem;vertical-align:top">&bull;</span>{% endif %}
+            {% if update_available or backup_alert %}<span class="badge rounded-pill text-bg-danger ms-1" style="font-size:.55rem;vertical-align:top">&bull;</span>{% endif %}
           </a>
           <ul class="dropdown-menu">
             <li><a class="dropdown-item" href="{{ url_for('admin_users') }}">{{ _('Usuários') }}</a></li>
             <li><a class="dropdown-item" href="{{ url_for('admin_brands') }}">{{ _('Marcas / Logos') }}</a></li>
             <li><a class="dropdown-item" href="{{ url_for('admin_settings') }}">{{ _('Configurações') }}</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('admin_backup') }}">{{ _('Backup') }}</a></li>
+            <li>
+              <a class="dropdown-item d-flex align-items-center gap-2" href="{{ url_for('admin_backup') }}">
+                {{ _('Backup') }}
+                {% if backup_alert %}<span class="badge rounded-pill text-bg-danger ms-auto">!</span>{% endif %}
+              </a>
+            </li>
             <li><hr class="dropdown-divider"></li>
             <li>
               <a class="dropdown-item d-flex align-items-center gap-2" href="{{ url_for('admin_update') }}">

@@ -120,11 +120,17 @@ ln -sf "${APP_DIR}/deploy/spool-control.service" /etc/systemd/system/spool-contr
 ln -sf "${APP_DIR}/deploy/spool-update.service" /etc/systemd/system/spool-update.service
 ln -sf "${APP_DIR}/deploy/spool-update.path"    /etc/systemd/system/spool-update.path
 
+# Backup diario rotativo (7 slots por dia da semana) + copia externa opcional.
+ln -sf "${APP_DIR}/deploy/spool-backup.service" /etc/systemd/system/spool-backup.service
+ln -sf "${APP_DIR}/deploy/spool-backup.timer"   /etc/systemd/system/spool-backup.timer
+
 systemctl daemon-reload
 systemctl enable spool-control
 # Habilita o observador do flag de update (inotify; dispara o oneshot na hora).
 systemctl enable --now spool-update.path 2>/dev/null \
     || warn "Nao foi possivel habilitar spool-update.path (autoatualizacao via web indisponivel)."
+systemctl enable --now spool-backup.timer 2>/dev/null \
+    || warn "Nao foi possivel habilitar spool-backup.timer (backup automatico indisponivel)."
 systemctl restart spool-control
 
 # ── 11. Verificação ───────────────────────────────────────────────────────────

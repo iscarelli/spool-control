@@ -10,6 +10,15 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.29.0] — 2026-06-08
+
+### Added
+- **Backup automático diário.** Um `systemd .timer` gera um backup por dia da semana (7 arquivos rotativos, `spool-backup-1.zip`…`spool-backup-7.zip` — número em vez de nome, independente de idioma), sobrescrevendo o do mesmo dia a cada semana. Escrita atômica + validação do snapshot antes de promover (nunca sobrescreve um backup bom com lixo); arquivos com `chmod 600` (contêm hashes de senha).
+  - **Tabela na UI** (Admin → Backup) lista os 7 slots com a **data real** de cada arquivo (do `mtime`, formatada no idioma) e o tamanho, e permite **restaurar com um clique** a partir de um backup local — sem precisar baixar/subir.
+  - **Cópia externa opcional**: em Admin → Configurações define-se uma pasta (ex.: disco/rede montado). O backup diário **sempre grava local** e, se a pasta estiver definida, **copia também** para lá. Se a gravação externa falhar, um **alerta** aparece na página de Backup e um badge no menu Admin (o backup local não é afetado). Ao salvar a pasta, há um teste de escrita imediato.
+  - O **backup manual** (download on-demand) continua com o nome `spool-backup-AAAAMMDD-HHMMSS.zip`, separado da rotação diária.
+  - Mecanismo: `backup.py` (lógica compartilhada), `deploy/backup-cron.py`, `deploy/spool-backup.{service,timer}` (oneshot como `spool`, sandbox brando p/ permitir a pasta externa). Habilitado no `setup-inside.sh` e no `update-lxc.sh` (instalações existentes ganham no próximo update).
+
 ## [1.28.1] — 2026-06-08
 
 ### Fixed
