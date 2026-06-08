@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Integrações') }} — Spool Control{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <h4 class="fw-bold mb-4">{{ _('Integrações') }}</h4>
+
+    {% for it in items %}
+    <div class="card mb-3">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <div>
+            <h6 class="fw-semibold mb-1">{{ it.label }}</h6>
+            <span class="badge {% if it.scope == 'write' %}text-bg-warning{% else %}text-bg-secondary{% endif %}">
+              {% if it.scope == 'write' %}{{ _('leitura + escrita') }}{% else %}{{ _('somente leitura') }}{% endif %}
+            </span>
+            {% if it.enabled %}
+            <span class="badge text-bg-success">{{ _('habilitada') }}</span>
+            {% else %}
+            <span class="badge text-bg-danger">{{ _('desabilitada') }}</span>
+            {% endif %}
+          </div>
+          <form method="post" action="{{ url_for('admin_integration_toggle', integration=it.slug) }}">
+            <button class="btn btn-sm btn-outline-secondary">
+              {% if it.enabled %}{{ _('Desabilitar') }}{% else %}{{ _('Habilitar') }}{% endif %}
+            </button>
+          </form>
+        </div>
+
+        <label class="form-label fw-semibold">{{ _('Chave de API') }}</label>
+        <div class="input-group mb-2">
+          <input type="text" class="form-control font-monospace sc-apikey" readonly
+                 data-key="{{ it.key }}" value="{{ '•' * 24 }}{{ it.key[-4:] }}">
+          <button type="button" class="btn btn-outline-secondary sc-reveal" title="{{ _('Revelar') }}"><i class="bi bi-eye"></i></button>
+          <button type="button" class="btn btn-outline-secondary sc-copy" title="{{ _('Copiar') }}"><i class="bi bi-clipboard"></i></button>
+        </div>
+        <div class="d-flex justify-content-between align-items-center">
+          <small class="text-muted">
+            {% if it.last_used_at %}{{ _('Último uso:') }} {{ it.last_used_at | localdt }}{% else %}{{ _('Nunca usada') }}{% endif %}
+          </small>
+          <form method="post" action="{{ url_for('admin_integration_regenerate', integration=it.slug) }}"
+                data-sc-confirm="{{ _('Gerar uma nova chave invalida a atual desta integração. Continuar?') }}">
+            <button class="btn btn-sm btn-outline-danger">{{ _('Gerar nova chave') }}</button>
+          </form>
+        </div>
+
+        {% if it.slug == 'homeassistant' %}
+        <hr class="my-3">
+        <h6 class="text-muted text-uppercase fw-semibold mb-2" style="font-size:.72rem">{{ _('Endpoints (somente leitura)') }}</h6>
+        <ul class="list-unstyled small font-monospace mb-2">
+          {% for ep in ha_endpoints %}<li><i class="bi bi-link-45deg me-1"></i>{{ ep }}</li>{% endfor %}
+        </ul>
+        <p class="small text-muted mb-0">
+          {{ _('Use estes endpoints no Home Assistant (plataforma REST). Passo a passo e exemplos de configuração em') }}
+          <code>docs/home-assistant.md</code>.
+        </p>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script nonce="{{ nonce }}">
+  document.querySelectorAll('.sc-apikey').forEach(function (input) {
+    var card = input.closest('.card');
+    var full = input.getAttribute('data-key');
+    var masked = input.value;
+    var shown = false;
+    var reveal = card.querySelector('.sc-reveal');
+    var copy = card.querySelector('.sc-copy');
+    if (reveal) reveal.addEventListener('click', function () {
+      shown = !shown;
+      input.value = shown ? full : masked;
+      reveal.querySelector('i').className = shown ? 'bi bi-eye-slash' : 'bi bi-eye';
+    });
+    if (copy) copy.addEventListener('click', function () {
+      navigator.clipboard.writeText(full).then(function () {
+        var i = copy.querySelector('i');
+        i.className = 'bi bi-check2';
+        setTimeout(function () { i.className = 'bi bi-clipboard'; }, 1500);
+      });
+    });
+  });
+</script>
+{% endblock %}

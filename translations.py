@@ -900,6 +900,55 @@ _ES["Falha ao restaurar o backup"] = "No se pudo restaurar el backup"
 _ES["O último backup automático falhou."] = "El último backup automático falló."
 _ES["Backup local OK, mas a cópia para a pasta externa falhou."] = "Backup local OK, pero la copia a la carpeta externa falló."
 
+# ── Integrações / API keys ───────────────────────────────────────────────────
+_EN["Integrações"] = "Integrations"
+_EN["Chave de API"] = "API key"
+_EN["leitura + escrita"] = "read + write"
+_EN["somente leitura"] = "read-only"
+_EN["habilitada"] = "enabled"
+_EN["desabilitada"] = "disabled"
+_EN["Habilitar"] = "Enable"
+_EN["Desabilitar"] = "Disable"
+_EN["Revelar"] = "Reveal"
+_EN["Copiar"] = "Copy"
+_EN["Último uso:"] = "Last used:"
+_EN["Nunca usada"] = "Never used"
+_EN["Gerar nova chave"] = "Generate new key"
+_EN["Gerar uma nova chave invalida a atual desta integração. Continuar?"] = \
+    "Generating a new key invalidates the current one for this integration. Continue?"
+_EN["Endpoints (somente leitura)"] = "Endpoints (read-only)"
+_EN["Use estes endpoints no Home Assistant (plataforma REST). Passo a passo e exemplos de configuração em"] = \
+    "Use these endpoints in Home Assistant (REST platform). Step-by-step and config examples in"
+_EN["Integração desconhecida"] = "Unknown integration"
+_EN["Nova chave gerada. Atualize a configuração da integração."] = \
+    "New key generated. Update the integration's configuration."
+_EN["Integração habilitada"] = "Integration enabled"
+_EN["Integração desabilitada"] = "Integration disabled"
+
+_ES["Integrações"] = "Integraciones"
+_ES["Chave de API"] = "Clave de API"
+_ES["leitura + escrita"] = "lectura + escritura"
+_ES["somente leitura"] = "solo lectura"
+_ES["habilitada"] = "habilitada"
+_ES["desabilitada"] = "deshabilitada"
+_ES["Habilitar"] = "Habilitar"
+_ES["Desabilitar"] = "Deshabilitar"
+_ES["Revelar"] = "Revelar"
+_ES["Copiar"] = "Copiar"
+_ES["Último uso:"] = "Último uso:"
+_ES["Nunca usada"] = "Nunca usada"
+_ES["Gerar nova chave"] = "Generar nueva clave"
+_ES["Gerar uma nova chave invalida a atual desta integração. Continuar?"] = \
+    "Generar una nueva clave invalida la actual de esta integración. ¿Continuar?"
+_ES["Endpoints (somente leitura)"] = "Endpoints (solo lectura)"
+_ES["Use estes endpoints no Home Assistant (plataforma REST). Passo a passo e exemplos de configuração em"] = \
+    "Use estos endpoints en Home Assistant (plataforma REST). Paso a paso y ejemplos de configuración en"
+_ES["Integração desconhecida"] = "Integración desconocida"
+_ES["Nova chave gerada. Atualize a configuração da integração."] = \
+    "Nueva clave generada. Actualice la configuración de la integración."
+_ES["Integração habilitada"] = "Integración habilitada"
+_ES["Integração desabilitada"] = "Integración deshabilitada"
+
 _TABLES = {"en": _EN, "es": _ES, "pt": _PT}
 
 
