@@ -35,13 +35,15 @@ print 60×40mm thermal labels with a QR code, and get stock reports.
 - Multiple spools per filament with a full weighing history
 - Quick weigh: enter the spool code and the gross weight — the system subtracts the tare
 - 60×40mm PDF labels with a QR code (points to the spool page — login required)
-- **Direct thermal printing to Niimbot** (B1 Pro) straight from the browser via Web Bluetooth — no Niimbot app required
+- **Direct thermal printing to Niimbot** (B1 / B1 Pro / M2-H) straight from the browser via Web Bluetooth — no Niimbot app required
 - Batch label print queue
-- Reports: by material, by location, low stock, weight history
+- Reports: inventory, statistics, by material, by location, low stock, weight history
 - Search and sorting on listings
-- Authentication with access control (admin / viewer)
+- Authentication with access control (admin / viewer); the admin must set a new password on first login
+- Automatic daily backups (7-day rotation, optional external copy) plus on-demand backup/restore — see [Backup](#backup)
 - Multi-language UI: **Portuguese, English and Spanish** (see [Languages (i18n)](#languages-i18n))
 - Weighing API for automatic stations (`POST /api/weigh`) — see [Weighing API](#weighing-api)
+- Home Assistant integration (read-only stock API) — see [Home Assistant](#home-assistant)
 
 ## Stack
 
@@ -49,7 +51,7 @@ print 60×40mm thermal labels with a QR code, and get stock reports.
 |---|---|
 | Backend | Flask 3.x + Gunicorn |
 | Database | SQLite (WAL mode) |
-| Frontend | Bootstrap 5.3 + Bootstrap Icons |
+| Frontend | Bootstrap 5.3 + Bootstrap Icons (vendored, served same-origin — no CDN) |
 | Labels | ReportLab + qrcode + Pillow |
 | Deploy | Systemd + Traefik |
 
@@ -57,32 +59,37 @@ print 60×40mm thermal labels with a QR code, and get stock reports.
 
 ```
 spool-control/
-├── app.py              # Flask routes
-├── database.py         # SQLite schema and helpers
-├── labels.py           # Label PDF / thermal PNG generation
+├── app.py              # Core: app factory, security (CSP/CSRF), auth, logging, error handlers
+├── routes/             # Routes by area: main, filaments, spools, spool_models, label_queue,
+│                       #   reports, admin, api, account, integrations
+├── database.py         # SQLite schema and helpers (no ORM)
+├── backup.py           # Backup/restore (manual download + daily rotation)
+├── labels.py           # Label PDF / thermal PNG / QR generation
+├── logger.py           # Structured JSON logging + secret masking
 ├── translations.py     # UI translations (i18n: PT/EN/ES)
+├── filament_catalog.py # Vendored SpoolmanDB catalog loader
+├── niimbot_registry.py # Vendored Niimbot models/sizes
 ├── requirements.txt
 ├── static/
-│   ├── spool.css
-│   ├── spool.js        # Client-side filter and sorting
-│   ├── spool-icon.svg
-│   └── brands/         # Brand logos (generated at deploy)
+│   ├── spool.css / spool.js     # Styles + client-side filter/sorting
+│   ├── vendor/                  # Bootstrap + Bootstrap Icons (vendored, no CDN)
+│   ├── niimbot*.js              # Vendored Web Bluetooth driver + integration
+│   └── brands/                  # Brand logos (downloaded post-install)
 ├── templates/
 ├── tools/
 │   └── validate_qr_autoweigh.py  # Validate the QR/auto-weigh flow without hardware
 └── deploy/
-    ├── proxmox-deploy.sh   # Proxmox LXC installer (creates the container + installs)
-    ├── setup-inside.sh     # Install inside the LXC (public clone + venv + systemd)
-    ├── update-lxc.sh       # Update via git archive
-    ├── seed_brands.py      # Download brand logos
+    ├── proxmox-deploy.sh / setup-inside.sh / update-lxc.sh / update-cli.sh
+    ├── gunicorn.conf.py
     ├── spool-control.service
-    └── proxmox-helper/     # community-scripts compatible format (future PR)
-        ├── ct/spool-control.sh
-        ├── install/spool-control-install.sh
-        └── json/spool-control.json
+    ├── spool-update.{service,path}    # privilege-separated web update (flag-file + watcher)
+    ├── spool-backup.{service,timer}   # daily rotating backup
+    ├── vendor-frontend.sh / vendor-niimbot.sh / vendor-spoolmandb.sh
+    ├── seed_brands.py / seed-demo-data.py
+    └── proxmox-helper/                # community-scripts compatible format (future PR)
 ```
 
-`data/spool.db` and `spool.env` live outside git (generated on the server).
+`data/` (DB + backups) and `spool.env` live outside git (generated on the server).
 
 ## Public URL / domain (important)
 
@@ -112,9 +119,9 @@ The step-by-step to **add a new language** is in [`docs/i18n.md`](docs/i18n.md).
 
 Machine-to-machine endpoints for an automatic weighing station (e.g. a scale + QR reader +
 ESP32 — see [`docs/estudo_balanca_qrcode.md`](docs/estudo_balanca_qrcode.md)).
-Authenticated by `X-API-Key` (== the `SPOOL_API_KEY` env var, generated at install).
-**If `SPOOL_API_KEY` is not set the endpoints return 401** — there is no open-by-default
-mode. CSRF-exempt.
+Authenticated by `X-API-Key`. The scale uses a **write-scoped** key, seeded at install from
+the `SPOOL_API_KEY` env var and managed in **Admin → Integrations**. Requests without a valid
+key get **401** — there is no open-by-default mode. CSRF-exempt.
 
 - `POST /api/weigh` — body `{"spool_id": 1, "gross_weight_g": 532}` → records the weighing
   (`net = gross − tare`) and returns JSON with `net_weight_g` and `remaining_pct`.
@@ -232,7 +239,10 @@ logos can be added in **Admin → Brands / Logos**.
 - User: `admin`
 - Password: randomly generated by `setup-inside.sh` (shown at the end of the install)
 
-Change it immediately in **Admin → Users**.
+On the **first login the admin must set a new password** before using the system — the
+generated one is temporary. The same forced change applies to any user created or
+password-reset by an admin. You can change your password anytime later via the user menu →
+**Change password**.
 
 ## Environment variables (`spool.env`)
 
@@ -257,6 +267,19 @@ Restricts the instance for public demonstration:
 - Use `deploy/reset-demo.sh` + `spool-demo-reset.timer` for automatic daily resets (pulls latest release, then reseeds)
 
 > `spool.env` is in `.gitignore` and must never be committed.
+
+## Backup
+
+Everything backup-related is under **Admin → Backup**.
+
+- **Automatic daily backup**: a systemd timer keeps **7 rotating backups** — one per weekday
+  (`spool-backup-1.zip` … `spool-backup-7.zip`), written atomically to `data/backups/`. Each
+  is a `.zip` with the database + brand logos, validated before it replaces the previous one.
+- **External copy (optional)**: set a folder in **Admin → Backup** (e.g. a mounted NAS/USB).
+  The daily backup always writes locally and, if set, also copies there. If the external write
+  fails, an alert shows on the Backup page (the local backup is unaffected).
+- **Manual / restore**: on-demand download (timestamped name, separate from the rotation) and
+  restore — upload a `.zip`, or restore one of the daily backups in one click.
 
 ## Observability / Logs
 
@@ -296,9 +319,9 @@ Error lines include the full Python traceback inline:
 }
 ```
 
-**Sensitive fields** (`password`, `token`, `secret`, `api_key`, `authorization`,
-`cookie`, `spool_api_key`, `password_hash`) are replaced with `***` before any log
-is written.
+**Sensitive fields** (`password`, `senha`, `token`, `secret`, `api_key`, `authorization`,
+`cookie`, `spool_api_key`, `password_hash`, `current_password`, `new_password`,
+`secret_key`) are replaced with `***` before any log is written.
 
 ### Viewing logs
 
@@ -334,7 +357,8 @@ check fails:
 ```json
 {
   "status": "ok",
-  "version": "1.16.1",
+  "version": "1.30.2",
+  "demo_mode": false,
   "checks": {
     "db": "ok",
     "data_dir": "ok"
@@ -342,4 +366,6 @@ check fails:
 }
 ```
 
-Useful for uptime monitors (`/health` does not require authentication).
+`status` is `"degraded"` (HTTP 503) when a check fails. `demo_mode` lets an external monitor
+catch a `DEMO_MODE` leak into a real install. Useful for uptime monitors (`/health` does not
+require authentication).
