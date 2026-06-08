@@ -357,8 +357,9 @@ check fails:
 ```json
 {
   "status": "ok",
-  "version": "1.30.2",
+  "version": "1.30.3",
   "demo_mode": false,
+  "backup_age_h": 6.2,
   "checks": {
     "db": "ok",
     "data_dir": "ok"
@@ -367,5 +368,6 @@ check fails:
 ```
 
 `status` is `"degraded"` (HTTP 503) when a check fails. `demo_mode` lets an external monitor
-catch a `DEMO_MODE` leak into a real install. Useful for uptime monitors (`/health` does not
-require authentication).
+catch a `DEMO_MODE` leak into a real install, and `backup_age_h` (hours since the last
+successful automatic backup, `null` if none) lets it alert when backups stop. Useful for
+uptime monitors (`/health` does not require authentication).

@@ -10,6 +10,17 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.30.3] — 2026-06-08
+
+### Security
+- **Remoção total do `sudo` + hardening do systemd.** Como todas as instalações já migraram para o vigia `.path` (sem privilégio), o fallback `sudo` foi **removido do app** (`routes/admin.py`) e o `spool-control.service` ganhou `NoNewPrivileges=true`, `RestrictSUIDSGID=true`, `CapabilityBoundingSet=` (vazio), `SystemCallFilter=@system-service`, `ProtectProc=invisible`, `ProcSubset=pid`. A aresta app→root pelo caminho web deixou de existir. O `update-lxc.sh` ainda remove qualquer grant sudoers legado por garantia.
+
+### Added
+- **`backup_age_h` no `/health`** — horas desde o último backup automático bem-sucedido (`null` se nunca rodou), para um monitor externo alertar quando os backups pararem.
+
+### Removed
+- Imagem antiga `docs/2026-06-02_19-25.png` (não referenciada).
+
 ## [1.30.2] — 2026-06-08
 
 ### Added

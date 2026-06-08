@@ -140,3 +140,13 @@ def test_health_exposes_demo_mode(client):
     data = client.get("/health").get_json()
     assert "demo_mode" in data
     assert data["demo_mode"] is False
+
+
+def test_health_exposes_backup_age(client, db):
+    """O /health expõe backup_age_h p/ um monitor alertar se o backup parar."""
+    data = client.get("/health").get_json()
+    assert "backup_age_h" in data
+    assert data["backup_age_h"] is None          # banco novo: nenhum backup ainda
+    db.set_setting("backup_last_run", db.now_iso())
+    data2 = client.get("/health").get_json()
+    assert isinstance(data2["backup_age_h"], (int, float)) and data2["backup_age_h"] >= 0

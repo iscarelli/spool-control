@@ -2,7 +2,6 @@
 do sistema e backup/restauração."""
 import re
 import time
-import subprocess
 from pathlib import Path
 from flask import (
     render_template, request, redirect, url_for, session, flash, jsonify, Response,
@@ -237,17 +236,6 @@ def admin_update_run():
         log.error("admin.update_flag_failed", exc_info=True)
         return jsonify(ok=False,
                        error="Não foi possível registrar o pedido de atualização."), 500
-    # Fallback transitório (Seamless): em instalações onde o vigia .path ainda não foi
-    # instalado (ele entra na PRÓXIMA atualização, junto do novo update-lxc.sh), o grant
-    # sudoers legado dispara o oneshot. `-n` evita prompt; falha é ignorada. Vira no-op
-    # assim que o sudoers é removido — aí o flag + .path assumem sozinhos.
-    try:
-        subprocess.run(
-            ["sudo", "-n", "systemctl", "start", "--no-block", "spool-update.service"],
-            check=False, capture_output=True, text=True, timeout=10,
-        )
-    except Exception:
-        pass  # sem sudoers (ou sem sudo) → tudo bem, o vigia .path cuida do flag
     log.info("admin.update_triggered")
     return jsonify(ok=True)
 

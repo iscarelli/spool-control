@@ -80,9 +80,9 @@ atualização **seguinte** à que os trouxe. Logo:
 
 - **Instalação nova** direto numa versão ≥ 1.26.0: já nasce blindada (o script novo roda de primeira).
 - **De 1.26.0 → 1.26.1+**: a atualização **finaliza** a blindagem (instala `.path` + `update`, remove sudoers).
-- **De uma versão < 1.26.0 direto para ≥ 1.26.1**: funciona normalmente (o botão usa um
-  *fallback* transitório), mas a blindagem total se completa na **próxima** atualização —
-  tudo automático, **sem console**.
 
-Em qualquer caso o botão "Atualizar" continua funcionando: nunca há um estado sem o vigia
-`.path` **e** sem o grant `sudoers` ao mesmo tempo.
+> **A partir da v1.30.3** o *fallback* `sudo` foi **removido do app** — todas as instalações já
+> migraram para o vigia `.path`. O update é 100% pelo flag-file + `.path` watcher (sem nenhum
+> `sudo`), e o `spool-control.service` ganhou `NoNewPrivileges=true`, `RestrictSUIDSGID=true`,
+> `CapabilityBoundingSet=` e `SystemCallFilter=@system-service`. O `update-lxc.sh` ainda roda
+> `rm -f /etc/sudoers.d/spool-update` por garantia (no-op se já removido).
