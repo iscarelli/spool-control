@@ -949,6 +949,11 @@ _ES["Nova chave gerada. Atualize a configuração da integração."] = \
 _ES["Integração habilitada"] = "Integración habilitada"
 _ES["Integração desabilitada"] = "Integración deshabilitada"
 
+_EN["A atualização está demorando. Recarregue a página em instantes."] = \
+    "The update is taking a while. Please reload the page shortly."
+_ES["A atualização está demorando. Recarregue a página em instantes."] = \
+    "La actualización está tardando. Vuelva a cargar la página en un momento."
+
 _TABLES = {"en": _EN, "es": _ES, "pt": _PT}
 
 
