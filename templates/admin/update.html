@@ -103,8 +103,10 @@
   var progress = document.getElementById('updateProgress');
   var progressMsg = document.getElementById('progressMsg');
   var target = "{{ latest }}";
+  var healthUrl = "{{ url_for('health') }}";
+  var deadline = 0;
 
-  function toTuple(v) { return (v.match(/\d+/g) || ['0']).map(Number); }
+  function toTuple(v) { return (String(v).match(/\d+/g) || ['0']).map(Number); }
   function gte(a, b) {
     a = toTuple(a); b = toTuple(b);
     for (var i = 0; i < Math.max(a.length, b.length); i++) {
@@ -114,24 +116,35 @@
     return true;
   }
 
+  // Sonda o /health até o serviço VOLTAR já na versão nova. O /health reporta a versão
+  // do PROCESSO em execução (constante fixada no import), que só muda DEPOIS do restart
+  // — então só recarregamos quando o novo processo está de pé. Isso atravessa a janela
+  // de 502 do proxy durante o reinício sem mostrar erro ao usuário (era a causa do
+  // "Bad Gateway" no fim do update).
   function poll() {
-    fetch("{{ url_for('admin_update_status') }}", { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-      .then(function (r) { return r.json(); })
-      .then(function (d) {
-        if (d.done || (d.current && gte(d.current, target))) {
+    if (Date.now() > deadline) {
+      progressMsg.textContent = "{{ _('A atualização está demorando. Recarregue a página em instantes.') }}";
+      progress.querySelector('.spinner-border').classList.add('d-none');
+      return;
+    }
+    fetch(healthUrl, { cache: 'no-store', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+      .then(function (h) {
+        if (h && h.version && gte(h.version, target)) {
           progressMsg.textContent = "{{ _('Concluído! Recarregando…') }}";
-          try { sessionStorage.setItem('sc-updated', d.current || target); } catch (e) {}
-          setTimeout(function () { location.reload(); }, 1500);
+          try { sessionStorage.setItem('sc-updated', h.version); } catch (e) {}
+          setTimeout(function () { location.reload(); }, 800);
         } else {
-          setTimeout(poll, 4000);
+          setTimeout(poll, 3000);   // de pé, mas ainda na versão antiga → update em curso
         }
       })
-      .catch(function () { setTimeout(poll, 4000); });  // restart em curso → re-tenta
+      .catch(function () { setTimeout(poll, 3000); });  // 502/queda durante restart → re-tenta
   }
 
   btn.addEventListener('click', function () {
     btn.disabled = true;
     progress.classList.remove('d-none');
+    deadline = Date.now() + 5 * 60 * 1000;  // teto de 5 min p/ o ciclo de update
     fetch("{{ url_for('admin_update_run') }}", { method: 'POST' })
       .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
       .then(function (res) {

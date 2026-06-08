@@ -10,6 +10,11 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.30.1] — 2026-06-08
+
+### Fixed
+- **"Bad Gateway" no fim da atualização pela web.** A página recarregava por tempo (~1,5s após o status indicar "concluído"), batendo bem na janela em que o serviço reinicia — o proxy respondia 502 e era preciso recarregar à mão. Agora a página **sonda o `/health` até o serviço voltar já na versão nova** (o `/health` reporta a versão do processo em execução, que só muda após o restart) e só então recarrega — atravessando o reinício sem erro. Teto de 5 min com mensagem de fallback.
+
 ## [1.30.0] — 2026-06-08
 
 ### Added
