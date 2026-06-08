@@ -10,14 +10,14 @@
           <div class="mb-3">
             <label class="form-label fw-semibold">{{ _('Código do Spool') }}</label>
             <input type="text" name="spool_code" class="form-control form-control-lg font-monospace"
-                   placeholder="SP-0001 ou 1" autofocus required>
+                   placeholder="{{ _('SP-0001 ou 1') }}" autofocus required>
             <div class="form-text">{{ _('Aceita SP-0001, SP0001 ou somente o número.') }}</div>
           </div>
           <div class="mb-4">
             <label class="form-label fw-semibold">{{ _('Peso Bruto (g)') }}</label>
             <div class="input-group input-group-lg">
               <input type="number" name="gross_weight_g" class="form-control" step="1" min="0"
-                     placeholder="ex: 1150" required>
+                     placeholder="{{ _('ex: 1150') }}" required>
               <span class="input-group-text">g</span>
             </div>
             <div class="form-text">{{ _('Peso total com o carretel. A tara é subtraída automaticamente.') }}</div>
