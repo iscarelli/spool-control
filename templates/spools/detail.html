@@ -14,35 +14,35 @@
   {% endif %}
   {{ donut(pct, fill, tip=pct|int|string + _('% disponível')) }}
   <h4 class="mb-0 fw-bold ms-2">SP-{{ '%04d'|format(spool.id) }}</h4>
-  {% if not spool.active %}<span class="badge bg-secondary ms-2">Finalizado</span>{% endif %}
+  {% if not spool.active %}<span class="badge bg-secondary ms-2">{{ _('Finalizado') }}</span>{% endif %}
   {% if logged_in %}
   <div class="ms-auto d-flex gap-2">
     {% if spool.active %}
     <a href="{{ url_for('spools_weigh', spool_id=spool.id) }}" class="btn btn-dark btn-sm">
-      <span class="icon-scale me-1"></span>Pesar
+      <span class="icon-scale me-1"></span>{{ _('Pesar') }}
     </a>
     {% endif %}
-    <a href="{{ url_for('spools_edit', spool_id=spool.id) }}" class="btn btn-outline-secondary btn-sm">Editar</a>
+    <a href="{{ url_for('spools_edit', spool_id=spool.id) }}" class="btn btn-outline-secondary btn-sm">{{ _('Editar') }}</a>
     <a href="{{ url_for('spool_label_pdf', spool_id=spool.id) }}" class="btn btn-outline-dark btn-sm" target="_blank">
-      <i class="bi bi-printer me-1"></i>Etiqueta PDF
+      <i class="bi bi-printer me-1"></i>{{ _('Etiqueta PDF') }}
     </a>
     <button type="button" class="btn btn-outline-primary btn-sm"
             data-niimbot-url="{{ url_for('spool_label_png', spool_id=spool.id) }}"
-            title="Imprimir direto na Niimbot (Bluetooth)">
-      <i class="bi bi-bluetooth me-1"></i>Imprimir Niimbot
+            title="{{ _('Imprimir direto na Niimbot (Bluetooth)') }}">
+      <i class="bi bi-bluetooth me-1"></i>{{ _('Imprimir Niimbot') }}
     </button>
     {% if in_queue %}
     <form method="post" action="{{ url_for('label_queue_remove', spool_id=spool.id) }}">
       <input type="hidden" name="next" value="{{ url_for('spools_detail', spool_id=spool.id) }}">
-      <button class="btn btn-sm btn-warning" title="Remover da fila de impressão">
-        <i class="bi bi-printer-fill me-1"></i>Na fila
+      <button class="btn btn-sm btn-warning" title="{{ _('Remover da fila de impressão') }}">
+        <i class="bi bi-printer-fill me-1"></i>{{ _('Na fila') }}
       </button>
     </form>
     {% else %}
     <form method="post" action="{{ url_for('label_queue_add', spool_id=spool.id) }}">
       <input type="hidden" name="next" value="{{ url_for('spools_detail', spool_id=spool.id) }}">
-      <button class="btn btn-sm btn-outline-warning" title="Adicionar à fila de impressão">
-        <i class="bi bi-printer me-1"></i>+ Fila
+      <button class="btn btn-sm btn-outline-warning" title="{{ _('Adicionar à fila de impressão') }}">
+        <i class="bi bi-printer me-1"></i>{{ _('+ Fila') }}
       </button>
     </form>
     {% endif %}
@@ -54,7 +54,7 @@
   <div class="col-md-4">
     <div class="card h-100 border-0 bg-light">
       <div class="card-body">
-        <div class="text-muted small mb-1">Filamento</div>
+        <div class="text-muted small mb-1">{{ _('Filamento') }}</div>
         <div class="fs-5 fw-bold">{{ spool.material }}</div>
         <div>{{ spool.brand }}</div>
         <div class="text-muted">{{ spool.family }}</div>
@@ -65,7 +65,7 @@
         </div>
         {% endif %}
         {% if logged_in %}
-        <a href="{{ url_for('filaments_detail', filament_id=spool.filament_id) }}" class="btn btn-sm btn-outline-secondary mt-2">Ver filamento</a>
+        <a href="{{ url_for('filaments_detail', filament_id=spool.filament_id) }}" class="btn btn-sm btn-outline-secondary mt-2">{{ _('Ver filamento') }}</a>
         {% endif %}
       </div>
     </div>
@@ -73,24 +73,24 @@
   <div class="col-md-4">
     <div class="card h-100 border-0 bg-light">
       <div class="card-body">
-        <div class="text-muted small mb-1">Peso Atual</div>
+        <div class="text-muted small mb-1">{{ _('Peso Atual') }}</div>
         {% if spool.current_net_g is not none %}
           <div class="fs-3 fw-bold">{{ spool.current_net_g|int }}g</div>
-          <div class="text-muted small">de {{ spool.nominal_weight_g|int }}g nominais</div>
+          <div class="text-muted small">{{ _('de {n}g nominais').replace('{n}', spool.nominal_weight_g|int|string) }}</div>
           {% if spool.nominal_weight_g > 0 %}
           {% set pct = [(spool.current_net_g / spool.nominal_weight_g * 100)|int, 100]|min %}
           <div class="progress mt-2" style="height:10px">
             <div class="progress-bar {% if pct < 20 %}bg-danger{% elif pct < 50 %}bg-warning{% else %}bg-success{% endif %}" style="width:{{ pct }}%"></div>
           </div>
-          <div class="text-muted small mt-1">{{ pct }}% restante</div>
+          <div class="text-muted small mt-1">{{ pct }}% {{ _('restante') }}</div>
           {% endif %}
           {% if spool.last_weighed_at %}
-          <div class="text-muted" style="font-size:0.75rem">Pesado em {{ spool.last_weighed_at | localdate }}</div>
+          <div class="text-muted" style="font-size:0.75rem">{{ _('Pesado em') }} {{ spool.last_weighed_at | localdate }}</div>
           {% endif %}
         {% else %}
-          <div class="text-muted">Não pesado ainda</div>
+          <div class="text-muted">{{ _('Não pesado ainda') }}</div>
           {% if logged_in and spool.active %}
-          <a href="{{ url_for('spools_weigh', spool_id=spool.id) }}" class="btn btn-dark btn-sm mt-2">Registrar peso</a>
+          <a href="{{ url_for('spools_weigh', spool_id=spool.id) }}" class="btn btn-dark btn-sm mt-2">{{ _('Registrar peso') }}</a>
           {% endif %}
         {% endif %}
       </div>
@@ -99,15 +99,15 @@
   <div class="col-md-4">
     <div class="card h-100 border-0 bg-light">
       <div class="card-body">
-        <div class="text-muted small mb-1">Detalhes</div>
-        <div><span class="text-muted">Local:</span> {{ spool.location or '—' }}</div>
-        <div><span class="text-muted">Carretel:</span> {{ spool.model_name or '—' }}</div>
-        <div><span class="text-muted">Tara efetiva:</span> {{ spool.effective_tare_g|int }}g</div>
+        <div class="text-muted small mb-1">{{ _('Detalhes') }}</div>
+        <div><span class="text-muted">{{ _('Local') }}:</span> {{ spool.location or '—' }}</div>
+        <div><span class="text-muted">{{ _('Carretel') }}:</span> {{ spool.model_name or '—' }}</div>
+        <div><span class="text-muted">{{ _('Tara efetiva') }}:</span> {{ spool.effective_tare_g|int }}g</div>
         {% if spool.purchase_date %}
-        <div><span class="text-muted">Compra:</span> {{ spool.purchase_date | localdate }}</div>
+        <div><span class="text-muted">{{ _('Compra') }}:</span> {{ spool.purchase_date | localdate }}</div>
         {% endif %}
         {% if spool.purchase_price %}
-        <div><span class="text-muted">Preço:</span> R$ {{ "%.2f"|format(spool.purchase_price)|replace(".", ",") }}</div>
+        <div><span class="text-muted">{{ _('Preço') }}:</span> R$ {{ "%.2f"|format(spool.purchase_price)|replace(".", ",") }}</div>
         {% endif %}
       </div>
     </div>
@@ -119,12 +119,12 @@
 {% endif %}
 
 {% if readings %}
-<h5 class="fw-semibold mb-3">Histórico de Pesagens</h5>
+<h5 class="fw-semibold mb-3">{{ _('Histórico de Pesagens') }}</h5>
 <div class="card">
   <div class="table-responsive">
     <table class="table table-sm mb-0">
       <thead class="table-light">
-        <tr><th>Data/Hora</th><th>Bruto (g)</th><th>Tara (g)</th><th>Net (g)</th><th>Registrado por</th><th>Notas</th></tr>
+        <tr><th>{{ _('Data/Hora') }}</th><th>{{ _('Bruto (g)') }}</th><th>{{ _('Tara (g)') }}</th><th>{{ _('Net (g)') }}</th><th>{{ _('Registrado por') }}</th><th>{{ _('Notas') }}</th></tr>
       </thead>
       <tbody>
         {% for r in readings %}
@@ -158,17 +158,17 @@ window.addEventListener('DOMContentLoaded', function() {
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title"><i class="bi bi-printer me-2"></i>Fila de Impressão</h5>
+        <h5 class="modal-title"><i class="bi bi-printer me-2"></i>{{ _('Fila de Impressão') }}</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        Deseja adicionar <strong>SP-{{ '%04d'|format(spool.id) }}</strong> à fila de impressão de etiquetas?
+        {{ _('Deseja adicionar') }} <strong>SP-{{ '%04d'|format(spool.id) }}</strong> {{ _('à fila de impressão de etiquetas?') }}
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Não</button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ _('Não') }}</button>
         <form method="post" action="{{ url_for('label_queue_add', spool_id=spool.id) }}">
           <input type="hidden" name="next" value="{{ url_for('spools_detail', spool_id=spool.id) }}">
-          <button type="submit" class="btn btn-dark">Sim, adicionar</button>
+          <button type="submit" class="btn btn-dark">{{ _('Sim, adicionar') }}</button>
         </form>
       </div>
     </div>

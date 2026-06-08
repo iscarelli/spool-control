@@ -10,6 +10,14 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.30.2] — 2026-06-08
+
+### Added
+- **Screenshots no README** (dashboard, filamentos, inventário, detalhe do spool, estatísticas, integrações).
+
+### Fixed
+- **Internacionalização completa.** A página de **detalhe do spool** estava em português fixo (não passava pelo `_()`), e havia títulos de aba, tooltips e textos em JS hardcoded em alguns templates (relatórios, fila de etiquetas, pesagem rápida, lista de spools). Tudo foi movido para `_()` com tradução PT/EN/ES — a interface fica 100% no idioma escolhido.
+
 ## [1.30.1] — 2026-06-08
 
 ### Fixed

@@ -11,7 +11,7 @@
     </a>
     <button type="button" class="btn btn-primary"
             data-niimbot-urls='[{% for s in items %}"{{ url_for('spool_label_png', spool_id=s.id) }}"{% if not loop.last %},{% endif %}{% endfor %}]'
-            title="Imprimir a fila direto na Niimbot (Bluetooth)">
+            title="{{ _('Imprimir a fila direto na Niimbot (Bluetooth)') }}">
       <i class="bi bi-bluetooth me-1"></i>{{ _('Imprimir Niimbot') }} ({{ items|length }})
     </button>
     <form method="post" action="{{ url_for('label_queue_clear') }}"

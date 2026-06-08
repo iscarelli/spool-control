@@ -11,6 +11,24 @@ print 60×40mm thermal labels with a QR code, and get stock reports.
 
 > Data resets daily at midnight UTC. Password and user creation are disabled.
 
+## Screenshots
+
+![Dashboard](docs/img/dashboard.png)
+*Dashboard — stock summary and low-stock alerts.*
+
+| Filaments | Inventory |
+|---|---|
+| ![Filaments](docs/img/filaments.png) | ![Inventory](docs/img/inventory.png) |
+| Filament registry with per-spool stock | Visual inventory with remaining-weight donuts |
+
+| Spool detail & weighing history | Statistics |
+|---|---|
+| ![Spool detail](docs/img/spool-detail.png) | ![Statistics](docs/img/stats.png) |
+| Per-spool weighing history (gross − tare = net) | Breakdown by brand, material and color |
+
+![Integrations](docs/img/integrations.png)
+*Admin → Integrations — manage independent API keys (Home Assistant shown).*
+
 ## Features
 
 - Filament registry (material, brand, family, color) with automatic brand logos

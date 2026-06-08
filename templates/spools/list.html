@@ -159,7 +159,7 @@ function _updateMarkBtn() {
   const allIn = ids.length > 0 && ids.every(id => _queueIds.has(id));
   _markBtn.classList.toggle('btn-warning', allIn);
   _markBtn.classList.toggle('btn-outline-warning', !allIn);
-  _markBtn.title = allIn ? 'Remover todos da fila' : 'Adicionar todos à fila';
+  _markBtn.title = allIn ? "{{ _('Remover todos da fila') }}" : "{{ _('Adicionar todos à fila') }}";
 }
 _updateMarkBtn();
 
