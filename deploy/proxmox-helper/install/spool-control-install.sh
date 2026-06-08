@@ -92,11 +92,12 @@ msg_ok "Set Permissions"
 
 msg_info "Creating Service"
 ln -sf /opt/spool-control/deploy/spool-control.service /etc/systemd/system/spool-control.service
+# Autoatualizacao pela web SEM privilegio: flag-file + systemd .path watcher (o app nao usa sudo).
 ln -sf /opt/spool-control/deploy/spool-update.service /etc/systemd/system/spool-update.service
-install -m 0440 /opt/spool-control/deploy/sudoers-spool-update /etc/sudoers.d/spool-update
-visudo -cf /etc/sudoers.d/spool-update >/dev/null 2>&1 || rm -f /etc/sudoers.d/spool-update
+ln -sf /opt/spool-control/deploy/spool-update.path    /etc/systemd/system/spool-update.path
 systemctl daemon-reload
 $STD systemctl enable spool-control
+$STD systemctl enable --now spool-update.path || true
 $STD systemctl start spool-control
 msg_ok "Created and Started Service"
 

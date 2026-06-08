@@ -13,7 +13,7 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 ## [1.28.1] — 2026-06-08
 
 ### Fixed
-- **Instalação quebrada pela referência a um arquivo apagado.** `setup-inside.sh` (e o installer do proxmox-helper) ainda tentavam instalar `deploy/sudoers-spool-update`, apagado na v1.26.0 — com `set -euo pipefail`, isso abortava a instalação nova. O arquivo foi **restaurado**, mantendo a autoatualização via sudo funcionando nas instalações que ainda não migraram para o vigia `.path` (sem privilégio). Ver `routes/admin.py`.
+- **Instalação quebrada pela referência a um arquivo apagado.** `setup-inside.sh` (e o installer do proxmox-helper) ainda tentavam instalar `deploy/sudoers-spool-update`, apagado na v1.26.0 — com `set -euo pipefail`, isso **abortava a instalação nova**. Como esses scripts rodam **só na instalação** (updates passam pelo `update-lxc.sh`), a correção faz a instalação nova **nascer já no mecanismo sem privilégio** (flag-file + systemd `.path` watcher), **sem** grant sudo. Instalações legadas que ainda não migraram seguem com seu grant existente e o fallback em `routes/admin.py` — **a autoatualização via sudo continua funcionando** nelas até atualizarem (o `update-lxc.sh` então remove o sudoers e habilita o `.path`).
 
 ### Security
 - **Guard-rail de `DEMO_MODE`.** Para evitar que o modo demonstrativo vaze para uma instalação real, agora há: aviso gritado no journal no boot (`demo_mode.enabled`), exposição de `demo_mode` no `/health` (monitores externos detectam o vazamento) e `DEMO_MODE=0` documentado no `spool.env.example`.
