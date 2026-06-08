@@ -57,8 +57,24 @@ def account_password():
             session.pop("must_change_password", None)
             log.info("account.password_changed", forced=forced)
             flash(t("Senha alterada com sucesso"), "success")
+            # Primeiro login (senha temporária recém-trocada): oferece — sem obrigar —
+            # ativar o 2FA. Quem já tem 2FA ou veio fora do fluxo forçado vai direto.
+            if forced and not user["totp_enabled"]:
+                return redirect(url_for("account_2fa_offer"))
             return redirect(url_for("dashboard"))
     return render_template("account/password.html", forced=forced)
+
+
+@app.route("/account/2fa/offer")
+@login_required
+@demo_blocked
+def account_2fa_offer():
+    """Convite (opcional) para ativar o 2FA logo após o primeiro login. Quem já tem
+    2FA ativo não vê o convite — segue para o painel."""
+    user = db.get_user_by_id(session["user_id"])
+    if user["totp_enabled"]:
+        return redirect(url_for("dashboard"))
+    return render_template("account/2fa_offer.html")
 
 
 @app.route("/account/2fa", methods=["GET", "POST"])

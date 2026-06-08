@@ -419,6 +419,14 @@ _EN = {
         "Enter the 6-digit code shown by the app to confirm.",
     "Não consegue escanear? Use esta chave:": "Can't scan? Use this key:",
     "Ativar":                               "Enable",
+    "Copiar códigos":                       "Copy codes",
+    "Copiado!":                             "Copied!",
+    "Proteja sua conta com verificação em duas etapas":
+        "Protect your account with two-factor authentication",
+    "Você pode ativar agora ou depois, na sua conta.":
+        "You can enable it now or later, from your account.",
+    "Agora não":                            "Not now",
+    "Ativar agora":                         "Enable now",
 
     # ── Color buckets (stats) ────────────────────────────────────────────────
     "Preto":    "Black",
@@ -854,6 +862,14 @@ _ES = {
         "Introduce el código de 6 dígitos que muestra la app para confirmar.",
     "Não consegue escanear? Use esta chave:": "¿No puedes escanear? Usa esta clave:",
     "Ativar":                               "Activar",
+    "Copiar códigos":                       "Copiar códigos",
+    "Copiado!":                             "¡Copiado!",
+    "Proteja sua conta com verificação em duas etapas":
+        "Protege tu cuenta con verificación en dos pasos",
+    "Você pode ativar agora ou depois, na sua conta.":
+        "Puedes activarla ahora o más tarde, en tu cuenta.",
+    "Agora não":                            "Ahora no",
+    "Ativar agora":                         "Activar ahora",
 
     # ── Color buckets (stats) ────────────────────────────────────────────────
     "Preto":    "Negro",

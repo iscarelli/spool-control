@@ -167,6 +167,32 @@ def test_demo_mode_blocks_2fa_setup(auth_client, app_module, monkeypatch):
     assert resp.status_code == 302  # demo_blocked redireciona
 
 
+# ── Oferta de 2FA no primeiro login ───────────────────────────────────────────
+
+def test_forced_password_change_offers_2fa(client, db):
+    """Trocar a senha temporária no 1º login leva ao convite (opcional) de 2FA."""
+    admin = db.get_user_by_username(ADMIN_USER)
+    db.set_must_change_password(admin["id"], True)
+    client.post("/login", data={"username": ADMIN_USER, "password": ADMIN_PASS})
+    resp = client.post("/account/password", data={
+        "current_password": ADMIN_PASS,
+        "new_password": "nova-senha-forte",
+        "confirm_password": "nova-senha-forte",
+    })
+    assert resp.status_code == 302
+    assert "/account/2fa/offer" in resp.headers["Location"]
+    # O convite em si é acessível e não obriga nada (sem 2FA ainda).
+    assert client.get("/account/2fa/offer").status_code == 200
+
+
+def test_2fa_offer_skipped_when_already_enabled(auth_client, db, app_module):
+    """Quem já tem 2FA ativo não vê o convite — vai direto ao painel."""
+    _seed_2fa(db, app_module)
+    resp = auth_client.get("/account/2fa/offer")
+    assert resp.status_code == 302
+    assert "/account/2fa/offer" not in resp.headers["Location"]
+
+
 # ── reset-2fa.py zera o 2FA ───────────────────────────────────────────────────
 
 def test_reset_script_disables_2fa(db, app_module, monkeypatch):
