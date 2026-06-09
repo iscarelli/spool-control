@@ -10,6 +10,11 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.32.0] — 2026-06-09
+
+### Added
+- **Instalação de versão fixa via `SETUP_REF`.** O `proxmox-deploy.sh` e o `setup-inside.sh` passam a aceitar a variável de ambiente `SETUP_REF` (tag/branch/commit): faz `git checkout` da ref logo após o clone, **antes** do `git archive` (mesmo padrão do `update-lxc.sh`), instalando uma versão específica em vez da latest do `main`. Sem `SETUP_REF`, instala a latest como sempre — retrocompatível. Útil para reproduzir o estado de um cliente numa release antiga. Ex.: `SETUP_REF=v1.29.0 bash -c "$(curl -fsSL .../deploy/proxmox-deploy.sh)"`.
+
 ## [1.31.1] — 2026-06-08
 
 ### Fixed

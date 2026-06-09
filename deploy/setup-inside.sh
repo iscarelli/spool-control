@@ -11,6 +11,9 @@
 #   SECURE_COOKIES      1 atrás de HTTPS/proxy; 0 p/ acesso direto http
 #   USE_BR_MIRROR       1 usa mirror Debian BR (UFPR); 0 mantém o padrão (default 1)
 #   ADMIN_DEFAULT_PASS  senha inicial do admin (default: gerada aleatoriamente)
+#   SETUP_REF           tag/branch/commit p/ instalar uma versão FIXA, ex.: v1.29.0
+#                       (default: vazio = latest do main). Útil p/ reproduzir o
+#                       estado de um cliente numa versão específica.
 #
 # IMPORTANTE: o QR da etiqueta usa APP_BASE_URL. Cada instalação roda no SEU próprio
 # servidor — informe SEU domínio (ou deixe vazio para usar o IP do host). Nunca há
@@ -32,6 +35,7 @@ else
 fi
 USE_BR_MIRROR="${USE_BR_MIRROR:-1}"
 ADMIN_DEFAULT_PASS="${ADMIN_DEFAULT_PASS:-}"
+SETUP_REF="${SETUP_REF:-}"
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; NC='\033[0m'
 info()  { echo -e "${GREEN}[INFO]${NC}  $*"; }
@@ -75,6 +79,17 @@ mkdir -p "${APP_DIR}/data" "${APP_DIR}/deploy"
 info "Clonando repositorio..."
 rm -rf "$REPO_DIR"
 git clone -q "$REPO" "$REPO_DIR"
+
+# Versao fixa (SETUP_REF): faz checkout da tag/branch/commit antes do archive, para
+# instalar uma versao especifica em vez da HEAD do main (mesmo padrao do update-lxc.sh).
+# Apos o checkout HEAD aponta para a ref, entao o `git archive HEAD` abaixo aplica a
+# arvore dela. Default vazio = latest do main (comportamento de sempre).
+if [ -n "$SETUP_REF" ]; then
+    info "Fixando versao: $SETUP_REF"
+    git -C "$REPO_DIR" checkout -q "$SETUP_REF" \
+        || error "Ref '$SETUP_REF' nao encontrada no repositorio."
+    warn "Instalando ref '$SETUP_REF' — nao e a HEAD do main."
+fi
 
 # Copia a ÁRVORE VERSIONADA INTEIRA (git archive) — não há lista de arquivos para
 # manter; o que está no git vai para o servidor. Evita instalação quebrada quando um
