@@ -21,7 +21,32 @@ REPO_DIR=/tmp/spool-repo
 GREEN='\033[0;32m'; RED='\033[0;31m'; YELLOW='\033[1;33m'; NC='\033[0m'
 info()  { echo -e "${GREEN}[INFO]${NC}  $*"; }
 warn()  { echo -e "${YELLOW}[WARN]${NC}  $*"; }
-error() { echo -e "${RED}[ERROR]${NC} $*"; exit 1; }
+error() { echo -e "${RED}[ERROR]${NC} $*"; FAIL_REASON="$*"; exit 1; }
+
+# ── Status do update para a UI ───────────────────────────────────────────────
+# Grava o resultado em data/.update-status (JSON) que o app (user spool, não-root)
+# lê na /admin/update — assim uma falha aparece com o motivo em vez de o botão
+# "voltar em silêncio". Sem isto o usuário não tinha como saber por que não atualizou.
+STATUS_FILE="${APP_DIR}/data/.update-status"
+DEPLOY_DONE=0
+FAIL_REASON=""
+write_status() {
+    local state="$1"; shift; local msg="${*:-}"
+    msg=${msg//\\/}; msg=${msg//\"/}; msg=${msg//$'\n'/ }   # JSON-safe (sem aspas/barras/quebras)
+    { printf '{"state":"%s","message":"%s","ts":"%s"}\n' \
+        "$state" "$msg" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$STATUS_FILE"; } 2>/dev/null || return 0
+    chown spool:spool "$STATUS_FILE" 2>/dev/null || true
+    chmod 644 "$STATUS_FILE" 2>/dev/null || true
+}
+on_err()  { FAIL_REASON="${FAIL_REASON:-falhou em \'${BASH_COMMAND}\' (linha ${1:-?})}"; }
+on_exit() {
+    local rc=$?
+    trap - ERR EXIT
+    { [ "$DEPLOY_DONE" = "1" ] || [ "$rc" -eq 0 ]; } && return 0
+    local extra=""
+    [ -s /tmp/spool-smoke.log ] && extra=" — $(tail -n 2 /tmp/spool-smoke.log | tr '\n' ' ')"
+    write_status failed "${FAIL_REASON:-deploy abortado (rc=$rc)}${extra}"
+}
 
 main() {
     # ── Dispatcher ───────────────────────────────────────────────────────────
@@ -33,6 +58,12 @@ main() {
     fi
 
     # ── Deploy normal / rollback ──────────────────────────────────────────────
+    # A partir daqui qualquer aborto (smoke test, clone, API) é registrado em
+    # .update-status pelo on_exit, para a /admin/update mostrar o motivo.
+    trap 'on_err $LINENO' ERR
+    trap on_exit EXIT
+    write_status running "Atualizacao em andamento"
+
     local REF=""
     if [ "${1:-}" = "--ref" ]; then
         [ -z "${2:-}" ] && error "Uso: $0 --ref <tag|branch|commit>"
@@ -68,11 +99,16 @@ main() {
     # sem copiar nada: o servico atual continua intacto (evita crash loop / 404
     # por modulo faltando, erro de sintaxe, import quebrado etc.).
     info "Instalando dependencias e validando o novo codigo (smoke test)..."
-    "${APP_DIR}/.venv/bin/pip" install --quiet -r "$REPO_DIR/requirements.txt"
+    # pip e import gravam no smoke log; se o pip falhar (ex.: dep nova como pyotp
+    # sem acesso ao PyPI), abortamos com motivo claro em vez de morrer via set -e.
+    if ! "${APP_DIR}/.venv/bin/pip" install --quiet -r "$REPO_DIR/requirements.txt" \
+            >/tmp/spool-smoke.log 2>&1; then
+        error "Falha ao instalar as dependencias do novo codigo (PyPI inacessivel? disco cheio?) — deploy abortado, servico atual mantido no ar. Detalhe: $(tail -n 3 /tmp/spool-smoke.log)"
+    fi
     if ! ( cd "$REPO_DIR"; set -a
            if [ -f "${APP_DIR}/spool.env" ]; then . "${APP_DIR}/spool.env"; else SECRET_KEY=smoketest; fi
            set +a
-           PYTHONPATH="$REPO_DIR" "${APP_DIR}/.venv/bin/python" -c "import app" ) 2>/tmp/spool-smoke.log; then
+           PYTHONPATH="$REPO_DIR" "${APP_DIR}/.venv/bin/python" -c "import app" ) >>/tmp/spool-smoke.log 2>&1; then
         error "Novo codigo NAO importa — deploy abortado, servico atual mantido no ar. Detalhe: $(tail -n 3 /tmp/spool-smoke.log)"
     fi
     info "Smoke test OK — aplicando."
@@ -143,6 +179,8 @@ EOF
     systemctl is-active spool-control || error "Servico nao iniciou. Veja: journalctl -u spool-control -n 30"
     systemctl status spool-control --no-pager | head -15
 
+    DEPLOY_DONE=1
+    write_status done "$(tr -d '[:space:]' < "${APP_DIR}/VERSION" 2>/dev/null)"
     echo -e "\n${GREEN}Deploy concluido.${NC}"
 }
 
