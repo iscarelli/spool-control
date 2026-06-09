@@ -10,6 +10,11 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.32.4] — 2026-06-09
+
+### Fixed
+- **Login não acontecia: o botão "recarregava" a tela de login (regressão da v1.31.0).** Após o logout, ao logar com credenciais corretas e sem `?next=`, a sessão era criada mas o usuário voltava para `/login` (ou caía numa página "Redirecting… target URL:" em branco) — sem mensagem de erro, dando a impressão de senha errada; remover o `/login` da URL revelava que já estava logado. Causa: o fix de open redirect da 1.31.0 passou a validar o destino só por `urlparse().netloc`/`.scheme`, e a string vazia (login sem `next`) passava nesse teste e virava `redirect("")` — que o navegador resolve recarregando a própria `/login`. Agora o redirect pós-login só segue o `next` quando é um caminho relativo de verdade (começa com `/` e não `//`); sem `next`, vai para o dashboard. A barreira anti-open-redirect do CodeQL é preservada. Teste de regressão cobrindo o login sem `next`.
+
 ## [1.32.3] — 2026-06-09
 
 ### Changed

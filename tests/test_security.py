@@ -76,6 +76,17 @@ def test_login_honors_local_next(client):
     assert resp.headers["Location"].endswith("/spools")
 
 
+def test_login_without_next_goes_to_dashboard(client):
+    """Login normal (sem ?next=) NÃO pode cair num redirect("") — que recarrega
+    a própria /login (regressão da v1.31.0). Tem que ir pro dashboard."""
+    resp = client.post("/login",
+                       data={"username": ADMIN_USER, "password": ADMIN_PASS})
+    assert resp.status_code == 302
+    loc = resp.headers["Location"]
+    assert loc not in ("", "/login")
+    assert not loc.endswith("/login")
+
+
 # ── Troca de senha forçada (rec 5) ───────────────────────────────────────────
 
 def test_admin_bootstrap_requires_password_change(db):
