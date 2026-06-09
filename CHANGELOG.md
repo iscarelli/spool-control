@@ -10,6 +10,13 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.32.2] — 2026-06-09
+
+### Fixed
+- **Autoatualização travada em toda instalação ≥1.31.1 (crítico).** A resolução da última release fazia `git ls-remote … | head -1`: o `head` fechava o pipe na 1ª linha e o `git ls-remote`, ainda escrevendo, levava **SIGPIPE (exit 141)** — que com `set -o pipefail` abortava o update inteiro logo após "Resolvendo ultima release no GitHub…". Como é uma corrida (depende do timing do `ls-remote`), passava despercebido em alguns deploys e travava em outros — a produção ficou presa na 1.31.1. Agora a saída do `git ls-remote` é **capturada inteira** e a tag é extraída em bash puro (`${tags%%…}`), **sem pipe para o `head`** — impossível dar SIGPIPE. Afetava o botão web e o `update` do console (o caminho `--ref` nunca foi atingido).
+
+> Instalações já presas numa versão ≥1.31.1 precisam de **um** update manual no console que pule a resolução quebrada: `bash /opt/spool-control/deploy/update-lxc.sh --ref v1.32.2`. A partir daí o autoupdate volta a funcionar normalmente.
+
 ## [1.32.1] — 2026-06-09
 
 ### Fixed
