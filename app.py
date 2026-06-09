@@ -658,8 +658,12 @@ def _promote_session(user, remember, ip, next_url=""):
     # EXATAMENTE o snippet recomendado pelo CodeQL para py/url-redirection:
     # navegadores tratam "\" como "/", então remove as barras invertidas e checa
     # `urlparse(target).netloc`/`.scheme` inline — caminho relativo é seguro.
+    # Exige um caminho relativo de verdade (começa com "/" mas não "//"): sem
+    # `next`, target="" passaria no teste de netloc/scheme e cairia num
+    # `redirect("")`, que recarrega a própria /login (regressão da v1.31.0).
     target = (next_url or "").replace("\\", "")
-    if not urlparse(target).netloc and not urlparse(target).scheme:
+    if target.startswith("/") and not target.startswith("//") \
+            and not urlparse(target).netloc and not urlparse(target).scheme:
         return redirect(target)
     return redirect(url_for("dashboard"))
 
