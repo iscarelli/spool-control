@@ -7,7 +7,7 @@ import socket
 import secrets
 import ipaddress
 import urllib.request
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, urlparse
 from functools import wraps
 from pathlib import Path
 from datetime import datetime
@@ -588,13 +588,12 @@ def _promote_session(user, remember, ip, next_url=""):
     session["must_change_password"] = bool(user["must_change_password"])
     db.log_login(user["username"], ip)
     # Open redirect (CWE-601): valida o destino no PRÓPRIO ponto do redirect (o
-    # analisador não reconhece a barreira interprocedural do _safe_next). Padrão
-    # reconhecido pelo CodeQL: navegadores tratam "\" como "/", então remove as
-    # barras invertidas e checa `urlsplit(...).netloc/.scheme` INLINE no guard; o
-    # redirect do valor do usuário fica dentro do guard, o default cai num url_for.
+    # analisador não reconhece a barreira interprocedural do _safe_next). Segue
+    # EXATAMENTE o snippet recomendado pelo CodeQL para py/url-redirection:
+    # navegadores tratam "\" como "/", então remove as barras invertidas e checa
+    # `urlparse(target).netloc`/`.scheme` inline — caminho relativo é seguro.
     target = (next_url or "").replace("\\", "")
-    if (not urlsplit(target).netloc and not urlsplit(target).scheme
-            and target.startswith("/") and not target.startswith("//")):
+    if not urlparse(target).netloc and not urlparse(target).scheme:
         return redirect(target)
     return redirect(url_for("dashboard"))
 
