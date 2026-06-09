@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Verificação em duas etapas') }} — Spool Control{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7 col-lg-6">
+    <h4 class="mb-3"><i class="bi bi-shield-lock me-2"></i>{{ _('Verificação em duas etapas') }}</h4>
+
+    {# ── Códigos de recuperação: mostrados UMA vez (ativação/regeneração) ── #}
+    {% if new_codes %}
+    <div class="card border-warning mb-3">
+      <div class="card-header bg-warning-subtle fw-semibold">
+        <i class="bi bi-key me-1"></i>{{ _('Códigos de recuperação') }}
+      </div>
+      <div class="card-body">
+        <p class="small text-danger mb-3">
+          <i class="bi bi-exclamation-triangle-fill me-1"></i>
+          {{ _('Guarde estes códigos em local seguro. Cada um serve UMA vez se você perder o acesso ao app autenticador. Eles NÃO serão mostrados novamente.') }}
+        </p>
+        <div class="row row-cols-2 g-2 font-monospace text-center" id="recoveryCodes">
+          {% for c in new_codes %}
+          <div class="col"><span class="badge text-bg-light border w-100 py-2 js-recovery-code" style="letter-spacing:.15em">{{ c }}</span></div>
+          {% endfor %}
+        </div>
+        <div class="text-end mt-3">
+          <button type="button" class="btn btn-sm btn-outline-secondary" id="copyRecoveryCodes"
+                  data-copy-label="{{ _('Copiar códigos') }}" data-copied-label="{{ _('Copiado!') }}">
+            <i class="bi bi-clipboard me-1"></i>{{ _('Copiar códigos') }}
+          </button>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if enabled %}
+    {# ── 2FA ATIVO: status + desativar + regenerar ── #}
+    {% if not new_codes %}
+    <div class="alert alert-success d-flex align-items-center gap-2">
+      <i class="bi bi-check-circle-fill"></i>
+      <div>{{ _('A verificação em duas etapas está ativa nesta conta.') }}</div>
+    </div>
+    {% endif %}
+    <p class="text-muted small">
+      {{ _('Códigos de recuperação restantes:') }} <strong>{{ remaining }}</strong>
+    </p>
+
+    <div class="card mb-3">
+      <div class="card-header fw-semibold">{{ _('Regenerar códigos de recuperação') }}</div>
+      <div class="card-body">
+        <p class="small text-muted">{{ _('Gera 8 códigos novos e invalida os antigos. Use se acabaram ou se você os perdeu.') }}</p>
+        <form method="post" action="{{ url_for('account_2fa') }}" class="row g-2 align-items-end">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="regenerate">
+          <div class="col-sm-7">
+            <label class="form-label">{{ _('Código de verificação') }}</label>
+            <input type="text" name="code" class="form-control" inputmode="numeric" autocomplete="one-time-code" required>
+          </div>
+          <div class="col-sm-5">
+            <button type="submit" class="btn btn-outline-secondary w-100">{{ _('Regenerar') }}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card border-danger">
+      <div class="card-header fw-semibold text-danger">{{ _('Desativar 2FA') }}</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('account_2fa') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="disable">
+          <div class="mb-2">
+            <label class="form-label">{{ _('Senha atual') }}</label>
+            <input type="password" name="password" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{{ _('Código de verificação') }}</label>
+            <input type="text" name="code" class="form-control" inputmode="numeric" autocomplete="one-time-code" required>
+          </div>
+          <button type="submit" class="btn btn-outline-danger">{{ _('Desativar 2FA') }}</button>
+        </form>
+      </div>
+    </div>
+
+    {% else %}
+    {# ── 2FA INATIVO: ativar ── #}
+    <p class="text-muted">{{ _('Adicione uma camada extra de segurança ao login: além da senha, será pedido um código gerado por um app autenticador (Google Authenticator, Authy, FreeOTP…).') }}</p>
+    <div class="card">
+      <div class="card-header fw-semibold">{{ _('Ativar verificação em duas etapas') }}</div>
+      <div class="card-body">
+        <ol class="small mb-3">
+          <li>{{ _('Escaneie o QR Code abaixo com o seu app autenticador.') }}</li>
+          <li>{{ _('Digite o código de 6 dígitos exibido pelo app para confirmar.') }}</li>
+        </ol>
+        <div class="text-center mb-3">
+          <img src="{{ qr_uri }}" alt="QR Code" class="img-fluid border rounded" style="max-width:220px">
+        </div>
+        <p class="small text-muted text-center mb-3">
+          {{ _('Não consegue escanear? Use esta chave:') }}<br>
+          <code class="user-select-all">{{ manual_key }}</code>
+        </p>
+        <form method="post" action="{{ url_for('account_2fa') }}" class="row g-2 align-items-end">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="activate">
+          <div class="col-sm-7">
+            <label class="form-label">{{ _('Código de verificação') }}</label>
+            <input type="text" name="code" class="form-control" inputmode="numeric" autocomplete="one-time-code" autofocus required>
+          </div>
+          <div class="col-sm-5">
+            <button type="submit" class="btn btn-dark w-100">{{ _('Ativar') }}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if new_codes %}
+<script nonce="{{ nonce }}">
+  (function () {
+    var btn = document.getElementById('copyRecoveryCodes');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      var codes = Array.prototype.map.call(
+        document.querySelectorAll('#recoveryCodes .js-recovery-code'),
+        function (el) { return el.textContent.trim(); }
+      ).join('\n');
+      function done() {
+        btn.classList.replace('btn-outline-secondary', 'btn-success');
+        btn.innerHTML = '<i class="bi bi-check2 me-1"></i>' + btn.dataset.copiedLabel;
+        setTimeout(function () {
+          btn.classList.replace('btn-success', 'btn-outline-secondary');
+          btn.innerHTML = '<i class="bi bi-clipboard me-1"></i>' + btn.dataset.copyLabel;
+        }, 2000);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(codes).then(done, fallback);
+      } else {
+        fallback();
+      }
+      function fallback() {
+        var ta = document.createElement('textarea');
+        ta.value = codes;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); done(); } catch (e) { /* noop */ }
+        document.body.removeChild(ta);
+      }
+    });
+  })();
+</script>
+{% endif %}
+{% endblock %}

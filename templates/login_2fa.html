@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ _('Verificação em duas etapas') }} — Spool Control</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='spool-icon.svg') }}">
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='icons/favicon-32x32.png') }}">
+  <link rel="shortcut icon" href="{{ url_for('static', filename='icons/favicon.ico') }}">
+  <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}">
+  <meta name="theme-color" content="#0d6efd">
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.css') }}">
+  <style>
+    .sc-flag { width: 1.15rem; height: auto; border-radius: 2px; display: inline-block;
+               vertical-align: middle; box-shadow: 0 0 0 1px rgba(0,0,0,.15); }
+  </style>
+</head>
+<body class="bg-light">
+{% set _flag = {'pt': 'br', 'en': 'us', 'es': 'es'} %}
+<div class="dropdown position-absolute top-0 end-0 m-3">
+  <button class="btn btn-outline-secondary btn-sm dropdown-toggle d-inline-flex align-items-center justify-content-center" data-bs-toggle="dropdown"
+          style="height:2rem;font-size:0.8rem;letter-spacing:0.03em;gap:.3rem">
+    <img src="{{ url_for('static', filename='flags/' + _flag.get(lang, 'br') + '.svg') }}" alt="" class="sc-flag">{{ lang.upper() }}
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end" style="min-width:0">
+    <li><a class="dropdown-item d-flex align-items-center gap-2" href="{{ url_for('set_lang', code='pt') }}"><img src="{{ url_for('static', filename='flags/br.svg') }}" alt="" class="sc-flag">PT</a></li>
+    <li><a class="dropdown-item d-flex align-items-center gap-2" href="{{ url_for('set_lang', code='en') }}"><img src="{{ url_for('static', filename='flags/us.svg') }}" alt="" class="sc-flag">EN</a></li>
+    <li><a class="dropdown-item d-flex align-items-center gap-2" href="{{ url_for('set_lang', code='es') }}"><img src="{{ url_for('static', filename='flags/es.svg') }}" alt="" class="sc-flag">ES</a></li>
+  </ul>
+</div>
+<div class="d-flex justify-content-center align-items-center" style="min-height:100vh">
+  <div class="card shadow-sm" style="width:360px">
+    <div class="card-body p-4">
+      <div class="text-center mb-4">
+        {% set logo_h = 44 %}{% include '_brand.html' %}
+      </div>
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}
+        <div class="alert alert-{{ cat }} py-2">{{ msg }}</div>
+        {% endfor %}
+      {% endwith %}
+      <p class="text-muted small mb-3">{{ _('Digite o código de 6 dígitos do seu app autenticador, ou um código de recuperação.') }}</p>
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="mb-3">
+          <label class="form-label">{{ _('Código de verificação') }}</label>
+          <input type="text" name="code" class="form-control text-center" inputmode="numeric"
+                 autocomplete="one-time-code" autofocus required
+                 style="letter-spacing:.3em;font-size:1.25rem">
+        </div>
+        <button class="btn btn-dark w-100" type="submit">{{ _('Verificar') }}</button>
+      </form>
+      <div class="text-center mt-3">
+        <a href="{{ url_for('login') }}" class="small text-muted">{{ _('Cancelar') }}</a>
+      </div>
+    </div>
+  </div>
+</div>
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap-icons/bootstrap-icons.min.css') }}">
+<script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
+</body>
+</html>

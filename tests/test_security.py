@@ -40,6 +40,42 @@ def test_fetch_image_internal_url_returns_none(app_module):
     assert app_module._try_fetch_image("http://169.254.169.254/latest/meta-data/") is None
 
 
+# ── Open redirect: guarda do parâmetro ?next= ────────────────────────────────
+
+@pytest.mark.parametrize("evil", [
+    "http://evil.com",          # URL absoluta http
+    "https://evil.com/x",       # URL absoluta https
+    "//evil.com",               # protocol-relative
+    "/\\evil.com",              # backslash normalizado p/ "//" por navegadores
+    "\\/evil.com",              # idem, invertido
+    "javascript:alert(1)",      # esquema perigoso
+    "  /painel",                # espaço inicial (não começa com "/")
+    "",                         # vazio
+])
+def test_safe_next_rejects_external(app_module, evil):
+    assert app_module._safe_next(evil) == ""
+
+
+@pytest.mark.parametrize("ok", ["/filaments", "/spools/3", "/account/2fa", "/x?y=1&z=2"])
+def test_safe_next_accepts_local_paths(app_module, ok):
+    assert app_module._safe_next(ok) == ok
+
+
+def test_login_ignores_external_next(client):
+    """O sink real (redirect no _promote_session) não segue um ?next= externo."""
+    resp = client.post("/login?next=//evil.com",
+                       data={"username": ADMIN_USER, "password": ADMIN_PASS})
+    assert resp.status_code == 302
+    assert "evil.com" not in resp.headers["Location"]
+
+
+def test_login_honors_local_next(client):
+    resp = client.post("/login?next=/spools",
+                       data={"username": ADMIN_USER, "password": ADMIN_PASS})
+    assert resp.status_code == 302
+    assert resp.headers["Location"].endswith("/spools")
+
+
 # ── Troca de senha forçada (rec 5) ───────────────────────────────────────────
 
 def test_admin_bootstrap_requires_password_change(db):
