@@ -209,7 +209,10 @@ def admin_settings():
 @app.route("/admin/update")
 @admin_required
 def admin_update():
-    latest = check_latest_release(force=True)
+    # Cache curto (60s) em vez de forçar a cada load: refreshes seguidos reusam o
+    # resultado recente. A detecção é por redirect do site (sem REST API), então
+    # nem depende mais do limite de 60/h.
+    latest = check_latest_release(max_age=60)
     cur = current_version()
     return render_template(
         "admin/update.html",
@@ -238,15 +241,6 @@ def admin_update_run():
                        error="Não foi possível registrar o pedido de atualização."), 500
     log.info("admin.update_triggered")
     return jsonify(ok=True)
-
-
-@app.route("/admin/update/status")
-@admin_required
-def admin_update_status():
-    latest = check_latest_release()
-    cur = current_version()
-    done = bool(latest) and _version_tuple(cur) >= _version_tuple(latest)
-    return jsonify(current=cur, latest=latest, done=done)
 
 
 # ── Backup / restauração ─────────────────────────────────────────────────────
