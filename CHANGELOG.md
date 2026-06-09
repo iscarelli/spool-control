@@ -10,6 +10,11 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.32.3] — 2026-06-09
+
+### Changed
+- **Bump de validação** — sem mudança funcional. Publicada apenas para exercitar o fluxo de autoatualização ponta a ponta (resolução da última release → smoke test → `git archive` → restart) após as correções da 1.32.2 (SIGPIPE e falha-em-silêncio). Confirma que o botão web e o `update` do console aplicam a nova versão sem intervenção manual.
+
 ## [1.32.2] — 2026-06-09
 
 > Consolida o que foi publicado nas 1.32.0/1.32.1 (removidas por carregarem o bug do autoupdate abaixo); a 1.32.2 é a única release da linha 1.32.x.
