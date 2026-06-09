@@ -587,15 +587,13 @@ def _promote_session(user, remember, ip, next_url=""):
     session["role"] = user["role"]
     session["must_change_password"] = bool(user["must_change_password"])
     db.log_login(user["username"], ip)
-    # Open redirect (CWE-601): valida o destino no PRÓPRIO ponto do redirect — o
-    # analisador estático não reconhece a barreira interprocedural do _safe_next.
-    # Navegadores tratam "\" como "/", então remove barras invertidas antes; só
-    # aceita caminho relativo ao próprio site (sem esquema e sem host). O redirect
-    # do valor do usuário fica DENTRO do guard positivo (padrão reconhecido); o
-    # default cai num url_for, que é seguro.
+    # Open redirect (CWE-601): valida o destino no PRÓPRIO ponto do redirect (o
+    # analisador não reconhece a barreira interprocedural do _safe_next). Padrão
+    # reconhecido pelo CodeQL: navegadores tratam "\" como "/", então remove as
+    # barras invertidas e checa `urlsplit(...).netloc/.scheme` INLINE no guard; o
+    # redirect do valor do usuário fica dentro do guard, o default cai num url_for.
     target = (next_url or "").replace("\\", "")
-    parts = urlsplit(target)
-    if (not parts.scheme and not parts.netloc
+    if (not urlsplit(target).netloc and not urlsplit(target).scheme
             and target.startswith("/") and not target.startswith("//")):
         return redirect(target)
     return redirect(url_for("dashboard"))
