@@ -7,6 +7,7 @@ import socket
 import secrets
 import ipaddress
 import urllib.request
+import urllib.error
 from urllib.parse import urlsplit, urlparse
 from functools import wraps
 from pathlib import Path
@@ -286,14 +287,32 @@ VERSION_FILE = Path(__file__).parent / "VERSION"
 APP_VERSION = VERSION_FILE.read_text().strip()
 
 # ── Autoatualização: checagem da última release no GitHub ────────────────────
-GITHUB_RELEASES_API = "https://api.github.com/repos/iscarelli/spool-control/releases/latest"
 RELEASES_URL = "https://github.com/iscarelli/spool-control/releases"
-# Cache em memória (por worker): evita martelar a API do GitHub (limite de 60/h
-# sem token). Sucesso vale 6h; falha re-tenta em 15min. Fail-open: erro nunca
-# quebra a página, apenas não mostra atualização.
-_release_cache = {"tag": None, "notes": "", "ts": 0.0, "ok": False}
+# A DETECÇÃO de versão usa o redirect de .../releases/latest (o SITE, não a REST
+# API) → imune ao limite anônimo de 60/h por IP, que qualquer cliente da mesma
+# rede pode esgotar. A REST API só entra para as NOTAS da release, e somente na
+# página /admin/update (latest_release_notes), de forma tolerante a falha.
+GITHUB_LATEST_RELEASE = RELEASES_URL + "/latest"
+GITHUB_RELEASES_API = "https://api.github.com/repos/iscarelli/spool-control/releases/latest"
+
+# Cache em memória (por worker). Sucesso vale 6h; falha re-tenta em 15min; um
+# debounce de 30s evita martelar em refreshes seguidos. Fail-open: erro nunca
+# quebra a página, só não mostra atualização.
+_release_cache = {"tag": None, "ts": 0.0, "ok": False}
+_notes_cache = {"tag": None, "notes": ""}
 _RELEASE_TTL_OK = 6 * 3600
 _RELEASE_TTL_FAIL = 15 * 60
+_RELEASE_DEBOUNCE = 30
+
+
+class _CaptureRedirect(urllib.request.HTTPRedirectHandler):
+    """Não SEGUE o redirect — deixa o 3xx propagar para lermos só o cabeçalho
+    Location. Como não buscamos o destino, não há risco de SSRF aqui."""
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+_redirect_reader = urllib.request.build_opener(_CaptureRedirect())
 
 
 def _version_tuple(v):
@@ -310,13 +329,68 @@ def current_version():
         return APP_VERSION
 
 
-def check_latest_release(force=False):
-    """Última tag publicada no GitHub (sem o 'v'), com cache. Devolve None se
-    nunca conseguiu consultar."""
+def _latest_release_tag_via_web():
+    """Última tag pelo redirect de github.com/.../releases/latest — o SITE, não a
+    REST API (logo, sem o limite de 60/h). Lê o Location do 302
+    (.../releases/tag/vX.Y.Z) SEM seguir o redirect. Devolve a tag ('v1.31.0') ou
+    levanta."""
+    if not _is_public_host(urlsplit(GITHUB_LATEST_RELEASE).hostname):
+        raise ValueError("host do GitHub não-público")
+    req = urllib.request.Request(GITHUB_LATEST_RELEASE,
+                                 headers={"User-Agent": "spool-control"})
+    location = ""
+    try:
+        with _redirect_reader.open(req, timeout=4) as resp:
+            location = resp.headers.get("Location", "")
+    except urllib.error.HTTPError as e:
+        if e.code in (301, 302, 303, 307, 308):
+            location = e.headers.get("Location", "")
+        else:
+            raise
+    if "/tag/" not in location:
+        raise ValueError(f"redirect inesperado: {location!r}")
+    return location.rstrip("/").rsplit("/tag/", 1)[-1]
+
+
+def check_latest_release(max_age=None):
+    """Última tag publicada (sem o 'v') via o redirect do site — SEM REST API, logo
+    sem o limite de 60/h. Cacheada; um debounce de 30s evita martelar em refreshes.
+    max_age (s): idade máxima aceitável do cache antes de re-consultar (a página de
+    update passa um valor curto); None usa o TTL padrão (6h ok / 15min falha)."""
     now = time.time()
-    ttl = _RELEASE_TTL_OK if _release_cache["ok"] else _RELEASE_TTL_FAIL
-    if not force and _release_cache["ts"] and now - _release_cache["ts"] < ttl:
-        return _release_cache["tag"]
+    age = (now - _release_cache["ts"]) if _release_cache["ts"] else None
+    if age is not None:
+        if age < _RELEASE_DEBOUNCE:                      # anti-martelo (sempre)
+            return _release_cache["tag"]
+        limit = max_age if max_age is not None else (
+            _RELEASE_TTL_OK if _release_cache["ok"] else _RELEASE_TTL_FAIL)
+        if age < limit:
+            return _release_cache["tag"]
+    try:
+        tag = _latest_release_tag_via_web().lstrip("v").strip()
+        _release_cache.update(tag=tag or _release_cache["tag"], ts=now, ok=bool(tag))
+    except Exception:
+        _release_cache.update(ts=now, ok=False)
+        log.warning("github_release.check_failed", exc_info=True)
+    return _release_cache["tag"]
+
+
+def cached_latest_tag():
+    """Última tag conhecida do cache, SEM tocar a rede — para o badge do menu, que
+    NÃO deve disparar consulta fora da página de atualização (quem popula o cache é
+    a /admin/update). None se ainda não buscou com sucesso."""
+    return _release_cache["tag"] if _release_cache["ok"] else None
+
+
+def latest_release_notes():
+    """Notas (Markdown) da última release, via REST API — chamada SÓ na página de
+    update. Tolerante a falha (rate limit / sem rede): devolve '' e a página mostra
+    o update sem as notas. Cacheada pela tag corrente."""
+    tag = _release_cache.get("tag")
+    if not tag:
+        return ""
+    if _notes_cache["tag"] == tag and _notes_cache["notes"]:
+        return _notes_cache["notes"]
     try:
         if not _is_public_host(urlsplit(GITHUB_RELEASES_API).hostname):
             raise ValueError("host da API do GitHub não-público")
@@ -324,24 +398,14 @@ def check_latest_release(force=False):
             GITHUB_RELEASES_API,
             headers={"User-Agent": "spool-control", "Accept": "application/vnd.github+json"},
         )
-        with _safe_opener.open(req, timeout=3) as resp:
+        with _safe_opener.open(req, timeout=4) as resp:
             data = json.loads(resp.read().decode())
-        tag = (data.get("tag_name") or "").lstrip("v").strip()
-        if tag:
-            _release_cache.update(tag=tag, notes=(data.get("body") or "").strip(),
-                                  ts=now, ok=True)
-        else:
-            _release_cache.update(ts=now, ok=False)
+        notes = (data.get("body") or "").strip()
+        _notes_cache.update(tag=tag, notes=notes)
+        return notes
     except Exception:
-        _release_cache.update(ts=now, ok=False)
-        log.warning("github_release.check_failed", exc_info=True)
-    return _release_cache["tag"]
-
-
-def latest_release_notes():
-    """Notas (Markdown) da última release em cache — preenchidas por
-    check_latest_release(). Vazio se a consulta nunca teve sucesso."""
-    return _release_cache.get("notes") or ""
+        log.info("github_release.notes_unavailable", exc_info=True)
+        return ""
 
 
 # Subconjunto de Markdown usado nas release notes → HTML seguro, sem dependência
@@ -409,7 +473,9 @@ def render_release_notes(md):
 
 
 def is_update_available():
-    latest = check_latest_release()
+    """Badge do menu Admin: lê SÓ o cache (sem rede) — nunca dispara consulta fora
+    da página de atualização, que é quem popula o cache."""
+    latest = cached_latest_tag()
     return bool(latest) and _version_tuple(latest) > _version_tuple(current_version())
 
 ALL_MATERIALS = [

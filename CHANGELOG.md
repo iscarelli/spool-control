@@ -10,6 +10,17 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.31.1] — 2026-06-08
+
+### Fixed
+- **Checagem de versão deixa de depender da REST API anônima do GitHub** (limite de 60/h por IP, compartilhado por toda a rede — qualquer vizinho de IP podia esgotá-lo e fazer a `/admin/update` mostrar "não foi possível verificar"). Agora a **detecção da última versão** usa o redirect de `github.com/.../releases/latest` (o site, via header `Location` — sem REST API, sem limite). A REST API só é usada para as **notas da release**, e somente quando se está na página `/admin/update`, de forma tolerante a falha (sem as notas se a API estiver indisponível).
+- **O badge "Nova" do menu Admin não dispara mais consulta de rede.** Passou a ler **só o cache** (`cached_latest_tag`) — a verificação acontece **apenas na página de atualização**, que é quem popula o cache. Some o vazamento de chamadas a partir de páginas comuns de admin.
+- **`/admin/update` não força mais uma consulta a cada carregamento** — usa cache curto (60s) + debounce de 30s, evitando martelar em refreshes.
+- **`update-lxc.sh --latest-release`** resolve a última tag via `git ls-remote` (protocolo git, sem REST API) em vez da API — o gatilho do update também fica imune ao rate limit.
+
+### Removed
+- Endpoint órfão `GET /admin/update/status` (nenhum cliente o usava; o poller da página sonda o `/health`).
+
 ## [1.31.0] — 2026-06-08
 
 ### Security

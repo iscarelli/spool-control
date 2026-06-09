@@ -39,13 +39,14 @@ main() {
         REF="$2"
     elif [ "${1:-}" = "--latest-release" ]; then
         # Usado pela autoatualização via web (spool-update.service). Resolve a
-        # última tag publicada no GitHub; aborta se a API falhar (sem cair p/ main).
+        # última tag publicada via `git ls-remote` (protocolo git, SEM a REST API
+        # do GitHub) — imune ao limite anônimo de 60/h. Aborta se falhar (sem cair
+        # p/ main). --sort=-v:refname ordena por versão (maior primeiro).
         info "Resolvendo ultima release no GitHub..."
-        REF=$(curl -fsSL -H "User-Agent: spool-control" \
-            https://api.github.com/repos/iscarelli/spool-control/releases/latest \
-            | grep -oE '"tag_name"[[:space:]]*:[[:space:]]*"[^"]+"' | head -1 \
-            | sed -E 's/.*"([^"]+)"$/\1/')
-        [ -z "$REF" ] && error "Nao foi possivel resolver a ultima release via API do GitHub."
+        REF=$(git ls-remote --tags --refs --sort=-v:refname \
+            https://github.com/iscarelli/spool-control.git 'v*' 2>/dev/null \
+            | head -1 | sed -E 's@.*refs/tags/@@')
+        [ -z "$REF" ] && error "Nao foi possivel resolver a ultima release via git ls-remote."
         info "Ultima release: $REF"
     fi
 
