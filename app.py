@@ -587,8 +587,15 @@ def _promote_session(user, remember, ip, next_url=""):
     session["role"] = user["role"]
     session["must_change_password"] = bool(user["must_change_password"])
     db.log_login(user["username"], ip)
-    nxt = _safe_next(next_url)
-    return redirect(nxt or url_for("dashboard"))
+    # Open redirect (CWE-601): valida o destino no PRÓPRIO ponto do redirect — o
+    # analisador estático não reconhece a barreira interprocedural do _safe_next.
+    # Navegadores tratam "\" como "/", então remove barras invertidas antes; só
+    # aceita caminho relativo ao próprio site (sem esquema e sem host).
+    target = (next_url or "").replace("\\", "")
+    parts = urlsplit(target)
+    if parts.scheme or parts.netloc or not target.startswith("/") or target.startswith("//"):
+        target = url_for("dashboard")
+    return redirect(target)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -749,4 +756,12 @@ from routes import (  # noqa: E402
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    # Bloco só de desenvolvimento local — em produção a app sobe via gunicorn
+    # (`app:app`), nunca por aqui. debug/host/porta vêm do ambiente; o default é
+    # SEM debug e ligado só ao localhost, para não expor o reloader/console nem
+    # abrir a porta na rede (CWE-489 / py/flask-debug).
+    app.run(
+        debug=os.environ.get("FLASK_DEBUG") == "1",
+        host=os.environ.get("FLASK_RUN_HOST", "127.0.0.1"),
+        port=int(os.environ.get("FLASK_RUN_PORT", "5000")),
+    )

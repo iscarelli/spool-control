@@ -61,6 +61,21 @@ def test_safe_next_accepts_local_paths(app_module, ok):
     assert app_module._safe_next(ok) == ok
 
 
+def test_login_ignores_external_next(client):
+    """O sink real (redirect no _promote_session) não segue um ?next= externo."""
+    resp = client.post("/login?next=//evil.com",
+                       data={"username": ADMIN_USER, "password": ADMIN_PASS})
+    assert resp.status_code == 302
+    assert "evil.com" not in resp.headers["Location"]
+
+
+def test_login_honors_local_next(client):
+    resp = client.post("/login?next=/spools",
+                       data={"username": ADMIN_USER, "password": ADMIN_PASS})
+    assert resp.status_code == 302
+    assert resp.headers["Location"].endswith("/spools")
+
+
 # ── Troca de senha forçada (rec 5) ───────────────────────────────────────────
 
 def test_admin_bootstrap_requires_password_change(db):
