@@ -12,22 +12,16 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ## [1.32.2] — 2026-06-09
 
+> Consolida o que foi publicado nas 1.32.0/1.32.1 (removidas por carregarem o bug do autoupdate abaixo); a 1.32.2 é a única release da linha 1.32.x.
+
 ### Fixed
 - **Autoatualização travada em toda instalação ≥1.31.1 (crítico).** A resolução da última release fazia `git ls-remote … | head -1`: o `head` fechava o pipe na 1ª linha e o `git ls-remote`, ainda escrevendo, levava **SIGPIPE (exit 141)** — que com `set -o pipefail` abortava o update inteiro logo após "Resolvendo ultima release no GitHub…". Como é uma corrida (depende do timing do `ls-remote`), passava despercebido em alguns deploys e travava em outros — a produção ficou presa na 1.31.1. Agora a saída do `git ls-remote` é **capturada inteira** e a tag é extraída em bash puro (`${tags%%…}`), **sem pipe para o `head`** — impossível dar SIGPIPE. Afetava o botão web e o `update` do console (o caminho `--ref` nunca foi atingido).
-
-> Instalações já presas numa versão ≥1.31.1 precisam de **um** update manual no console que pule a resolução quebrada: `bash /opt/spool-control/deploy/update-lxc.sh --ref v1.32.2`. A partir daí o autoupdate volta a funcionar normalmente.
-
-## [1.32.1] — 2026-06-09
-
-### Fixed
 - **A atualização web não falha mais em silêncio.** Quando o deploy aborta no smoke test (ex.: uma dependência nova como o `pyotp` da 1.31.0 não instala — PyPI inacessível, disco cheio) o serviço continua na versão atual (fail-safe), mas antes a UI só ficava girando até o teto de 5 min **sem dizer o motivo** — o admin via "Atualizando…" e a versão simplesmente não mudava. Agora o `update-lxc.sh` grava o resultado em `data/.update-status` (gravação sem privilégio: root escreve, o app `spool` lê), o endpoint `GET /admin/update/status` expõe esse resultado e o poller da `/admin/update` **mostra a falha com o motivo** e reabilita o botão, em vez de girar sem explicação. O `pip install` do smoke test também passou a ser tratado com mensagem clara (em vez de morrer via `set -e`) e tem a saída capturada no `/tmp/spool-smoke.log`.
-
-> Observação: como o `update-lxc.sh` roda da cópia **instalada**, a mensagem de falha só aparece para atualizações **a partir** desta versão; uma instalação presa numa versão anterior precisa de um update manual no console uma vez (`bash /opt/spool-control/deploy/update-lxc.sh --latest-release`).
-
-## [1.32.0] — 2026-06-09
 
 ### Added
 - **Instalação de versão fixa via `SETUP_REF`.** O `proxmox-deploy.sh` e o `setup-inside.sh` passam a aceitar a variável de ambiente `SETUP_REF` (tag/branch/commit): faz `git checkout` da ref logo após o clone, **antes** do `git archive` (mesmo padrão do `update-lxc.sh`), instalando uma versão específica em vez da latest do `main`. Sem `SETUP_REF`, instala a latest como sempre — retrocompatível. Útil para reproduzir o estado de um cliente numa release antiga. Ex.: `SETUP_REF=v1.29.0 bash -c "$(curl -fsSL .../deploy/proxmox-deploy.sh)"`.
+
+> Instalações já presas numa versão ≥1.31.1 precisam de **um** update manual no console que pule a resolução quebrada: `bash /opt/spool-control/deploy/update-lxc.sh --ref v1.32.2`. A partir daí o autoupdate volta a funcionar normalmente.
 
 ## [1.31.1] — 2026-06-08
 
