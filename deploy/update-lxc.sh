@@ -73,10 +73,18 @@ main() {
         # última tag publicada via `git ls-remote` (protocolo git, SEM a REST API
         # do GitHub) — imune ao limite anônimo de 60/h. Aborta se falhar (sem cair
         # p/ main). --sort=-v:refname ordena por versão (maior primeiro).
+        #
+        # IMPORTANTE: capturamos a saída INTEIRA e extraímos a 1ª linha em bash puro.
+        # Um `git ls-remote ... | head -1` fecharia o pipe na 1ª linha e o ls-remote,
+        # ainda escrevendo, levaria SIGPIPE (exit 141); com `set -o pipefail` isso
+        # aborta o update inteiro — era o bug que travava o autoupdate em ≥1.31.1.
         info "Resolvendo ultima release no GitHub..."
-        REF=$(git ls-remote --tags --refs --sort=-v:refname \
-            https://github.com/iscarelli/spool-control.git 'v*' 2>/dev/null \
-            | head -1 | sed -E 's@.*refs/tags/@@')
+        local _tags
+        _tags=$(git ls-remote --tags --refs --sort=-v:refname \
+            https://github.com/iscarelli/spool-control.git 'v*' 2>/dev/null) \
+            || error "Nao foi possivel consultar as releases via git ls-remote."
+        REF=${_tags%%$'\n'*}        # 1ª linha = maior versão
+        REF=${REF##*refs/tags/}     # só o nome da tag (vX.Y.Z)
         [ -z "$REF" ] && error "Nao foi possivel resolver a ultima release via git ls-remote."
         info "Ultima release: $REF"
     fi
