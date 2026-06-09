@@ -9,6 +9,10 @@
 # Creates a Debian 12 LXC, asks for the configuration (CTID, host, network,
 # resources) and installs Spool Control + a systemd service.
 # Public repository — no token required.
+#
+# Install a PINNED version instead of latest (e.g. to reproduce a client on an
+# older release) — set SETUP_REF to a tag/branch/commit:
+#   SETUP_REF=v1.29.0 bash -c "$(curl -fsSL https://raw.githubusercontent.com/iscarelli/spool-control/main/deploy/proxmox-deploy.sh)"
 # =============================================================================
 set -Eeuo pipefail
 
@@ -88,6 +92,7 @@ STORAGE=""
 DOMAIN=""
 USE_BR_MIRROR="1"
 UNPRIV="1"
+SETUP_REF="${SETUP_REF:-}"   # tag/branch/commit p/ instalar versao fixa (vazio = latest)
 
 whiptail --backtitle "$APP" --title "$APP — LXC Installer" \
   --msgbox "This wizard creates a Debian 12 LXC container and installs $APP.\n\nUse TAB to navigate and SPACE to select." 12 64
@@ -233,13 +238,13 @@ msg_info "Preparing dependencies (curl)"
 pct exec "$CTID" -- bash -c "apt-get update -qq && apt-get install -y -qq curl ca-certificates >/dev/null 2>&1" || die "Failed to install curl."
 msg_ok "Base dependencies ready"
 
-msg_info "Installing $APP (public clone + venv + systemd)"
+msg_info "Installing $APP${SETUP_REF:+ (pinned: $SETUP_REF)} (public clone + venv + systemd)"
 pct exec "$CTID" -- bash -c "
   DOMAIN='${DOMAIN:-}' APP_BASE_URL='${APP_BASE_URL}' SECURE_COOKIES='${SECURE_COOKIES}' \
-  USE_BR_MIRROR='${USE_BR_MIRROR}' \
+  USE_BR_MIRROR='${USE_BR_MIRROR}' SETUP_REF='${SETUP_REF}' \
   bash <(curl -fsSL '${SETUP_URL}')
 " || die "setup-inside.sh failed (see: pct exec $CTID -- journalctl -u spool-control -n 40)."
-msg_ok "$APP installed"
+msg_ok "$APP installed${SETUP_REF:+ ($SETUP_REF)}"
 
 # ── Admin password + result ──────────────────────────────────────────────────
 ADMIN_PASS=$(pct exec "$CTID" -- bash -c "grep '^ADMIN_DEFAULT_PASS=' /opt/spool-control/spool.env | cut -d= -f2-" 2>/dev/null | tr -d '\r')
