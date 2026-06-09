@@ -69,9 +69,33 @@ def test_update_page_checks_via_web(app_module, monkeypatch):
     assert app_module._release_cache["tag"] == "9.9.9"
 
 
-# ── Endpoint órfão removido ────────────────────────────────────────────────────
+# ── Status do update (lido pela /admin/update p/ mostrar falha) ───────────────
 
-def test_orphan_status_endpoint_gone(app_module):
+def test_update_status_idle_when_no_file(app_module):
+    import database as db
+    (db.DB_PATH.parent / ".update-status").unlink(missing_ok=True)
     client = app_module.app.test_client()
     client.post("/login", data={"username": ADMIN_USER, "password": ADMIN_PASS})
-    assert client.get("/admin/update/status").status_code == 404
+    r = client.get("/admin/update/status")
+    assert r.status_code == 200
+    assert r.get_json()["state"] == "idle"
+
+
+def test_update_status_reports_failure(app_module):
+    import database as db
+    (db.DB_PATH.parent / ".update-status").write_text(
+        '{"state":"failed","message":"pyotp indisponivel","ts":"2026-06-09T00:00:00Z"}',
+        encoding="utf-8",
+    )
+    client = app_module.app.test_client()
+    client.post("/login", data={"username": ADMIN_USER, "password": ADMIN_PASS})
+    data = client.get("/admin/update/status").get_json()
+    assert data["state"] == "failed"
+    assert "pyotp" in data["message"]
+    (db.DB_PATH.parent / ".update-status").unlink(missing_ok=True)
+
+
+def test_update_status_requires_admin(app_module):
+    client = app_module.app.test_client()
+    r = client.get("/admin/update/status")
+    assert r.status_code in (302, 401, 403)   # sem login → barrado

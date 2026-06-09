@@ -104,7 +104,16 @@
   var progressMsg = document.getElementById('progressMsg');
   var target = "{{ latest }}";
   var healthUrl = "{{ url_for('health') }}";
+  var statusUrl = "{{ url_for('admin_update_status') }}";
   var deadline = 0;
+
+  function showFailure(msg) {
+    progressMsg.textContent =
+      "{{ _('A atualização falhou — o serviço continua na versão atual.') }}" +
+      (msg ? " (" + msg + ")" : "");
+    progress.querySelector('.spinner-border').classList.add('d-none');
+    btn.disabled = false;
+  }
 
   function toTuple(v) { return (String(v).match(/\d+/g) || ['0']).map(Number); }
   function gte(a, b) {
@@ -121,12 +130,25 @@
   // — então só recarregamos quando o novo processo está de pé. Isso atravessa a janela
   // de 502 do proxy durante o reinício sem mostrar erro ao usuário (era a causa do
   // "Bad Gateway" no fim do update).
+  // Primeiro checa o resultado gravado pelo update-lxc.sh: se o deploy abortou
+  // (smoke test, PyPI, etc.) mostra o motivo e para — em vez de girar até o teto.
+  // Se o status estiver indisponível (502 durante o restart), cai pro /health.
   function poll() {
     if (Date.now() > deadline) {
       progressMsg.textContent = "{{ _('A atualização está demorando. Recarregue a página em instantes.') }}";
       progress.querySelector('.spinner-border').classList.add('d-none');
       return;
     }
+    fetch(statusUrl, { cache: 'no-store', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+      .then(function (s) {
+        if (s && s.state === 'failed') { showFailure(s.message || ''); return; }
+        checkHealth();
+      })
+      .catch(checkHealth);  // status fora do ar durante o restart → segue pelo /health
+  }
+
+  function checkHealth() {
     fetch(healthUrl, { cache: 'no-store', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
       .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
       .then(function (h) {

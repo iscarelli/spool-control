@@ -1,5 +1,6 @@
 """Rotas administrativas (só admin): usuários, marcas, configurações, atualização
 do sistema e backup/restauração."""
+import json
 import re
 import time
 from pathlib import Path
@@ -231,6 +232,15 @@ def admin_update_run():
     # Um systemd .path unit (root) detecta o arquivo via inotify e dispara o oneshot
     # de update — instantâneo, sem o app ter qualquer poder de root.
     flag = db.DB_PATH.parent / ".update-requested"
+    # Limpa o resultado de um update anterior para o poller não ler um "failed"
+    # antigo como se fosse desta tentativa (o app é dono de data/, então remove
+    # mesmo o arquivo escrito pelo root via permissão do diretório).
+    try:
+        (db.DB_PATH.parent / ".update-status").unlink()
+    except FileNotFoundError:
+        pass
+    except Exception:
+        log.warning("admin.update_status_clear_failed", exc_info=True)
     try:
         flag.write_text(
             f"{db.now_iso()} by {session.get('username', '?')}\n", encoding="utf-8"
@@ -241,6 +251,24 @@ def admin_update_run():
                        error="Não foi possível registrar o pedido de atualização."), 500
     log.info("admin.update_triggered")
     return jsonify(ok=True)
+
+
+@app.route("/admin/update/status")
+@admin_required
+def admin_update_status():
+    """Resultado do último update, gravado pelo update-lxc.sh em data/.update-status.
+    O poller da /admin/update usa isto para mostrar uma falha (com o motivo) em vez de
+    girar até o timeout sem explicação. Sem arquivo = nenhum update registrado (idle)."""
+    f = db.DB_PATH.parent / ".update-status"
+    try:
+        data = json.loads(f.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return jsonify(state="idle")
+    except Exception:
+        return jsonify(state="unknown")
+    return jsonify(state=str(data.get("state", "unknown")),
+                   message=str(data.get("message", "")),
+                   ts=str(data.get("ts", "")))
 
 
 # ── Backup / restauração ─────────────────────────────────────────────────────

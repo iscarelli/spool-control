@@ -1035,6 +1035,10 @@ _EN["A atualização está demorando. Recarregue a página em instantes."] = \
     "The update is taking a while. Please reload the page shortly."
 _ES["A atualização está demorando. Recarregue a página em instantes."] = \
     "La actualización está tardando. Vuelva a cargar la página en un momento."
+_EN["A atualização falhou — o serviço continua na versão atual."] = \
+    "The update failed — the service is still on the current version."
+_ES["A atualização falhou — o serviço continua na versão atual."] = \
+    "La actualización falló — el servicio sigue en la versión actual."
 
 # ── Detalhe do spool / fila de impressão / pesagem rápida (i18n completa) ─────
 _EN["Detalhes"] = "Details"

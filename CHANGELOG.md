@@ -10,6 +10,13 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.32.1] — 2026-06-09
+
+### Fixed
+- **A atualização web não falha mais em silêncio.** Quando o deploy aborta no smoke test (ex.: uma dependência nova como o `pyotp` da 1.31.0 não instala — PyPI inacessível, disco cheio) o serviço continua na versão atual (fail-safe), mas antes a UI só ficava girando até o teto de 5 min **sem dizer o motivo** — o admin via "Atualizando…" e a versão simplesmente não mudava. Agora o `update-lxc.sh` grava o resultado em `data/.update-status` (gravação sem privilégio: root escreve, o app `spool` lê), o endpoint `GET /admin/update/status` expõe esse resultado e o poller da `/admin/update` **mostra a falha com o motivo** e reabilita o botão, em vez de girar sem explicação. O `pip install` do smoke test também passou a ser tratado com mensagem clara (em vez de morrer via `set -e`) e tem a saída capturada no `/tmp/spool-smoke.log`.
+
+> Observação: como o `update-lxc.sh` roda da cópia **instalada**, a mensagem de falha só aparece para atualizações **a partir** desta versão; uma instalação presa numa versão anterior precisa de um update manual no console uma vez (`bash /opt/spool-control/deploy/update-lxc.sh --latest-release`).
+
 ## [1.32.0] — 2026-06-09
 
 ### Added
