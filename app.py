@@ -464,8 +464,17 @@ def t(s):
 
 
 def _safe_next(url, default=""):
-    """Aceita só caminhos relativos ao próprio site — evita open redirect."""
-    if url and url.startswith("/") and not url.startswith("//"):
+    """Aceita só caminhos relativos ao próprio site — evita open redirect.
+
+    Rejeita URLs absolutas (com esquema ou host) e barras invertidas: vários
+    navegadores normalizam "\\" para "/", então "/\\evil.com" viraria
+    "//evil.com" (host externo) e escaparia de um teste ingênuo de prefixo."""
+    if not url or "\\" in url:
+        return default
+    parts = urlsplit(url)
+    if parts.scheme or parts.netloc:
+        return default
+    if url.startswith("/") and not url.startswith("//"):
         return url
     return default
 
