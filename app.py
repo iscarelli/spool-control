@@ -590,12 +590,15 @@ def _promote_session(user, remember, ip, next_url=""):
     # Open redirect (CWE-601): valida o destino no PRÓPRIO ponto do redirect — o
     # analisador estático não reconhece a barreira interprocedural do _safe_next.
     # Navegadores tratam "\" como "/", então remove barras invertidas antes; só
-    # aceita caminho relativo ao próprio site (sem esquema e sem host).
+    # aceita caminho relativo ao próprio site (sem esquema e sem host). O redirect
+    # do valor do usuário fica DENTRO do guard positivo (padrão reconhecido); o
+    # default cai num url_for, que é seguro.
     target = (next_url or "").replace("\\", "")
     parts = urlsplit(target)
-    if parts.scheme or parts.netloc or not target.startswith("/") or target.startswith("//"):
-        target = url_for("dashboard")
-    return redirect(target)
+    if (not parts.scheme and not parts.netloc
+            and target.startswith("/") and not target.startswith("//")):
+        return redirect(target)
+    return redirect(url_for("dashboard"))
 
 
 @app.route("/login", methods=["GET", "POST"])
