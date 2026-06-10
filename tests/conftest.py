@@ -54,3 +54,22 @@ def auth_client(client):
     """Cliente já logado como admin."""
     client.post("/login", data={"username": ADMIN_USER, "password": ADMIN_PASS})
     return client
+
+
+VIEWER_USER = "viewer1"
+VIEWER_PASS = "viewer-test-pass"   # >= MIN_PASSWORD_LEN (8)
+
+
+@pytest.fixture()
+def viewer_client(app_module):
+    """Cliente logado como usuário de papel `viewer` (somente leitura).
+
+    Usa um test_client PRÓPRIO (não o fixture `client`) para poder coexistir com
+    `auth_client` no mesmo teste sem que um login sobreponha o outro."""
+    from werkzeug.security import generate_password_hash
+    import database
+    database.create_user(VIEWER_USER, generate_password_hash(VIEWER_PASS),
+                         role="viewer", must_change=False)
+    c = app_module.app.test_client()
+    c.post("/login", data={"username": VIEWER_USER, "password": VIEWER_PASS})
+    return c

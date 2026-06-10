@@ -9,7 +9,7 @@ import database as db
 import labels as lbl
 import niimbot_registry as reg
 import logger as log_cfg
-from app import app, login_required, t, _parse_price, public_base_url, _label_spool, _currency_meta
+from app import app, login_required, write_required, t, _parse_price, public_base_url, _label_spool, _currency_meta
 
 log = log_cfg.get_logger()
 
@@ -45,7 +45,7 @@ def spools_list():
 
 
 @app.route("/spools/new", methods=["GET", "POST"])
-@login_required
+@write_required
 def spools_new():
     filament_id = request.args.get("filament_id", type=int)
     if request.method == "POST":
@@ -89,7 +89,7 @@ def spools_detail(spool_id):
 
 
 @app.route("/spools/<int:spool_id>/edit", methods=["GET", "POST"])
-@login_required
+@write_required
 def spools_edit(spool_id):
     spool = db.get_spool(spool_id)
     if not spool:
@@ -124,7 +124,7 @@ def spools_edit(spool_id):
 
 
 @app.route("/spools/<int:spool_id>/weigh", methods=["GET", "POST"])
-@login_required
+@write_required
 def spools_weigh(spool_id):
     spool = db.get_spool(spool_id)
     if not spool:
@@ -163,7 +163,7 @@ def spools_weigh(spool_id):
 
 
 @app.route("/spools/<int:spool_id>/deactivate", methods=["POST"])
-@login_required
+@write_required
 def spools_deactivate(spool_id):
     db.deactivate_spool(spool_id)
     flash(t("Rolo marcado como finalizado"), "success")
@@ -248,7 +248,7 @@ def niimbot_registry():
 # ── Pesagem rápida ───────────────────────────────────────────────────────────
 
 @app.route("/weigh", methods=["GET", "POST"])
-@login_required
+@write_required
 def quick_weigh():
     if request.method == "POST":
         code = request.form.get("spool_code", "").strip()

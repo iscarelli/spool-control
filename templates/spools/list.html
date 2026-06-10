@@ -27,10 +27,12 @@
       <i class="bi bi-printer me-1"></i>{{ _('Imprimir') }} ({{ label_queue_count }})
     </a>
     {% endif %}
+    {% if can_write %}
     <a href="{{ url_for('spools_new') }}" class="btn btn-primary btn-sm rounded-pill px-3 d-inline-flex flex-column align-items-center justify-content-center" style="height:2rem;padding-top:0;padding-bottom:0;gap:1px">
       <i class="bi bi-plus-circle-fill" style="font-size:.75rem;line-height:1"></i>
       <span style="font-size:.75rem;font-weight:600;letter-spacing:.02em;line-height:1">{{ _('Spool') }}</span>
     </a>
+    {% endif %}
   </div>
 </div>
 <div class="card">
@@ -77,11 +79,13 @@
           <td class="text-nowrap" onclick="event.stopPropagation()">
             <a href="{{ url_for('spools_detail', spool_id=s.id) }}" class="btn btn-sm btn-outline-secondary">{{ _('Ver') }}</a>
             {% if s.active %}
+            {% if can_write %}
             <button class="btn btn-sm btn-outline-secondary weigh-btn"
                     onclick="openWeighModal(this, event)"
                     title="{{ _('Pesar') }}">
               <span class="icon-scale"></span>
             </button>
+            {% endif %}
             {% if s.id in queue_ids %}
             <form method="post" action="{{ url_for('label_queue_remove', spool_id=s.id) }}" class="d-inline">
               <input type="hidden" name="next" value="{{ url_for('spools_list') }}">
@@ -93,7 +97,9 @@
               <button class="btn btn-sm btn-outline-warning" title="{{ _('Adicionar à fila') }}"><i class="bi bi-printer"></i></button>
             </form>
             {% endif %}
+            {% if can_write %}
             <a href="{{ url_for('spools_edit', spool_id=s.id) }}" class="btn btn-sm btn-outline-secondary" title="{{ _('Editar') }}"><i class="bi bi-pencil"></i></a>
+            {% endif %}
             {% endif %}
           </td>
         </tr>

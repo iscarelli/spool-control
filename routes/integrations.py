@@ -4,7 +4,7 @@ A balança (escopo write — grava pesagem) e o Home Assistant (escopo read — 
 leitura de estoque) têm chaves SEPARADAS: rotacionar uma não afeta a outra. A
 balança fica PRONTA mas OCULTA por enquanto (VISIBLE_INTEGRATIONS) — seu código,
 auth e seed já funcionam; só não aparece na UI ainda."""
-from flask import render_template, request, redirect, url_for, flash
+from flask import render_template, request, redirect, url_for, flash, jsonify, abort
 import database as db
 import logger as log_cfg
 from app import app, admin_required, demo_blocked, t, public_base_url
@@ -31,10 +31,13 @@ def admin_integrations():
         row = rows.get(slug)
         if not row:
             continue
+        # NUNCA mande a chave inteira para o template/DOM (CWE-200): só os 4 últimos
+        # dígitos mascarados. O valor em claro é buscado sob demanda via reveal_key().
+        key = row["key"] or ""
         items.append({
             "slug": slug,
             "label": row["label"] or slug,
-            "key": row["key"],
+            "key_masked": ("•" * 24) + key[-4:],
             "scope": row["scope"],
             "enabled": bool(row["enabled"]),
             "created_at": row["created_at"],
@@ -42,6 +45,21 @@ def admin_integrations():
         })
     return render_template("admin/integrations.html",
                            items=items, ha_endpoints=_ha_endpoints())
+
+
+@app.route("/admin/integrations/<integration>/key")
+@admin_required
+def admin_integration_key(integration):
+    """Revela a chave em claro SOB DEMANDA (botão "Revelar"/"Copiar"), só p/ admin e
+    nunca embutida no HTML servido. Resposta no-store p/ não ficar em cache."""
+    if integration not in VISIBLE_INTEGRATIONS:
+        abort(404)
+    row = db.get_api_key(integration)
+    if not row:
+        abort(404)
+    resp = jsonify(key=row["key"])
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
 
 
 @app.route("/admin/integrations/<integration>/regenerate", methods=["POST"])

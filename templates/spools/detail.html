@@ -29,12 +29,14 @@
   {% if not spool.active %}<span class="badge bg-secondary ms-2">{{ _('Finalizado') }}</span>{% endif %}
   {% if logged_in %}
   <div class="ms-auto d-flex gap-2">
-    {% if spool.active %}
+    {% if can_write and spool.active %}
     <a href="{{ url_for('spools_weigh', spool_id=spool.id) }}" class="btn btn-dark btn-sm">
       <span class="icon-scale me-1"></span>{{ _('Pesar') }}
     </a>
     {% endif %}
+    {% if can_write %}
     <a href="{{ url_for('spools_edit', spool_id=spool.id) }}" class="btn btn-outline-secondary btn-sm">{{ _('Editar') }}</a>
+    {% endif %}
     <a href="{{ url_for('spool_label_pdf', spool_id=spool.id) }}" class="btn btn-outline-dark btn-sm" target="_blank">
       <i class="bi bi-printer me-1"></i>{{ _('Etiqueta PDF') }}
     </a>

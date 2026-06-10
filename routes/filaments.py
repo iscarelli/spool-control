@@ -3,7 +3,7 @@ from flask import render_template, request, redirect, url_for, flash, abort, jso
 import database as db
 import filament_catalog as catalog
 import logger as log_cfg
-from app import app, login_required, t, _safe_next, get_ordered_materials
+from app import app, login_required, write_required, t, _safe_next, get_ordered_materials
 
 log = log_cfg.get_logger()
 
@@ -42,7 +42,7 @@ def _resolve_material(form) -> str:
 
 
 @app.route("/filaments/new", methods=["GET", "POST"])
-@login_required
+@write_required
 def filaments_new():
     if request.method == "POST":
         try:
@@ -78,7 +78,7 @@ def filaments_detail(filament_id):
 
 
 @app.route("/filaments/<int:filament_id>/edit", methods=["GET", "POST"])
-@login_required
+@write_required
 def filaments_edit(filament_id):
     filament = db.get_filament(filament_id)
     if not filament:
@@ -107,7 +107,7 @@ def filaments_edit(filament_id):
 
 
 @app.route("/filaments/<int:filament_id>/duplicate", methods=["POST"])
-@login_required
+@write_required
 def filaments_duplicate(filament_id):
     src = db.get_filament(filament_id)
     if not src:
@@ -126,7 +126,7 @@ def filaments_duplicate(filament_id):
 
 
 @app.route("/filaments/<int:filament_id>/delete", methods=["POST"])
-@login_required
+@write_required
 def filaments_delete(filament_id):
     try:
         db.delete_filament(filament_id)

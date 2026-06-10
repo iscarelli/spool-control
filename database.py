@@ -214,6 +214,10 @@ def init_db():
             "ALTER TABLE users ADD COLUMN totp_secret  TEXT    NOT NULL DEFAULT ''",
             "ALTER TABLE users ADD COLUMN totp_enabled INTEGER NOT NULL DEFAULT 0",
             "ALTER TABLE filaments ADD COLUMN color_name TEXT NOT NULL DEFAULT ''",
+            # Token de sessão server-side (revogação de cookie — ver app._validate_session).
+            # Default '' p/ instalações existentes: na próxima requisição o cookie legado
+            # (sem auth_token) não bate e o usuário reloga, recebendo um token gerado.
+            "ALTER TABLE users ADD COLUMN session_token TEXT NOT NULL DEFAULT ''",
         ]:
             try:
                 db.execute(sql)
@@ -292,6 +296,35 @@ def log_login(username, ip):
             (now_iso(), username, ip),
         )
         db.commit()
+
+
+# ── Token de sessão (revogação server-side — ver app._validate_session) ──────
+# Cada usuário tem um token; o login grava na sessão e toda requisição autenticada
+# revalida contra o banco. Rotacionar (logout / troca de senha) invalida na hora
+# qualquer cookie de sessão antigo.
+
+def get_session_token(user_id):
+    """Token de sessão atual do usuário ('' se nenhum/usuário inexistente)."""
+    with closing(get_db()) as db:
+        row = db.execute("SELECT session_token FROM users WHERE id=?", (user_id,)).fetchone()
+    return (row["session_token"] if row else "") or ""
+
+
+def get_or_create_session_token(user_id):
+    """Token atual; gera e persiste um se ainda vazio (usuário/instalação legados)."""
+    token = get_session_token(user_id)
+    if token:
+        return token
+    return rotate_session_token(user_id)
+
+
+def rotate_session_token(user_id):
+    """Gera um token novo, persiste e o devolve — invalida sessões anteriores."""
+    token = secrets.token_hex(16)
+    with closing(get_db()) as db:
+        db.execute("UPDATE users SET session_token=? WHERE id=?", (token, user_id))
+        db.commit()
+    return token
 
 
 # ── 2FA (TOTP opcional por usuário) ──────────────────────────────────────────

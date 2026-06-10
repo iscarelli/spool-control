@@ -31,7 +31,9 @@
           </td>
           <td>
             <a href="{{ url_for('spools_detail', spool_id=s.id) }}" class="btn btn-sm btn-outline-secondary">{{ _('Ver') }}</a>
+            {% if can_write %}
             <a href="{{ url_for('spools_weigh', spool_id=s.id) }}" class="btn btn-sm btn-outline-dark">{{ _('Pesar') }}</a>
+            {% endif %}
           </td>
         </tr>
         {% endfor %}

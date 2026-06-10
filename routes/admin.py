@@ -65,8 +65,12 @@ def admin_users_password(user_id):
         is_self = (user_id == session["user_id"])
         db.update_user_password(user_id, generate_password_hash(password),
                                 must_change=not is_self)
+        # Rotaciona o token de sessão do alvo (CWE-613): se for outro usuário, derruba
+        # imediatamente as sessões dele; se for o próprio admin, re-amarra a sessão atual.
+        new_token = db.rotate_session_token(user_id)
         if is_self:
             session.pop("must_change_password", None)
+            session["auth_token"] = new_token
         flash(t("Senha atualizada"), "success")
     return redirect(url_for("admin_users"))
 

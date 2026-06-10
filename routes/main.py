@@ -1,6 +1,6 @@
 """Rotas gerais: dashboard, busca e health check."""
 from datetime import datetime, timezone
-from flask import render_template, request, jsonify
+from flask import render_template, request, jsonify, Response
 import database as db
 import logger as log_cfg
 from app import app, login_required, APP_VERSION, DEMO_MODE
@@ -32,6 +32,19 @@ def search():
 
 
 # ── Health ─────────────────────────────────────────────────────────────────
+
+@app.route("/.well-known/security.txt")
+@app.route("/security.txt")
+def security_txt():
+    """Canal de divulgação responsável de vulnerabilidades (RFC 9116). Público (sem
+    auth) — é o ponto de contato p/ quem encontrar uma falha."""
+    body = (
+        "Contact: mailto:iscarelli@gmail.com\n"
+        "Preferred-Languages: pt, en\n"
+        "Canonical: https://spool.lojinharacer.com.br/.well-known/security.txt\n"
+    )
+    return Response(body, mimetype="text/plain")
+
 
 @app.route("/health")
 def health():

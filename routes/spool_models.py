@@ -2,7 +2,7 @@
 from flask import render_template, request, redirect, url_for, flash, abort
 import database as db
 import logger as log_cfg
-from app import app, login_required, t
+from app import app, login_required, write_required, t
 
 log = log_cfg.get_logger()
 
@@ -15,7 +15,7 @@ def spool_models_list():
 
 
 @app.route("/spool-models/new", methods=["GET", "POST"])
-@login_required
+@write_required
 def spool_models_new():
     if request.method == "POST":
         try:
@@ -33,7 +33,7 @@ def spool_models_new():
 
 
 @app.route("/spool-models/<int:model_id>/edit", methods=["GET", "POST"])
-@login_required
+@write_required
 def spool_models_edit(model_id):
     model = db.get_spool_model(model_id)
     if not model:
@@ -55,7 +55,7 @@ def spool_models_edit(model_id):
 
 
 @app.route("/spool-models/<int:model_id>/delete", methods=["POST"])
-@login_required
+@write_required
 def spool_models_delete(model_id):
     try:
         db.delete_spool_model(model_id)

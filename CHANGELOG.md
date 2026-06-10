@@ -10,6 +10,47 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.36.0] — 2026-06-10
+
+Endurecimento de segurança a partir de um teste externo (caixa-preta). Vários
+achados do relatório já estavam cobertos pelo código (throttle de login por IP,
+mensagem de erro genérica, guarda anti-SSRF e anti open-redirect); o que segue são
+as lacunas reais corrigidas, cada uma com teste automatizado.
+
+### Security
+- **Controle de acesso por papel nas rotas de escrita (RBAC).** O papel `viewer`
+  é rotulado "somente leitura", mas as rotas de mutação de inventário
+  (`/spools/new` e `/edit`/`/weigh`/`/deactivate`, `/weigh`, `/filaments/*`,
+  `/spool-models/*`) eram protegidas apenas por `@login_required` — um viewer
+  conseguia criar/editar/excluir/pesar. Novo decorator `@write_required` enforça o
+  papel **no servidor** (403 para viewer, GET do formulário e POST). Os botões de
+  escrita também somem na UI para viewer (`can_write`), como defesa em profundidade.
+- **Revogação de sessão server-side (CWE-613).** O cookie de sessão do Flask é
+  *stateless*: `logout` só apagava o cookie do navegador, então um cookie capturado
+  seguia válido até expirar (até ~30 dias com "manter conectado"); trocar a senha
+  também não derrubava sessões antigas. Cada usuário agora tem um `session_token`
+  no banco, revalidado a cada requisição autenticada; **logout e troca de senha
+  rotacionam o token**, invalidando na hora qualquer cookie antigo (a troca de senha
+  derruba as *outras* sessões e mantém a atual). Reset de senha por admin derruba a
+  sessão do alvo. Cookies anteriores a esta versão caem uma vez e o usuário reloga.
+- **Chave de API não trafega mais no DOM (CWE-200).** A página Admin → Integrações
+  embutia a chave inteira num atributo `data-key` (visível em *view-source*). Agora
+  o HTML só recebe a versão mascarada; o valor em claro é buscado **sob demanda**
+  por um endpoint admin (`/admin/integrations/<int>/key`, resposta `no-store`) ao
+  clicar em Revelar/Copiar.
+- **Exceções de roteamento não viram mais 500.** O `errorhandler(Exception)`
+  capturava `HTTPException` e a transformava em 500 — um GET em `/logout`
+  (POST-only) ou um POST em `/spool-models` (GET-only) retornava 500 em vez de 405.
+  O handler agora repassa `HTTPException` e há uma página 405 dedicada.
+- **`/.well-known/security.txt`** (RFC 9116) com canal de divulgação responsável.
+
+### Notas
+- Achados de severidade baixa do relatório foram avaliados e mantidos como estão
+  (versão no rodapé / IDs sequenciais — atrás de auth e mitigados pelo RBAC; rotas
+  admin potentes já exigem `@admin_required`). Brute-force: o throttle por IP
+  (10 falhas / 15 min) já existia; não foi adicionado *lockout por conta* para não
+  abrir um DoS contra o usuário `admin` conhecido — o 2FA opt-in é o controle forte.
+
 ## [1.35.2] — 2026-06-10
 
 ### Changed

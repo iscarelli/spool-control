@@ -31,6 +31,7 @@
       </div>
     </div>
   </div>
+  {% if can_write %}
   <div class="col-6 col-md-3">
     <div class="card text-center border-0 bg-light h-100">
       <div class="card-body py-3 d-flex flex-column align-items-center justify-content-center gap-2">
@@ -45,6 +46,7 @@
       </div>
     </div>
   </div>
+  {% endif %}
 </div>
 
 {% if low_stock %}
