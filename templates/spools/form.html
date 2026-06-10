@@ -123,16 +123,24 @@ function updateFilamentPreview() {
 filamentSel.addEventListener('change', updateFilamentPreview);
 updateFilamentPreview();
 
-// Tara hint
+// Tara — habilita/desabilita campo personalizado conforme modelo selecionado
 const sel = document.getElementById('spoolModelSelect');
+const customTare = document.getElementById('customTare');
 const hint = document.getElementById('tareHint');
-function updateTareHint() {
+function updateTareState() {
   const opt = sel.options[sel.selectedIndex];
   const tare = opt.dataset.tare;
-  hint.textContent = tare ? "{{ _('Tara do modelo') }}: " + parseFloat(tare).toFixed(0) + 'g' : '';
+  if (tare) {
+    customTare.disabled = true;
+    customTare.value = '';
+    hint.textContent = "{{ _('Tara do modelo') }}: " + parseFloat(tare).toFixed(0) + 'g';
+  } else {
+    customTare.disabled = false;
+    hint.textContent = '';
+  }
 }
-sel.addEventListener('change', updateTareHint);
-updateTareHint();
+sel.addEventListener('change', updateTareState);
+updateTareState();
 
 // Máscara de preço — adapta aos separadores da moeda configurada
 const DEC = {{ currency.decimal | tojson }};
