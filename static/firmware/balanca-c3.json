@@ -1,0 +1,32 @@
+{
+  "chip": "esp32c3",
+  "parts": [
+    {
+      "offset": "0x0",
+      "file": "bootloader.bin",
+      "size": 13248,
+      "sha256": "30d47ab1f344cfa69f6b2f718ffa72fc7baea6db047eaabefea162db29e6821c"
+    },
+    {
+      "offset": "0x8000",
+      "file": "partitions.bin",
+      "size": 3072,
+      "sha256": "0a8b5720e7b77ff11f1462458c3a509dee79224e5279898f26d6a2e3ae0517b7"
+    },
+    {
+      "offset": "0xe000",
+      "file": "boot_app0.bin",
+      "size": 8192,
+      "sha256": "f94c5d786a7a8fab06ac5d10e33bf37711a6697636dc037559ea19cc410a17f0"
+    },
+    {
+      "offset": "0x10000",
+      "file": "app.bin",
+      "size": 308912,
+      "sha256": "1fb037f028bb0df9df5f6cbfa1c8f94f56c1fcff5e1e2d9f168533bc4e7a9b6a"
+    }
+  ],
+  "app_sha256": "1fb037f028bb0df9df5f6cbfa1c8f94f56c1fcff5e1e2d9f168533bc4e7a9b6a",
+  "source_commit": "fd0d576",
+  "built_at": "2026-06-10T23:11:48Z"
+}

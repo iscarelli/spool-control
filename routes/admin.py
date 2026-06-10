@@ -212,6 +212,26 @@ def admin_settings():
     )
 
 
+# ── Estação de pesagem (gravar firmware da balança pela web) ─────────────────
+
+def _firmware_manifest():
+    """Lê static/firmware/balanca-c3.json (gerado por deploy/build-firmware-bin.sh).
+    Fail-safe: ausente/corrompido → {} (a página mostra o estado sem versão)."""
+    path = Path(app.static_folder) / "firmware" / "balanca-c3.json"
+    try:
+        return json.loads(path.read_text())
+    except Exception:
+        return {}
+
+
+@app.route("/admin/scale")
+@admin_required
+def admin_scale():
+    manifest = _firmware_manifest()
+    manifest_url = url_for("static", filename="firmware/balanca-c3.json")
+    return render_template("admin/scale.html", manifest=manifest, manifest_url=manifest_url)
+
+
 # ── Atualização do sistema ───────────────────────────────────────────────────
 
 @app.route("/admin/update")
