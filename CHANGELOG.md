@@ -10,28 +10,6 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
-## [1.37.0] — 2026-06-10
-
-### Added
-- **Gravação do firmware da balança pela web** (Admin → **Estação de pesagem**,
-  `/admin/scale`, só admin). O usuário conecta o ESP32‑C3 por USB e grava o firmware
-  direto do navegador via **Web Serial + esptool‑js** — irmão do gravador Niimbot (Web
-  Bluetooth): Chrome/Edge no computador, HTTPS (ou `localhost`), sem instalar nada.
-  - O firmware é compilado e gravado em **4 pedaços separados nos seus offsets**
-    (`bootloader 0x0 · partitions 0x8000 · boot_app0 0xe000 · app 0x10000`) — exatamente
-    como o `pio upload` — via `deploy/build-firmware-bin.sh`, em `static/firmware/` +
-    manifesto (`balanca-c3.json`), **versionados no git** e servidos como estáticos (o
-    deploy por clone público/`git archive` leva tudo, sem build no servidor). Pedaços
-    separados (não uma imagem merged única em 0x0) + `data` como **`Uint8Array`** são o
-    que funciona com o esptool-js — validado em hardware (ESP32‑C3 SuperMini).
-  - O `esptool-js` é **vendorado** (`static/esptool.js`, via `deploy/vendor-esptool.sh`,
-    sem CDN/runtime); o adaptador `static/esp-flash.js` baixa o `.bin` e grava em `0x0`.
-    **Nenhuma mudança de CSP** (Web Serial é API JS, scripts são `'self'`). Mensagens
-    traduzidas no servidor (EN/ES). Ver `docs/balanca-web-flash.md`.
-  - Escopo desta versão: **só gravação** (binário genérico, sem segredos). Provisionamento
-    de Wi‑Fi/URL/chave de API (firmware com Wi‑Fi + `POST /api/weigh` + handshake
-    serial‑JSON + fallback SoftAP) virá numa próxima versão.
-
 ## [1.36.0] — 2026-06-10
 
 Endurecimento de segurança a partir de um teste externo (caixa-preta). Vários

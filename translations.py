@@ -450,32 +450,6 @@ _EN = {
     "Roxo":     "Purple",
     "Rosa":     "Pink",
     "Marrom":   "Brown",
-    # ── Estação de pesagem (gravar firmware da balança) ──────────────────────
-    "Estação de pesagem": "Weighing station",
-    "Gravar firmware da balança": "Flash the scale firmware",
-    "Conecte a balança (ESP32-C3) por USB e grave o firmware direto do navegador — sem instalar nada. Requer Chrome ou Edge no computador.":
-        "Connect the scale (ESP32-C3) over USB and flash the firmware straight from the browser — no install needed. Requires Chrome or Edge on a computer.",
-    "Versão do firmware": "Firmware version",
-    "indisponível": "unavailable",
-    "Compilado em": "Built at",
-    "A gravação substitui o firmware atual da placa conectada.":
-        "Flashing replaces the current firmware on the connected board.",
-    "Conectar e gravar": "Connect and flash",
-    "Esta página só grava o firmware. A configuração de Wi-Fi, URL e chave de API virá numa próxima versão.":
-        "This page only flashes the firmware. Wi-Fi, URL and API key setup will come in a future version.",
-    "Use o Chrome ou o Edge no computador (Web Serial).":
-        "Use Chrome or Edge on a computer (Web Serial).",
-    "Isto vai gravar o firmware na balança conectada. Continuar?":
-        "This will flash the firmware onto the connected scale. Continue?",
-    "Conectando…": "Connecting…",
-    "Conectado: ": "Connected: ",
-    "Baixando firmware…": "Downloading firmware…",
-    "Gravando…": "Flashing…",
-    "Reiniciando a placa…": "Resetting the board…",
-    "Gravação concluída. A balança vai reiniciar.": "Flash complete. The scale will restart.",
-    "Cancelado.": "Cancelled.",
-    "Nenhuma porta selecionada.": "No port selected.",
-    "Falha: ": "Failed: ",
 }
 
 _ES = {
@@ -928,32 +902,6 @@ _ES = {
     "Roxo":     "Morado",
     "Rosa":     "Rosa",
     "Marrom":   "Marrón",
-    # ── Estación de pesaje (grabar firmware de la balanza) ───────────────────
-    "Estação de pesagem": "Estación de pesaje",
-    "Gravar firmware da balança": "Grabar el firmware de la balanza",
-    "Conecte a balança (ESP32-C3) por USB e grave o firmware direto do navegador — sem instalar nada. Requer Chrome ou Edge no computador.":
-        "Conecte la balanza (ESP32-C3) por USB y grabe el firmware desde el navegador — sin instalar nada. Requiere Chrome o Edge en una computadora.",
-    "Versão do firmware": "Versión del firmware",
-    "indisponível": "no disponible",
-    "Compilado em": "Compilado el",
-    "A gravação substitui o firmware atual da placa conectada.":
-        "La grabación reemplaza el firmware actual de la placa conectada.",
-    "Conectar e gravar": "Conectar y grabar",
-    "Esta página só grava o firmware. A configuração de Wi-Fi, URL e chave de API virá numa próxima versão.":
-        "Esta página solo graba el firmware. La configuración de Wi-Fi, URL y clave de API llegará en una próxima versión.",
-    "Use o Chrome ou o Edge no computador (Web Serial).":
-        "Use Chrome o Edge en una computadora (Web Serial).",
-    "Isto vai gravar o firmware na balança conectada. Continuar?":
-        "Esto grabará el firmware en la balanza conectada. ¿Continuar?",
-    "Conectando…": "Conectando…",
-    "Conectado: ": "Conectado: ",
-    "Baixando firmware…": "Descargando firmware…",
-    "Gravando…": "Grabando…",
-    "Reiniciando a placa…": "Reiniciando la placa…",
-    "Gravação concluída. A balança vai reiniciar.": "Grabación completada. La balanza se reiniciará.",
-    "Cancelado.": "Cancelado.",
-    "Nenhuma porta selecionada.": "Ninguna puerta seleccionada.",
-    "Falha: ": "Error: ",
 }
 
 # PT-BR: só os termos que mudam em relação ao texto-fonte (Spool → Rolo).
