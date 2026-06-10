@@ -10,6 +10,11 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.33.2] — 2026-06-10
+
+### Fixed
+- **Campo Tara Personalizada oculto sem deslocar os campos adjacentes.** A v1.33.1 usava `display:none`, que removia o elemento do fluxo e reorganizava os outros campos. Corrigido para `visibility:hidden` — o espaço é preservado e o layout não muda.
+
 ## [1.33.1] — 2026-06-10
 
 ### Fixed

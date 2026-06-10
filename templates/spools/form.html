@@ -129,10 +129,10 @@ const customTareCol = document.getElementById('customTareCol');
 function updateTareState() {
   const opt = sel.options[sel.selectedIndex];
   if (opt.dataset.tare) {
-    customTareCol.style.display = 'none';
+    customTareCol.style.visibility = 'hidden';
     customTare.value = '';
   } else {
-    customTareCol.style.display = '';
+    customTareCol.style.visibility = '';
   }
 }
 sel.addEventListener('change', updateTareState);
