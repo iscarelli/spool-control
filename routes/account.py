@@ -55,6 +55,9 @@ def account_password():
             db.update_user_password(session["user_id"], generate_password_hash(new),
                                     must_change=False)
             session.pop("must_change_password", None)
+            # Troca de senha revoga TODAS as outras sessões (CWE-613): rotaciona o
+            # token server-side e re-amarra ESTA sessão ao token novo (continua logado).
+            session["auth_token"] = db.rotate_session_token(session["user_id"])
             log.info("account.password_changed", forced=forced)
             flash(t("Senha alterada com sucesso"), "success")
             # Primeiro login (senha temporária recém-trocada): oferece — sem obrigar —

@@ -30,7 +30,7 @@
         <label class="form-label fw-semibold">{{ _('Chave de API') }}</label>
         <div class="input-group mb-2">
           <input type="text" class="form-control font-monospace sc-apikey" readonly
-                 data-key="{{ it.key }}" value="{{ '•' * 24 }}{{ it.key[-4:] }}">
+                 data-slug="{{ it.slug }}" value="{{ it.key_masked }}">
           <button type="button" class="btn btn-outline-secondary sc-reveal" title="{{ _('Revelar') }}"><i class="bi bi-eye"></i></button>
           <button type="button" class="btn btn-outline-secondary sc-copy" title="{{ _('Copiar') }}"><i class="bi bi-clipboard"></i></button>
         </div>
@@ -64,23 +64,46 @@
 
 {% block scripts %}
 <script nonce="{{ nonce }}">
+  // A chave em claro NÃO vem no HTML (CWE-200): é buscada sob demanda num endpoint
+  // admin (no-store) só quando o usuário clica em Revelar/Copiar, e cacheada na
+  // closure apenas pela vida da página.
   document.querySelectorAll('.sc-apikey').forEach(function (input) {
     var card = input.closest('.card');
-    var full = input.getAttribute('data-key');
+    var slug = input.getAttribute('data-slug');
     var masked = input.value;
+    var full = null;
     var shown = false;
     var reveal = card.querySelector('.sc-reveal');
     var copy = card.querySelector('.sc-copy');
+
+    function fetchKey() {
+      if (full !== null) return Promise.resolve(full);
+      return fetch('/admin/integrations/' + encodeURIComponent(slug) + '/key', {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        credentials: 'same-origin',
+      }).then(function (r) { return r.json(); }).then(function (d) {
+        full = d.key || ''; return full;
+      });
+    }
+
     if (reveal) reveal.addEventListener('click', function () {
-      shown = !shown;
-      input.value = shown ? full : masked;
-      reveal.querySelector('i').className = shown ? 'bi bi-eye-slash' : 'bi bi-eye';
+      if (shown) {
+        input.value = masked; shown = false;
+        reveal.querySelector('i').className = 'bi bi-eye';
+        return;
+      }
+      fetchKey().then(function (k) {
+        input.value = k; shown = true;
+        reveal.querySelector('i').className = 'bi bi-eye-slash';
+      });
     });
     if (copy) copy.addEventListener('click', function () {
-      navigator.clipboard.writeText(full).then(function () {
-        var i = copy.querySelector('i');
-        i.className = 'bi bi-check2';
-        setTimeout(function () { i.className = 'bi bi-clipboard'; }, 1500);
+      fetchKey().then(function (k) {
+        navigator.clipboard.writeText(k).then(function () {
+          var i = copy.querySelector('i');
+          i.className = 'bi bi-check2';
+          setTimeout(function () { i.className = 'bi bi-clipboard'; }, 1500);
+        });
       });
     });
   });

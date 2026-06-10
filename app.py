@@ -18,6 +18,7 @@ from flask import (
 )
 from markupsafe import Markup, escape
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_wtf import CSRFProtect
 from flask_wtf.csrf import CSRFError
@@ -192,6 +193,27 @@ def _req_start():
     g._request_id = rid
     g._nonce = secrets.token_urlsafe(16)
     g._t0 = time.perf_counter()
+
+
+@app.before_request
+def _validate_session():
+    """Revogação de sessão server-side (CWE-613). O cookie de sessão do Flask é
+    *stateless* (assinado), então `session.clear()` no logout só apaga o cookie do
+    navegador — um cookie capturado continuaria válido até expirar. Aqui amarramos
+    cada sessão a um `session_token` guardado no usuário: o login grava o token na
+    sessão e toda requisição autenticada revalida contra o banco. Logout e troca de
+    senha ROTACIONAM o token, invalidando imediatamente quaisquer cookies antigos.
+
+    Cookies legados (anteriores a esta versão, sem `auth_token`) não batem com o
+    token recém-semeado → a sessão é encerrada uma única vez e o usuário reloga."""
+    if request.endpoint in ("static", "health") or "user_id" not in session:
+        return
+    stored = db.get_session_token(session["user_id"])
+    if not stored or session.get("auth_token") != stored:
+        session.clear()
+        if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify(error="Unauthorized"), 401
+        return redirect(url_for("login"))
 
 
 # Endpoints liberados mesmo com troca de senha pendente (o próprio formulário,
@@ -587,6 +609,9 @@ def inject_globals():
     count = db.queue_count() if "user_id" in session else 0
     lang = session.get("lang", "pt")
     is_admin = session.get("role") == "admin"
+    # Espelha o gate server-side (write_required/WRITE_ROLES) na UI: esconde botões de
+    # escrita p/ `viewer`. É só defesa em profundidade — quem barra de verdade é o servidor.
+    can_write = session.get("role") in WRITE_ROLES
     # Alerta de backup (só admin): última rotação diária falhou ou a cópia externa falhou.
     backup_alert = bool(is_admin and (
         db.get_setting("backup_last_result", "") == "error"
@@ -598,6 +623,7 @@ def inject_globals():
         "lang": lang,
         "_": i18n.get_translator(lang),
         "update_available": is_update_available() if is_admin else False,
+        "can_write": can_write,
         "backup_alert": backup_alert,
         "nonce": getattr(g, "_nonce", ""),
         "demo_mode": DEMO_MODE,
@@ -671,6 +697,28 @@ def admin_required(f):
     return decorated
 
 
+# Papéis com permissão de ESCRITA no inventário (criar/editar/excluir/pesar spools,
+# filamentos e modelos). `viewer` é somente-leitura — o rótulo no cadastro de usuário
+# é literalmente "Viewer (somente leitura)", então a regra é enforçada no servidor,
+# não só escondendo botões. Fica numa constante p/ facilitar um futuro papel "editor".
+WRITE_ROLES = ("admin",)
+
+
+def write_required(f):
+    """Exige um papel com permissão de escrita (CWE-285). Aplicado em TODA rota que
+    muta dados do inventário — o gate é no servidor, independente da UI."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if "user_id" not in session:
+            if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify(error="Unauthorized"), 401
+            return redirect(url_for("login", next=request.path))
+        if session.get("role") not in WRITE_ROLES:
+            abort(403)
+        return f(*args, **kwargs)
+    return decorated
+
+
 def demo_blocked(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -691,6 +739,9 @@ def _promote_session(user, remember, ip, next_url=""):
     session["username"] = user["username"]
     session["role"] = user["role"]
     session["must_change_password"] = bool(user["must_change_password"])
+    # Amarra o cookie a um token server-side (ver _validate_session): permite revogar
+    # esta sessão no logout / troca de senha rotacionando o token no banco.
+    session["auth_token"] = db.get_or_create_session_token(user["id"])
     db.log_login(user["username"], ip)
     # Open redirect (CWE-601): valida o destino no PRÓPRIO ponto do redirect (o
     # analisador não reconhece a barreira interprocedural do _safe_next). Segue
@@ -778,6 +829,11 @@ def login_2fa():
 
 @app.route("/logout", methods=["POST"])
 def logout():
+    # Rotaciona o token server-side ANTES de limpar o cookie: invalida na hora
+    # qualquer outra cópia deste cookie de sessão (replay pós-logout — CWE-613).
+    uid = session.get("user_id")
+    if uid:
+        db.rotate_session_token(uid)
     session.clear()
     return redirect(url_for("login"))
 
@@ -834,6 +890,17 @@ def err_404(e):
     return render_template("error.html", code=404, message=t("Página não encontrada")), 404
 
 
+@app.errorhandler(405)
+def err_405(e):
+    # Método errado numa rota válida (ex.: GET em /logout, que é POST-only). Sem este
+    # handler, o errorhandler(Exception) abaixo capturaria o 405 e o transformaria em
+    # 500 — ver `err_unhandled`, que repassa HTTPException justamente por isso.
+    log.warning("http.405", path=request.path, method=request.method)
+    if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return jsonify(ok=False, error="method_not_allowed"), 405
+    return render_template("error.html", code=405, message=t("Método não permitido")), 405
+
+
 @app.errorhandler(422)
 def err_422(e):
     log.warning("http.422", detail=str(e))
@@ -852,6 +919,11 @@ def err_500(e):
 
 @app.errorhandler(Exception)
 def err_unhandled(e):
+    # HTTPExceptions (404/405/403/abort(...) etc.) NÃO são falhas internas: repassa
+    # para o handler específico / resposta padrão do Flask. Sem isto, um simples 405
+    # (método errado) viraria 500. Só erros realmente não tratados caem como 500.
+    if isinstance(e, HTTPException):
+        return e
     log.critical("unhandled_exception", exc=str(e), exc_info=True)
     if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
         return jsonify(ok=False, error="internal_error"), 500
