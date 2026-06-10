@@ -24,7 +24,19 @@
 {% set fill = filament.color_hex if filament.color_hex else '#6c757d' %}
 
 <div class="d-flex align-items-center mb-3 gap-3">
-  <a href="{{ url_for('filaments_list') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+  <div class="btn-group btn-group-sm" role="group">
+    <a href="{{ url_for('filaments_list') }}" class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="{{ _('Voltar à lista') }}"><i class="bi bi-arrow-left"></i></a>
+    {% if prev_id %}
+    <a href="{{ url_for('filaments_detail', filament_id=prev_id) }}" class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="{{ _('Filamento anterior') }}"><i class="bi bi-chevron-left"></i></a>
+    {% else %}
+    <button type="button" class="btn btn-outline-secondary" disabled><i class="bi bi-chevron-left"></i></button>
+    {% endif %}
+    {% if next_id %}
+    <a href="{{ url_for('filaments_detail', filament_id=next_id) }}" class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="{{ _('Próximo filamento') }}"><i class="bi bi-chevron-right"></i></a>
+    {% else %}
+    <button type="button" class="btn btn-outline-secondary" disabled><i class="bi bi-chevron-right"></i></button>
+    {% endif %}
+  </div>
   {% if filament.brand_logo %}
   <img src="{{ url_for('static', filename=filament.brand_logo) }}"
        height="28" style="object-fit:contain;max-width:64px" alt="{{ filament.brand }}">

@@ -639,6 +639,26 @@ def get_filament(filament_id):
         """, (filament_id,)).fetchone()
 
 
+def _neighbors(ids, current_id):
+    """(prev_id, next_id) de current_id numa lista ordenada de ids — None nas pontas."""
+    try:
+        i = ids.index(current_id)
+    except ValueError:
+        return (None, None)
+    prev_id = ids[i - 1] if i > 0 else None
+    next_id = ids[i + 1] if i < len(ids) - 1 else None
+    return (prev_id, next_id)
+
+
+def filament_neighbors(filament_id):
+    """(prev_id, next_id) na mesma ordem da listagem de filamentos."""
+    with closing(get_db()) as db:
+        ids = [r["id"] for r in db.execute(
+            "SELECT id FROM filaments ORDER BY material, brand, family"
+        ).fetchall()]
+    return _neighbors(ids, filament_id)
+
+
 def create_filament(brand, material, family, color_hex="", color_name="", diameter_mm=1.75, notes=""):
     with closing(get_db()) as db:
         db.execute(
@@ -715,6 +735,21 @@ def list_spools_for_filament(filament_id):
             f"{_spool_query_base()} WHERE s.filament_id=? ORDER BY s.id",
             (filament_id,),
         ).fetchall()
+
+
+def spool_neighbors(spool_id):
+    """(prev_id, next_id) na mesma ordem da listagem de spools. Navega entre spools
+    do mesmo estado (ativos/finalizados) do atual, p/ casar com a lista visível."""
+    with closing(get_db()) as db:
+        row = db.execute("SELECT active FROM spools WHERE id=?", (spool_id,)).fetchone()
+        if row is None:
+            return (None, None)
+        where = "WHERE s.active=1" if row["active"] else "WHERE s.active=0"
+        ids = [r["id"] for r in db.execute(
+            f"SELECT s.id FROM spools s JOIN filaments f ON f.id=s.filament_id "
+            f"{where} ORDER BY f.material, f.brand, f.family, s.id"
+        ).fetchall()]
+    return _neighbors(ids, spool_id)
 
 
 def create_spool(filament_id, spool_model_id, custom_tare_g, nominal_weight_g,
@@ -811,7 +846,7 @@ def report_by_material():
             )
             SELECT f.material,
                    COUNT(DISTINCT s.id)        AS spool_count,
-                   COALESCE(SUM(l.net_weight_g), 0) AS total_net_g,
+                   COALESCE(SUM(COALESCE(l.net_weight_g, s.nominal_weight_g)), 0) AS total_net_g,
                    COALESCE(SUM(s.nominal_weight_g), 0) AS total_nominal_g
             FROM spools s
             JOIN filaments f ON f.id = s.filament_id
@@ -832,7 +867,7 @@ def report_by_location():
             )
             SELECT COALESCE(NULLIF(s.location,''), '(sem local)') AS location,
                    COUNT(DISTINCT s.id)        AS spool_count,
-                   COALESCE(SUM(l.net_weight_g), 0) AS total_net_g
+                   COALESCE(SUM(COALESCE(l.net_weight_g, s.nominal_weight_g)), 0) AS total_net_g
             FROM spools s
             LEFT JOIN latest l ON l.spool_id = s.id
             WHERE s.active = 1
@@ -851,17 +886,17 @@ def report_low_stock(threshold_g=200, threshold_pct=20):
             )
             SELECT s.id, s.location, s.nominal_weight_g,
                    f.brand, f.material, f.family, f.color_hex,
-                   COALESCE(l.net_weight_g, 0) AS current_net_g,
+                   COALESCE(l.net_weight_g, s.nominal_weight_g) AS current_net_g,
                    CASE WHEN s.nominal_weight_g > 0
-                        THEN CAST(COALESCE(l.net_weight_g,0)*100.0/s.nominal_weight_g AS INTEGER)
+                        THEN CAST(COALESCE(l.net_weight_g, s.nominal_weight_g)*100.0/s.nominal_weight_g AS INTEGER)
                         ELSE 0 END AS pct_remaining
             FROM spools s
             JOIN filaments f ON f.id = s.filament_id
             LEFT JOIN latest l ON l.spool_id = s.id
             WHERE s.active = 1
-              AND (COALESCE(l.net_weight_g,0) < ? OR
-                   (s.nominal_weight_g > 0 AND COALESCE(l.net_weight_g,0)*100.0/s.nominal_weight_g < ?))
-            ORDER BY COALESCE(l.net_weight_g, 0) ASC
+              AND (COALESCE(l.net_weight_g, s.nominal_weight_g) < ? OR
+                   (s.nominal_weight_g > 0 AND COALESCE(l.net_weight_g, s.nominal_weight_g)*100.0/s.nominal_weight_g < ?))
+            ORDER BY COALESCE(l.net_weight_g, s.nominal_weight_g) ASC
         """, (threshold_g, threshold_pct)).fetchall()
 
 

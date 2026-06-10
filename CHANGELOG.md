@@ -10,6 +10,14 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.35.0] — 2026-06-10
+
+### Added
+- **Navegação anterior/próximo nas telas de detalhe.** No topo das páginas de detalhe de rolo (`/spools/<id>`) e de filamento (`/filaments/<id>`), ao lado do botão voltar, há agora dois botões para ir ao item anterior e ao próximo, seguindo a mesma ordem da listagem. Nas pontas o botão correspondente fica desabilitado (sem dar a volta). A navegação de rolos respeita o estado (ativos/finalizados) do rolo atual.
+
+### Fixed
+- **Rolo recém-cadastrado deixava de contar o peso nominal nos relatórios.** Um rolo ainda não pesado é tratado como cheio (= peso nominal) no resto do app, mas três relatórios o contavam como 0g: ele aparecia falsamente em "Estoque Baixo" (inclusive no card do dashboard) e zerava os totais por material/local. Os relatórios `por material`, `por local` e `estoque baixo` agora usam o fallback para o peso nominal, consistente com as demais telas.
+
 ## [1.34.0] — 2026-06-10
 
 ### Added

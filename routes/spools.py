@@ -82,8 +82,10 @@ def spools_detail(spool_id):
     logged_in = True
     in_queue = db.is_in_queue(spool_id)
     queue_prompt = request.args.get("queue_prompt") == "1"
+    prev_id, next_id = db.spool_neighbors(spool_id)
     return render_template("spools/detail.html", spool=spool, readings=readings,
-                           logged_in=logged_in, in_queue=in_queue, queue_prompt=queue_prompt)
+                           logged_in=logged_in, in_queue=in_queue, queue_prompt=queue_prompt,
+                           prev_id=prev_id, next_id=next_id)
 
 
 @app.route("/spools/<int:spool_id>/edit", methods=["GET", "POST"])

@@ -10,7 +10,19 @@
 {% set fill = spool.color_hex if spool.color_hex else '#6c757d' %}
 <div class="d-flex align-items-center mb-3">
   {% if logged_in %}
-  <a href="{{ url_for('spools_list') }}" class="btn btn-sm btn-outline-secondary me-2"><i class="bi bi-arrow-left"></i></a>
+  <div class="btn-group btn-group-sm me-2" role="group">
+    <a href="{{ url_for('spools_list') }}" class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="{{ _('Voltar à lista') }}"><i class="bi bi-arrow-left"></i></a>
+    {% if prev_id %}
+    <a href="{{ url_for('spools_detail', spool_id=prev_id) }}" class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="{{ _('Rolo anterior') }}"><i class="bi bi-chevron-left"></i></a>
+    {% else %}
+    <button type="button" class="btn btn-outline-secondary" disabled><i class="bi bi-chevron-left"></i></button>
+    {% endif %}
+    {% if next_id %}
+    <a href="{{ url_for('spools_detail', spool_id=next_id) }}" class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="{{ _('Próximo rolo') }}"><i class="bi bi-chevron-right"></i></a>
+    {% else %}
+    <button type="button" class="btn btn-outline-secondary" disabled><i class="bi bi-chevron-right"></i></button>
+    {% endif %}
+  </div>
   {% endif %}
   {{ donut(pct, fill, tip=pct|int|string + _('% disponível')) }}
   <h4 class="mb-0 fw-bold ms-2">SP-{{ '%04d'|format(spool.id) }}</h4>

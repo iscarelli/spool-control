@@ -72,7 +72,9 @@ def filaments_detail(filament_id):
     if not filament:
         abort(404)
     spools = db.list_spools_for_filament(filament_id)
-    return render_template("filaments/detail.html", filament=filament, spools=spools)
+    prev_id, next_id = db.filament_neighbors(filament_id)
+    return render_template("filaments/detail.html", filament=filament, spools=spools,
+                           prev_id=prev_id, next_id=next_id)
 
 
 @app.route("/filaments/<int:filament_id>/edit", methods=["GET", "POST"])
