@@ -10,6 +10,11 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.35.1] — 2026-06-10
+
+### Fixed
+- **Modo demo não oferece mais "Trocar senha" e "Verificação em duas etapas".** O backend já bloqueava ambas (`@demo_blocked`), mas o menu do usuário ainda exibia os links — que viravam beco sem saída (clique → aviso → volta). No `DEMO_MODE` o menu agora mostra apenas o nome do usuário, sem ações de conta.
+
 ## [1.35.0] — 2026-06-10
 
 ### Added
