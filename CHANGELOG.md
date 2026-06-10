@@ -10,6 +10,11 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.33.1] — 2026-06-10
+
+### Fixed
+- **Campo Tara Personalizada some quando modelo de carretel está selecionado.** Antes o campo ficava visível mas desabilitado (difícil de perceber). Agora o campo e seu rótulo são ocultados completamente; voltam a aparecer ao selecionar "Tara personalizada / desconhecida".
+
 ## [1.33.0] — 2026-06-10
 
 ### Added
