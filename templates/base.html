@@ -144,6 +144,13 @@
         </ul>
       </div>
 
+      {% if demo_mode %}
+      {# No modo demo as ações de conta (trocar senha / 2FA) são bloqueadas no backend;
+         não oferecemos os links para não virarem beco sem saída. Só o nome do usuário. #}
+      <span class="btn btn-outline-secondary btn-sm disabled d-inline-flex align-items-center justify-content-center me-2" style="height:2rem">
+        <i class="bi bi-person-circle me-1"></i>{{ session.username }}
+      </span>
+      {% else %}
       <div class="dropdown me-2">
         <button class="btn btn-outline-secondary btn-sm dropdown-toggle d-inline-flex align-items-center justify-content-center" data-bs-toggle="dropdown" style="height:2rem">
           <i class="bi bi-person-circle me-1"></i>{{ session.username }}
@@ -153,6 +160,7 @@
           <li><a class="dropdown-item" href="{{ url_for('account_2fa') }}"><i class="bi bi-shield-lock me-2"></i>{{ _('Verificação em duas etapas') }}</a></li>
         </ul>
       </div>
+      {% endif %}
       <form method="post" action="{{ url_for('logout') }}" class="d-inline">
         <button class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center justify-content-center" type="submit" style="height:2rem">{{ _('Sair') }}</button>
       </form>
