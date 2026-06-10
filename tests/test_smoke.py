@@ -138,6 +138,15 @@ def test_spool_detail_pages_render(auth_client, db):
         assert resp.status_code == 200, f"{url} retornou {resp.status_code}"
 
 
+def test_unweighed_spool_detail_shows_nominal(auth_client, db):
+    """Rolo não pesado: o detalhe assume o peso nominal (cheio) em vez de exibir 0/—.
+    Trava a correção visual — consistente com relatórios e donuts."""
+    sid = _make_spool(db, nominal=1000)
+    html = auth_client.get(f"/spools/{sid}").get_data(as_text=True)
+    assert "1000g" in html
+    assert "Não pesado ainda" not in html
+
+
 # ── Autoatualização: o app só escreve o flag (sem privilégio) ────────────────
 
 def test_update_run_writes_flag(auth_client, db):
