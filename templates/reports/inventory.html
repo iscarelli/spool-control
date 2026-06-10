@@ -25,7 +25,7 @@
        data-hex="{{ s.color_hex }}"
        data-fill="{{ fill }}"
        data-pct="{{ pct }}"
-       data-remaining="{% if s.current_net_g is not none %}{{ s.current_net_g|int }} g / {{ s.nominal_weight_g|int }} g ({{ pct|int }}%){% else %}—{% endif %}"
+       data-remaining="{% if s.current_net_g is not none %}{{ s.current_net_g|int }} g / {{ s.nominal_weight_g|int }} g ({{ pct|int }}%){% else %}{{ s.nominal_weight_g|int }} g · {{ _('não pesado') }}{% endif %}"
        data-diameter="{{ s.diameter_mm }} mm"
        data-location="{{ s.location or '—' }}"
        data-notes="{{ s.notes }}"

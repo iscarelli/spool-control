@@ -10,6 +10,11 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.35.2] — 2026-06-10
+
+### Changed
+- **Rolo recém-cadastrado (ainda não pesado) passa a exibir o peso nominal como peso assumido** (cheio), em vez de mostrar "—" / "Não pesado ainda". O detalhe do rolo, a lista, o detalhe do filamento e o inventário agora mostram o nominal rotulado como `não pesado`, consistente com os relatórios e as roscas (que já o tratavam como cheio desde v1.35.0). Nenhuma pesagem é criada — o dado continua honesto (o histórico de pesagens segue vazio até a primeira pesagem real); só a exibição deixou de parecer "zerada".
+
 ## [1.35.1] — 2026-06-10
 
 ### Fixed

@@ -100,7 +100,8 @@
           <div class="text-muted" style="font-size:0.75rem">{{ _('Pesado em') }} {{ spool.last_weighed_at | localdate }}</div>
           {% endif %}
         {% else %}
-          <div class="text-muted">{{ _('Não pesado ainda') }}</div>
+          <div class="fs-3 fw-bold">{{ spool.nominal_weight_g|int }}g</div>
+          <div class="text-muted small">{{ _('de {n}g nominais').replace('{n}', spool.nominal_weight_g|int|string) }} · {{ _('não pesado') }}</div>
           {% if logged_in and spool.active %}
           <a href="{{ url_for('spools_weigh', spool_id=spool.id) }}" class="btn btn-dark btn-sm mt-2">{{ _('Registrar peso') }}</a>
           {% endif %}

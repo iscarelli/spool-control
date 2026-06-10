@@ -72,7 +72,7 @@
           <td>{{ s.brand }} / {{ s.family }}</td>
           <td>{{ s.location or '—' }}</td>
           <td class="weight-cell">
-            {% if s.current_net_g is not none %}{{ s.current_net_g|int }}g{% else %}—{% endif %}
+            {% if s.current_net_g is not none %}{{ s.current_net_g|int }}g{% else %}<span class="text-muted" data-bs-toggle="tooltip" title="{{ _('não pesado') }}">{{ s.nominal_weight_g|int }}g</span>{% endif %}
           </td>
           <td class="text-nowrap" onclick="event.stopPropagation()">
             <a href="{{ url_for('spools_detail', spool_id=s.id) }}" class="btn btn-sm btn-outline-secondary">{{ _('Ver') }}</a>

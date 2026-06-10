@@ -111,7 +111,7 @@
           <td>{{ s.nominal_weight_g|int }}g</td>
           <td>
             {% if s.current_net_g is not none %}{{ s.current_net_g|int }}g
-            {% else %}<span class="text-muted">—</span>{% endif %}
+            {% else %}<span class="text-muted" data-bs-toggle="tooltip" title="{{ _('não pesado') }}">{{ s.nominal_weight_g|int }}g</span>{% endif %}
           </td>
           <td>
             {% if s.active %}
