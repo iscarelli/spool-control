@@ -1121,6 +1121,17 @@ _ES["Adicionar todos à fila"] = "Agregar todos a la cola"
 _ES["SP-0001 ou 1"] = "SP-0001 o 1"
 _ES["ex: 1150"] = "ej: 1150"
 
+_EN["Voltar à lista"] = "Back to list"
+_EN["Rolo anterior"] = "Previous spool"
+_EN["Próximo rolo"] = "Next spool"
+_EN["Filamento anterior"] = "Previous filament"
+_EN["Próximo filamento"] = "Next filament"
+_ES["Voltar à lista"] = "Volver a la lista"
+_ES["Rolo anterior"] = "Bobina anterior"
+_ES["Próximo rolo"] = "Bobina siguiente"
+_ES["Filamento anterior"] = "Filamento anterior"
+_ES["Próximo filamento"] = "Filamento siguiente"
+
 _TABLES = {"en": _EN, "es": _ES, "pt": _PT}
 
 
