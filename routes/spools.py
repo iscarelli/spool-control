@@ -9,9 +9,19 @@ import database as db
 import labels as lbl
 import niimbot_registry as reg
 import logger as log_cfg
-from app import app, login_required, t, _parse_price, public_base_url, _label_spool
+from app import app, login_required, t, _parse_price, public_base_url, _label_spool, _currency_meta
 
 log = log_cfg.get_logger()
+
+
+def _filaments_with_color_display():
+    """Enriquece a lista de filamentos com color_display para o dropdown de novo spool."""
+    result = []
+    for f in db.list_filaments():
+        d = dict(f)
+        d["color_display"] = d.get("color_name", "").strip() or (db.classify_color(d.get("color_hex")) or "")
+        result.append(d)
+    return result
 
 
 @app.route("/spools")
@@ -55,7 +65,7 @@ def spools_new():
         except Exception:
             log.error("spool.create_failed", exc_info=True)
             flash(t("Erro ao processar. Tente novamente."), "danger")
-    filaments = db.list_filaments()
+    filaments = _filaments_with_color_display()
     spool_models = db.list_spool_models()
     return render_template("spools/form.html", spool=None,
                            filaments=filaments, spool_models=spool_models,
@@ -104,7 +114,7 @@ def spools_edit(spool_id):
         except Exception:
             log.error("spool.update_failed", spool_id=spool_id, exc_info=True)
             flash(t("Erro ao processar. Tente novamente."), "danger")
-    filaments = db.list_filaments()
+    filaments = _filaments_with_color_display()
     spool_models = db.list_spool_models()
     return render_template("spools/form.html", spool=spool,
                            filaments=filaments, spool_models=spool_models,

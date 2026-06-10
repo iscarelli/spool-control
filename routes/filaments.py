@@ -51,6 +51,7 @@ def filaments_new():
                 material=_resolve_material(request.form),
                 family=request.form["family"].strip(),
                 color_hex=request.form.get("color_hex", "").strip(),
+                color_name=request.form.get("color_name", "").strip(),
                 diameter_mm=float(request.form.get("diameter_mm") or 1.75),
                 notes=request.form.get("notes", "").strip(),
             )
@@ -89,6 +90,7 @@ def filaments_edit(filament_id):
                 material=_resolve_material(request.form),
                 family=request.form["family"].strip(),
                 color_hex=request.form.get("color_hex", "").strip(),
+                color_name=request.form.get("color_name", "").strip(),
                 diameter_mm=float(request.form.get("diameter_mm") or 1.75),
                 notes=request.form.get("notes", "").strip(),
             )
@@ -113,6 +115,7 @@ def filaments_duplicate(filament_id):
         material=src["material"],
         family=src["family"],
         color_hex=src["color_hex"],
+        color_name=src["color_name"],
         diameter_mm=src["diameter_mm"],
         notes=src["notes"],
     )

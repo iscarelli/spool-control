@@ -103,9 +103,9 @@
         if (dsel.options[i].value === want) { dsel.value = want; break; }
       }
     }
-    // Nome da cor → Notas (só se estiver vazio, p/ não sobrescrever no modo edição).
-    var notes = document.querySelector('textarea[name="notes"]');
-    if (notes && !notes.value.trim() && e.color) notes.value = e.color;
+    // Nome da cor do catálogo → campo color_name (só se estiver vazio).
+    var colorNameEl = document.querySelector('input[name="color_name"]');
+    if (colorNameEl && !colorNameEl.value.trim() && e.color) colorNameEl.value = e.color;
 
     var modalEl = document.getElementById("catalogModal");
     if (modalEl && window.bootstrap) {

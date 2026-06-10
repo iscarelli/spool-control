@@ -52,6 +52,13 @@
               </div>
             </div>
             <div class="col-6">
+              <label class="form-label fw-semibold">{{ _('Nome da Cor') }} <span class="text-muted small fw-normal">({{ _('opcional') }})</span></label>
+              <input type="text" name="color_name" class="form-control"
+                     value="{{ filament.color_name if filament else '' }}"
+                     placeholder="{{ _('ex: Galaxy Black, Azul Cobalto, Silk Silver') }}">
+              <div class="form-text">{{ _('Nome do fabricante ou como você identifica esta cor. Usado na etiqueta impressa.') }}</div>
+            </div>
+            <div class="col-6">
               <label class="form-label fw-semibold">{{ _('Diâmetro (mm)') }}</label>
               <select name="diameter_mm" class="form-select">
                 <option value="1.75" {% if not filament or filament.diameter_mm == 1.75 %}selected{% endif %}>1.75 mm</option>

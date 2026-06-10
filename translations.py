@@ -67,6 +67,7 @@ _EN = {
     "Backup e restauração": "Backup & restore",
     "Fazer backup":         "Create backup",
     "Baixar backup":        "Download backup",
+    "Baixar":               "Download",
     "Restaurar backup":     "Restore backup",
     "Baixa um arquivo .zip com o banco de dados (filamentos, spools, usuários, configurações) e os logos das marcas. Guarde-o em local seguro.":
         "Downloads a .zip with the database (filaments, spools, users, settings) and brand logos. Keep it somewhere safe.",
@@ -125,6 +126,10 @@ _EN = {
         "linked spool(s) — remove them before deleting",
     "ex: Basic, Matte, Rapid, HS":   "e.g.: Basic, Matte, Rapid, HS",
     "Cor (hex)":                     "Color (hex)",
+    "Nome da Cor":                   "Color Name",
+    "ex: Galaxy Black, Azul Cobalto, Silk Silver": "e.g.: Galaxy Black, Cobalt Blue, Silk Silver",
+    "Nome do fabricante ou como você identifica esta cor. Usado na etiqueta impressa.":
+        "Manufacturer name or how you identify this color. Used on the printed label.",
     "Diâmetro (mm)":                 "Diameter (mm)",
     "Pesquise ou digite...":         "Search or type...",
     "Remover este filamento?":       "Remove this filament?",
@@ -281,6 +286,9 @@ _EN = {
     # ── Admin: settings ──────────────────────────────────────────────────────
     "Configurações do Sistema":  "System Settings",
     "Geral":                     "General",
+    "Moeda":                     "Currency",
+    "Símbolo e formato usados nos preços. Independente do idioma da interface.":
+        "Symbol and format used for prices. Independent of the interface language.",
     "URL Base do Sistema":       "System Base URL",
     "Usada para gerar o QR code nas etiquetas. Deve ser acessível pelo celular.":
         "Used to generate the QR code on labels. Must be reachable from the phone.",
@@ -510,6 +518,7 @@ _ES = {
     "Backup e restauração": "Copia y restauración",
     "Fazer backup":         "Crear copia",
     "Baixar backup":        "Descargar copia",
+    "Baixar":               "Descargar",
     "Restaurar backup":     "Restaurar copia",
     "Baixa um arquivo .zip com o banco de dados (filamentos, spools, usuários, configurações) e os logos das marcas. Guarde-o em local seguro.":
         "Descarga un .zip con la base de datos (filamentos, bobinas, usuarios, ajustes) y los logos de marcas. Guárdalo en un lugar seguro.",
@@ -568,6 +577,10 @@ _ES = {
         "bobina(s) vinculada(s) — elimínalas antes de borrar",
     "ex: Basic, Matte, Rapid, HS":   "ej.: Basic, Matte, Rapid, HS",
     "Cor (hex)":                     "Color (hex)",
+    "Nome da Cor":                   "Nombre del Color",
+    "ex: Galaxy Black, Azul Cobalto, Silk Silver": "ej.: Galaxy Black, Azul Cobalto, Silk Silver",
+    "Nome do fabricante ou como você identifica esta cor. Usado na etiqueta impressa.":
+        "Nombre del fabricante o cómo identificas este color. Se usa en la etiqueta impresa.",
     "Diâmetro (mm)":                 "Diámetro (mm)",
     "Pesquise ou digite...":         "Busca o escribe...",
     "Remover este filamento?":       "¿Eliminar este filamento?",
@@ -724,6 +737,9 @@ _ES = {
     # ── Admin: settings ──────────────────────────────────────────────────────
     "Configurações do Sistema":  "Ajustes del Sistema",
     "Geral":                     "General",
+    "Moeda":                     "Moneda",
+    "Símbolo e formato usados nos preços. Independente do idioma da interface.":
+        "Símbolo y formato usados en los precios. Independiente del idioma de la interfaz.",
     "URL Base do Sistema":       "URL Base del Sistema",
     "Usada para gerar o QR code nas etiquetas. Deve ser acessível pelo celular.":
         "Se usa para generar el código QR en las etiquetas. Debe ser accesible desde el móvil.",

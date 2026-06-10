@@ -16,6 +16,16 @@
             <div class="form-text">{{ _('Usada para gerar o QR code nas etiquetas. Deve ser acessível pelo celular.') }}</div>
           </div>
 
+          <div class="mb-4">
+            <label class="form-label fw-semibold">{{ _('Moeda') }}</label>
+            <select name="currency" class="form-select" style="max-width:260px">
+              <option value="BRL" {% if settings.currency == 'BRL' or not settings.currency %}selected{% endif %}>BRL — R$ &nbsp;(1.234,56)</option>
+              <option value="USD" {% if settings.currency == 'USD' %}selected{% endif %}>USD — $ &nbsp;(1,234.56)</option>
+              <option value="EUR" {% if settings.currency == 'EUR' %}selected{% endif %}>EUR — € &nbsp;(1.234,56)</option>
+            </select>
+            <div class="form-text">{{ _('Símbolo e formato usados nos preços. Independente do idioma da interface.') }}</div>
+          </div>
+
           <hr class="my-4">
           <h6 class="text-muted text-uppercase fw-semibold mb-3" style="font-size:.75rem">{{ _('Estoque Baixo') }}</h6>
           <div class="row g-3 mb-4">

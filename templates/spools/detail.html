@@ -107,7 +107,7 @@
         <div><span class="text-muted">{{ _('Compra') }}:</span> {{ spool.purchase_date | localdate }}</div>
         {% endif %}
         {% if spool.purchase_price %}
-        <div><span class="text-muted">{{ _('Preço') }}:</span> R$ {{ "%.2f"|format(spool.purchase_price)|replace(".", ",") }}</div>
+        <div><span class="text-muted">{{ _('Preço') }}:</span> {{ currency.symbol }} {{ format_price(spool.purchase_price) }}</div>
         {% endif %}
       </div>
     </div>

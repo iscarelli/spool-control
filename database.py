@@ -187,7 +187,8 @@ def init_db():
                 ('low_stock_threshold_g','200'),
                 ('low_stock_pct',        '20'),
                 ('label_width_mm',       '60'),
-                ('label_height_mm',      '40');
+                ('label_height_mm',      '40'),
+                ('currency',             'BRL');
         """)
         # app_base_url é semeado a partir do ambiente (APP_BASE_URL, definido na
         # instalação) — cada usuário roda no próprio servidor, então o QR precisa
@@ -211,6 +212,7 @@ def init_db():
             # p/ validar, mesmo precedente das API keys); off por padrão.
             "ALTER TABLE users ADD COLUMN totp_secret  TEXT    NOT NULL DEFAULT ''",
             "ALTER TABLE users ADD COLUMN totp_enabled INTEGER NOT NULL DEFAULT 0",
+            "ALTER TABLE filaments ADD COLUMN color_name TEXT NOT NULL DEFAULT ''",
         ]:
             try:
                 db.execute(sql)
@@ -636,11 +638,11 @@ def get_filament(filament_id):
         """, (filament_id,)).fetchone()
 
 
-def create_filament(brand, material, family, color_hex="", diameter_mm=1.75, notes=""):
+def create_filament(brand, material, family, color_hex="", color_name="", diameter_mm=1.75, notes=""):
     with closing(get_db()) as db:
         db.execute(
-            "INSERT INTO filaments (brand, material, family, color_hex, diameter_mm, notes, created_at) VALUES (?,?,?,?,?,?,?)",
-            (brand, material, family, color_hex, diameter_mm, notes, now_iso()),
+            "INSERT INTO filaments (brand, material, family, color_hex, color_name, diameter_mm, notes, created_at) VALUES (?,?,?,?,?,?,?,?)",
+            (brand, material, family, color_hex, color_name, diameter_mm, notes, now_iso()),
         )
         last = db.execute("SELECT last_insert_rowid()").fetchone()[0]
         db.execute("INSERT OR IGNORE INTO brands (name) VALUES (?)", (brand,))
@@ -648,11 +650,11 @@ def create_filament(brand, material, family, color_hex="", diameter_mm=1.75, not
     return last
 
 
-def update_filament(filament_id, brand, material, family, color_hex="", diameter_mm=1.75, notes=""):
+def update_filament(filament_id, brand, material, family, color_hex="", color_name="", diameter_mm=1.75, notes=""):
     with closing(get_db()) as db:
         db.execute(
-            "UPDATE filaments SET brand=?, material=?, family=?, color_hex=?, diameter_mm=?, notes=? WHERE id=?",
-            (brand, material, family, color_hex, diameter_mm, notes, filament_id),
+            "UPDATE filaments SET brand=?, material=?, family=?, color_hex=?, color_name=?, diameter_mm=?, notes=? WHERE id=?",
+            (brand, material, family, color_hex, color_name, diameter_mm, notes, filament_id),
         )
         db.execute("INSERT OR IGNORE INTO brands (name) VALUES (?)", (brand,))
         db.commit()
@@ -674,7 +676,7 @@ def delete_filament(filament_id):
 def _spool_query_base():
     return """
         SELECT s.*,
-               f.brand, f.material, f.family, f.color_hex, f.diameter_mm,
+               f.brand, f.material, f.family, f.color_hex, f.color_name, f.diameter_mm,
                b.logo_path AS brand_logo,
                sm.name AS model_name,
                COALESCE(s.custom_tare_g, sm.tare_weight_g, 0) AS effective_tare_g,

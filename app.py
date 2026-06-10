@@ -513,10 +513,46 @@ def get_ordered_materials():
     return used + extra + unused
 
 
+_CURRENCY_META = {
+    "BRL": {"symbol": "R$", "decimal": ",", "thousands": "."},
+    "USD": {"symbol": "$",  "decimal": ".", "thousands": ","},
+    "EUR": {"symbol": "€",  "decimal": ",", "thousands": "."},
+}
+
+
+def _currency_meta():
+    code = db.get_setting("currency", "BRL")
+    return _CURRENCY_META.get(code, _CURRENCY_META["BRL"])
+
+
+def _format_price(value):
+    if value is None:
+        return ""
+    meta = _currency_meta()
+    # Formata com 2 casas decimais usando os separadores da moeda configurada.
+    int_part, dec_part = f"{value:.2f}".split(".")
+    # Insere separador de milhar
+    n = len(int_part)
+    groups = []
+    while n > 3:
+        groups.insert(0, int_part[n-3:n])
+        n -= 3
+    groups.insert(0, int_part[:n])
+    return meta["thousands"].join(groups) + meta["decimal"] + dec_part
+
+
 def _parse_price(s):
     if not s:
         return None
-    s = s.strip().replace("R$", "").strip().replace(".", "").replace(",", ".")
+    s = s.strip()
+    meta = _currency_meta()
+    s = s.replace(meta["symbol"], "").strip()
+    if meta["decimal"] == ",":
+        # Formato BR/EUR: ponto = milhar, vírgula = decimal
+        s = s.replace(".", "").replace(",", ".")
+    else:
+        # Formato USD: vírgula = milhar, ponto = decimal
+        s = s.replace(",", "")
     try:
         return float(s)
     except ValueError:
@@ -564,6 +600,8 @@ def inject_globals():
         "backup_alert": backup_alert,
         "nonce": getattr(g, "_nonce", ""),
         "demo_mode": DEMO_MODE,
+        "currency": _currency_meta(),
+        "format_price": _format_price,
     }
 
 
@@ -759,14 +797,18 @@ def public_base_url():
 
 
 def _label_spool(spool):
-    """Dict do spool enriquecido p/ a etiqueta: caminho do logo em disco + nome da
-    cor classificado do hexa (mantém labels.py sem depender de database/Flask)."""
+    """Dict do spool enriquecido p/ a etiqueta: caminho do logo em disco + nome da cor.
+    Usa color_name do filamento se preenchido; senão classifica pelo hex."""
     d = dict(spool)
     rel = d.get("brand_logo")
     p = os.path.join(app.static_folder, rel) if rel else None
     d["logo_file"] = p if (p and os.path.exists(p)) else None
-    cn = db.classify_color(d.get("color_hex"))
-    d["color_name"] = t(cn) if cn else ""   # traduz o nome da cor p/ o idioma da sessão
+    filament_color_name = (d.get("color_name") or "").strip()
+    if filament_color_name:
+        d["color_name"] = filament_color_name
+    else:
+        cn = db.classify_color(d.get("color_hex"))
+        d["color_name"] = t(cn) if cn else ""
     return d
 
 

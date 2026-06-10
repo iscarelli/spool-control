@@ -17,15 +17,18 @@
               {% for f in filaments %}
               <option value="{{ f.id }}"
                       data-color="{{ f.color_hex or '' }}"
+                      data-color-name="{{ f.color_display or '' }}"
                       data-edit-url="{{ url_for('filaments_edit', filament_id=f.id, next=request.url) }}"
                       {% if selected_filament_id == f.id %}selected{% endif %}>
                 {{ f.material }} — {{ f.brand }} / {{ f.family }}
+                {%- if f.color_display %} · {{ f.color_display }}{% endif %}
+                {%- if f.color_hex %} ({{ f.color_hex }}){% endif %}
               </option>
               {% endfor %}
             </select>
             <div class="d-flex align-items-center gap-2 mt-2" id="filamentMeta" style="display:none!important">
               <span id="filColorSwatch" style="width:20px;height:20px;border-radius:4px;border:1px solid #ccc;flex-shrink:0"></span>
-              <span id="filColorHex" class="text-muted small font-monospace"></span>
+              <span id="filColorLabel" class="text-muted small"></span>
               <a id="filEditLink" href="#" target="_blank" class="btn btn-sm btn-outline-secondary ms-auto">
                 <i class="bi bi-pencil me-1"></i>{{ _('Editar cor / filamento') }}
               </a>
@@ -71,10 +74,10 @@
             <div class="col-md-6">
               <label class="form-label fw-semibold">{{ _('Preço') }}</label>
               <div class="input-group">
-                <span class="input-group-text">R$</span>
+                <span class="input-group-text">{{ currency.symbol }}</span>
                 <input type="text" name="purchase_price" id="priceInput" class="form-control"
-                       placeholder="0,00" inputmode="numeric"
-                       value="{% if spool and spool.purchase_price %}{{ '%.2f'|format(spool.purchase_price)|replace('.',',') }}{% endif %}">
+                       placeholder="0{{ currency.decimal }}00" inputmode="numeric"
+                       value="{% if spool and spool.purchase_price %}{{ format_price(spool.purchase_price) }}{% endif %}">
               </div>
             </div>
             <div class="col-12">
@@ -105,15 +108,16 @@
 const filamentSel = document.getElementById('filamentSel');
 const filMeta     = document.getElementById('filamentMeta');
 const filSwatch   = document.getElementById('filColorSwatch');
-const filHex      = document.getElementById('filColorHex');
+const filLabel    = document.getElementById('filColorLabel');
 const filEdit     = document.getElementById('filEditLink');
 function updateFilamentPreview() {
   const opt = filamentSel.options[filamentSel.selectedIndex];
   if (!opt.value) { filMeta.style.display = 'none'; return; }
   filMeta.style.removeProperty('display');
   const color = opt.dataset.color;
+  const colorName = opt.dataset.colorName || '';
   filSwatch.style.background = color || '#e0e0e0';
-  filHex.textContent = color || "{{ _('(sem cor)') }}";
+  filLabel.textContent = colorName ? colorName + (color ? ' ' + color : '') : (color || "{{ _('(sem cor)') }}");
   filEdit.href = opt.dataset.editUrl || '#';
 }
 filamentSel.addEventListener('change', updateFilamentPreview);
@@ -130,23 +134,19 @@ function updateTareHint() {
 sel.addEventListener('change', updateTareHint);
 updateTareHint();
 
-// Máscara de preço (formato: 1.234,56)
+// Máscara de preço — adapta aos separadores da moeda configurada
+const DEC = {{ currency.decimal | tojson }};
+const THO = {{ currency.thousands | tojson }};
 const priceInput = document.getElementById('priceInput');
-priceInput.addEventListener('input', function(e) {
+priceInput.addEventListener('input', function() {
   let raw = this.value.replace(/\D/g, '');
   if (!raw) { this.value = ''; return; }
   let num = parseInt(raw, 10);
   let str = num.toString().padStart(3, '0');
   let cents = str.slice(-2);
-  let reais = str.slice(0, -2).replace(/^0+/, '') || '0';
-  reais = reais.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  this.value = reais + ',' + cents;
-});
-
-// Antes de submeter, converte para formato float (troca ponto/vírgula)
-document.getElementById('spoolForm').addEventListener('submit', function() {
-  let v = priceInput.value.replace(/\./g, '').replace(',', '.');
-  priceInput.value = v;
+  let intPart = str.slice(0, -2).replace(/^0+/, '') || '0';
+  intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, THO);
+  this.value = intPart + DEC + cents;
 });
 </script>
 {% endblock %}

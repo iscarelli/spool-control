@@ -5,7 +5,7 @@ import re
 import time
 from pathlib import Path
 from flask import (
-    render_template, request, redirect, url_for, session, flash, jsonify, Response,
+    render_template, request, redirect, url_for, session, flash, jsonify, Response, send_file, abort,
 )
 from werkzeug.security import generate_password_hash
 import database as db
@@ -189,6 +189,9 @@ def admin_settings():
         size = request.form.get("niimbot_label_size", reg.DEFAULT_PHYSICAL_SIZE).strip()
         db.set_setting("niimbot_label_size",
                        size if size in reg.PHYSICAL_SIZES else reg.DEFAULT_PHYSICAL_SIZE)
+        currency = request.form.get("currency", "BRL").strip()
+        from app import _CURRENCY_META
+        db.set_setting("currency", currency if currency in _CURRENCY_META else "BRL")
         flash(t("Configurações salvas"), "success")
         return redirect(url_for("admin_settings"))
     settings = db.get_all_settings()
@@ -355,3 +358,17 @@ def admin_backup_restore_local():
         return redirect(url_for("admin_backup"))
     ok, n, err = backup.restore_from_zip_bytes(data)
     return _flash_restore_result(ok, n, err)
+
+
+@app.route("/admin/backup/download-local/<int:slot>")
+@admin_required
+def admin_backup_download_local(slot):
+    """Faz download de um arquivo de backup da rotação diária."""
+    if slot not in backup.SLOTS:
+        abort(404)
+    path = backup.BACKUPS_DIR / backup.slot_filename(slot)
+    if not path.exists():
+        abort(404)
+    return send_file(str(path), as_attachment=True,
+                     download_name=f"spool-backup-slot{slot}.zip",
+                     mimetype="application/zip")

@@ -52,11 +52,17 @@
                 <td>{{ b.mtime | localdt }}</td>
                 <td class="text-end text-muted">{{ b.size_kb }} KB</td>
                 <td class="text-end">
-                  <form method="post" action="{{ url_for('admin_backup_restore_local') }}" class="d-inline"
-                        data-sc-confirm="{{ _('Tem certeza? Todos os dados atuais serão substituídos.') }}">
-                    <input type="hidden" name="slot" value="{{ b.slot }}">
-                    <button class="btn btn-sm btn-outline-danger">{{ _('Restaurar') }}</button>
-                  </form>
+                  <div class="d-flex justify-content-end gap-1">
+                    <a href="{{ url_for('admin_backup_download_local', slot=b.slot) }}"
+                       class="btn btn-sm btn-outline-secondary" title="{{ _('Baixar') }}">
+                      <i class="bi bi-download"></i>
+                    </a>
+                    <form method="post" action="{{ url_for('admin_backup_restore_local') }}" class="d-inline"
+                          data-sc-confirm="{{ _('Tem certeza? Todos os dados atuais serão substituídos.') }}">
+                      <input type="hidden" name="slot" value="{{ b.slot }}">
+                      <button class="btn btn-sm btn-outline-danger">{{ _('Restaurar') }}</button>
+                    </form>
+                  </div>
                 </td>
                 {% else %}
                 <td class="text-muted fst-italic" colspan="3">{{ _('ainda não gerado') }}</td>
