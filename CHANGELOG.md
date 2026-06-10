@@ -10,6 +10,20 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.33.0] — 2026-06-10
+
+### Added
+- **Campo Nome da Cor no filamento.** Texto livre (não obrigatório) para registrar o nome do fabricante ou como o usuário identifica a cor (ex: "Galaxy Black", "Silk Silver"). Usado na etiqueta impressa; se em branco, mantém o fallback automático via `classify_color()` — zero regressão para filamentos existentes.
+- **Import do catálogo Spoolman preenche o Nome da Cor.** O campo `color` do catálogo (ex: "Almond", "Sky Blue") agora vai para "Nome da Cor" em vez de "Notas".
+- **Configuração de moeda.** Nova opção em Configurações para escolher BRL (R$), USD ($) ou EUR (€), independente do idioma da interface. Símbolo e separadores decimais/de milhar se adaptam em todos os campos de preço.
+- **Cor no dropdown de seleção de filamento.** Ao cadastrar ou editar um spool, cada opção do dropdown mostra o nome da cor e o hex (ex: `PLA — Bambu Lab / Matte · Galaxy Black (#1A2B3C)`), facilitando distinguir filamentos idênticos de cores diferentes.
+- **Download de backup diário.** Ícone de download ao lado de cada slot na tabela de backups automáticos em `/admin/backup`.
+
+### Fixed
+- **Bug de preço: valores com decimais eram gravados errados** (ex: "21,60" virava 2160,00). O handler de `submit` do JavaScript convertia o formato BR "21,60" para "21.60" antes de enviar; `_parse_price` então interpretava o ponto como separador de milhar e gravava 2160. Handler removido — `_parse_price` já tratava o formato BR corretamente sem ele.
+- **Tara Personalizada desabilitada quando modelo de carretel está selecionado.** Ao escolher um modelo cadastrado, o campo fica desabilitado (a tara vem do modelo); ao voltar para "Tara personalizada / desconhecida", o campo reabilita.
+- Texto corrigido: "modelo acima" → "modelo ao lado" (os campos ficam lado a lado, não empilhados).
+
 ## [1.32.4] — 2026-06-09
 
 ### Fixed
