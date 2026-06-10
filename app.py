@@ -517,6 +517,7 @@ _CURRENCY_META = {
     "BRL": {"symbol": "R$", "decimal": ",", "thousands": "."},
     "USD": {"symbol": "$",  "decimal": ".", "thousands": ","},
     "EUR": {"symbol": "€",  "decimal": ",", "thousands": "."},
+    "CAD": {"symbol": "C$", "decimal": ".", "thousands": ","},
 }
 
 

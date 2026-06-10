@@ -75,6 +75,14 @@
 
         <hr class="my-3">
         <form method="post" action="{{ url_for('admin_backup_config') }}">
+          <label class="form-label fw-semibold" for="backup_hour">{{ _('Horário do backup automático') }}</label>
+          <select name="backup_hour" id="backup_hour" class="form-select" style="max-width:160px">
+            {% for h in range(24) %}
+            <option value="{{ h }}" {% if h == backup_hour %}selected{% endif %}>{{ '%02d:00' | format(h) }}</option>
+            {% endfor %}
+          </select>
+          <div class="form-text mb-3">{{ _('Hora local do servidor em que o backup diário é gerado. A rotação continua sendo um arquivo por dia da semana — só muda o instante da gravação.') }}</div>
+
           <label class="form-label fw-semibold">{{ _('Pasta de backup externa') }} <span class="text-muted fw-normal">({{ _('opcional') }})</span></label>
           <div class="input-group">
             <input type="text" name="backup_external_dir" class="form-control"

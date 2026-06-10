@@ -125,10 +125,49 @@ def slot_filename(slot):
     return f"spool-backup-{slot}.zip"
 
 
-def run_scheduled_backup():
+def backup_hour():
+    """Hora LOCAL (0..23) configurada p/ o backup diário. Default 3 (03:00).
+    Valor inválido cai no default — nunca derruba o backup."""
+    try:
+        h = int(db.get_setting("backup_hour", "3"))
+    except (TypeError, ValueError):
+        return 3
+    return h if 0 <= h <= 23 else 3
+
+
+def _ran_ok_today():
+    """True se já houve um backup BEM-SUCEDIDO hoje (data LOCAL). Torna o disparo
+    horário idempotente e o catch-up do `Persistent=` inofensivo; um backup que
+    FALHOU não conta, então a próxima hora tenta de novo até dar certo."""
+    if db.get_setting("backup_last_result", "") != "ok":
+        return False
+    last = db.get_setting("backup_last_run", "")
+    if not last:
+        return False
+    try:  # backup_last_run é UTC (db.now_iso) — converte p/ data local antes de comparar.
+        when = datetime.strptime(last, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    except ValueError:
+        return False
+    return when.astimezone().date() == datetime.now().date()
+
+
+def due_now():
+    """O timer acorda de hora em hora; só rodamos a partir da hora configurada e
+    enquanto não houve sucesso hoje. Usar `>=` (não `==`) preserva o catch-up: se a
+    máquina estava desligada na hora marcada e liga depois no mesmo dia, ainda roda."""
+    return datetime.now().hour >= backup_hour() and not _ran_ok_today()
+
+
+def run_scheduled_backup(force=False):
     """Backup diário rotativo: grava sempre local em data/backups/spool-backup-<N>.zip
     (N = dia da semana). Se `backup_external_dir` estiver configurado, copia também.
-    Persiste o status em settings p/ a UI alertar. Retorna o caminho local ou None."""
+    Persiste o status em settings p/ a UI alertar. Retorna o caminho local ou None.
+
+    O timer dispara de hora em hora; sem `force`, só executa quando `due_now()` —
+    nas demais horas é um tick silencioso (não mexe no status). `force=True` ignora
+    o agendamento (backup manual)."""
+    if not force and not due_now():
+        return None
     now = db.now_iso()
     slot = slot_today()
     name = slot_filename(slot)

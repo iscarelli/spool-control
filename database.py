@@ -188,7 +188,8 @@ def init_db():
                 ('low_stock_pct',        '20'),
                 ('label_width_mm',       '60'),
                 ('label_height_mm',      '40'),
-                ('currency',             'BRL');
+                ('currency',             'BRL'),
+                ('backup_hour',          '3');
         """)
         # app_base_url é semeado a partir do ambiente (APP_BASE_URL, definido na
         # instalação) — cada usuário roda no próprio servidor, então o QR precisa

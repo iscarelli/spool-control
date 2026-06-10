@@ -289,6 +289,7 @@ def admin_backup():
         last_result=db.get_setting("backup_last_result", ""),
         last_error=db.get_setting("backup_last_error", ""),
         external_error=db.get_setting("backup_external_error", ""),
+        backup_hour=backup.backup_hour(),
     )
 
 
@@ -300,6 +301,13 @@ def admin_backup_config():
     avisar já; o backup diário sempre grava local independente disto."""
     ext_dir = request.form.get("backup_external_dir", "").strip()
     db.set_setting("backup_external_dir", ext_dir)
+    # Hora do backup automático (0..23, local). Valor inválido mantém o atual.
+    try:
+        hour = int(request.form.get("backup_hour", ""))
+        if 0 <= hour <= 23:
+            db.set_setting("backup_hour", str(hour))
+    except (TypeError, ValueError):
+        pass
     if ext_dir:
         werr = backup.test_external_writable(ext_dir)
         if werr:
