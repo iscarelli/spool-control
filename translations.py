@@ -968,6 +968,9 @@ _EN["Caminho no servidor (ex.: disco/rede montado). O backup diário sempre grav
     "Path on the server (e.g. a mounted disk/network share). The daily backup always writes locally; if this folder is set, a copy is also written here. If writing fails, an alert appears on this page."
 _EN["Pasta de backup externa não é gravável: {e}"] = "External backup folder is not writable: {e}"
 _EN["Backups automáticos (diários)"] = "Automatic backups (daily)"
+_EN["Horário do backup automático"] = "Automatic backup time"
+_EN["Hora local do servidor em que o backup diário é gerado. A rotação continua sendo um arquivo por dia da semana — só muda o instante da gravação."] = \
+    "Server local time at which the daily backup is generated. The rotation is still one file per weekday — only the moment it is written changes."
 _EN["O sistema mantém um backup por dia da semana (7 no total), sobrescrevendo o do mesmo dia a cada semana."] = \
     "The system keeps one backup per weekday (7 total), overwriting the same weekday each week."
 _EN["Cópia externa em:"] = "External copy at:"
@@ -986,6 +989,9 @@ _ES["Caminho no servidor (ex.: disco/rede montado). O backup diário sempre grav
     "Ruta en el servidor (p. ej. un disco/red montado). El backup diario siempre se guarda localmente; si esta carpeta está definida, también se guarda una copia aquí. Si no se puede escribir, aparece una alerta en esta página."
 _ES["Pasta de backup externa não é gravável: {e}"] = "La carpeta de backup externa no es escribible: {e}"
 _ES["Backups automáticos (diários)"] = "Backups automáticos (diarios)"
+_ES["Horário do backup automático"] = "Hora del backup automático"
+_ES["Hora local do servidor em que o backup diário é gerado. A rotação continua sendo um arquivo por dia da semana — só muda o instante da gravação."] = \
+    "Hora local del servidor en que se genera el backup diario. La rotación sigue siendo un archivo por día de la semana — solo cambia el momento de la escritura."
 _ES["O sistema mantém um backup por dia da semana (7 no total), sobrescrevendo o do mesmo dia a cada semana."] = \
     "El sistema mantiene un backup por día de la semana (7 en total), sobrescribiendo el del mismo día cada semana."
 _ES["Cópia externa em:"] = "Copia externa en:"

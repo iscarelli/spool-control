@@ -182,6 +182,9 @@ EOF
         || warn "Nao foi possivel habilitar spool-update.path (update via web pode usar fallback)."
     systemctl enable --now spool-backup.timer 2>/dev/null \
         || warn "Nao foi possivel habilitar spool-backup.timer (backup automatico indisponivel)."
+    # Re-arma o timer com o OnCalendar atual (o daemon-reload acima ja releu a unit;
+    # o restart garante o re-calculo do proximo disparo apos mudanca de agendamento).
+    systemctl restart spool-backup.timer 2>/dev/null || true
     systemctl restart spool-control
     sleep 2
     systemctl is-active spool-control || error "Servico nao iniciou. Veja: journalctl -u spool-control -n 30"

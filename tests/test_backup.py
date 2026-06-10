@@ -31,7 +31,7 @@ def test_make_backup_file_is_valid_and_restorable(app_module, db, tmp_path):
 def test_scheduled_backup_uses_weekday_number(app_module, db):
     import backup
     _make_data(db)
-    result = backup.run_scheduled_backup()
+    result = backup.run_scheduled_backup(force=True)
     slot = datetime.now().isoweekday()
     expected = backup.BACKUPS_DIR / f"spool-backup-{slot}.zip"
     assert result == expected
@@ -44,7 +44,7 @@ def test_scheduled_backup_uses_weekday_number(app_module, db):
 def test_list_local_backups_reports_real_date(app_module, db):
     import backup
     _make_data(db)
-    backup.run_scheduled_backup()
+    backup.run_scheduled_backup(force=True)
     rows = backup.list_local_backups()
     assert len(rows) == 7
     slot = datetime.now().isoweekday()
@@ -54,6 +54,51 @@ def test_list_local_backups_reports_real_date(app_module, db):
     assert row["size_kb"] >= 0
 
 
+# ── Gate de agendamento (timer horário + hora configurável) ──────────────────
+
+def test_backup_hour_clamps_invalid(app_module, db):
+    import backup
+    db.set_setting("backup_hour", "0");   assert backup.backup_hour() == 0
+    db.set_setting("backup_hour", "23");  assert backup.backup_hour() == 23
+    db.set_setting("backup_hour", "99");  assert backup.backup_hour() == 3
+    db.set_setting("backup_hour", "abc"); assert backup.backup_hour() == 3
+
+
+def test_scheduled_backup_idempotent_same_day(app_module, db):
+    """Hora 0 → sempre 'na hora'; roda uma vez e os ticks horários seguintes do
+    mesmo dia são silenciosos (não reescrevem nem o arquivo nem o status)."""
+    import backup
+    _make_data(db)
+    db.set_setting("backup_hour", "0")
+    first = backup.run_scheduled_backup()
+    assert first is not None
+    assert backup.due_now() is False           # já houve sucesso hoje
+    assert backup.run_scheduled_backup() is None
+
+
+def test_scheduled_backup_skips_before_configured_hour(app_module, db):
+    """Antes da hora marcada não roda e NÃO toca no status (tick ocioso)."""
+    import backup
+    from datetime import datetime
+    h = datetime.now().hour
+    if h >= 23:
+        return   # 23:xx: não há hora futura no mesmo dia p/ testar o 'antes'
+    _make_data(db)
+    db.set_setting("backup_hour", str(h + 1))
+    assert backup.due_now() is False
+    assert backup.run_scheduled_backup() is None
+    assert db.get_setting("backup_last_result", "") == ""
+
+
+def test_force_runs_even_when_not_due(app_module, db):
+    """Backup manual ignora o gate de horário."""
+    import backup
+    _make_data(db)
+    db.set_setting("backup_hour", "23")
+    assert backup.run_scheduled_backup(force=True) is not None
+    assert db.get_setting("backup_last_result") == "ok"
+
+
 # ── Cópia externa + alerta ───────────────────────────────────────────────────
 
 def test_external_copy_success(app_module, db, tmp_path):
@@ -61,7 +106,7 @@ def test_external_copy_success(app_module, db, tmp_path):
     _make_data(db)
     ext = tmp_path / "ext"
     db.set_setting("backup_external_dir", str(ext))
-    backup.run_scheduled_backup()
+    backup.run_scheduled_backup(force=True)
     slot = datetime.now().isoweekday()
     assert (ext / f"spool-backup-{slot}.zip").exists()
     assert db.get_setting("backup_external_error", "") == ""
@@ -74,7 +119,7 @@ def test_external_copy_failure_sets_alert_but_keeps_local(app_module, db, tmp_pa
     blocker = tmp_path / "afile"
     blocker.write_text("x", encoding="utf-8")
     db.set_setting("backup_external_dir", str(blocker / "sub"))
-    backup.run_scheduled_backup()
+    backup.run_scheduled_backup(force=True)
     slot = datetime.now().isoweekday()
     # Local OK mesmo com a externa falhando.
     assert (backup.BACKUPS_DIR / f"spool-backup-{slot}.zip").exists()
@@ -107,7 +152,7 @@ def test_manual_download_keeps_timestamped_name(auth_client):
 def test_restore_local_roundtrip(auth_client, db):
     import backup
     _make_data(db)
-    backup.run_scheduled_backup()
+    backup.run_scheduled_backup(force=True)
     slot = datetime.now().isoweekday()
     # Apaga o filamento e restaura o backup local — deve voltar.
     fid = db.list_filaments()[0]["id"]
@@ -137,3 +182,15 @@ def test_backup_config_saves_external_dir(auth_client, db, tmp_path):
     assert resp.status_code == 302
     assert "/admin/backup" in resp.headers["Location"]
     assert db.get_setting("backup_external_dir") == ext
+
+
+def test_backup_config_saves_hour(auth_client, db):
+    resp = auth_client.post("/admin/backup/config", data={"backup_hour": "5"})
+    assert resp.status_code == 302
+    assert db.get_setting("backup_hour") == "5"
+
+
+def test_backup_config_rejects_invalid_hour(auth_client, db):
+    db.set_setting("backup_hour", "5")
+    auth_client.post("/admin/backup/config", data={"backup_hour": "99"})
+    assert db.get_setting("backup_hour") == "5"   # inválido → mantém o atual

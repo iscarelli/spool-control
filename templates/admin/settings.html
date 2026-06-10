@@ -22,6 +22,7 @@
               <option value="BRL" {% if settings.currency == 'BRL' or not settings.currency %}selected{% endif %}>BRL — R$ &nbsp;(1.234,56)</option>
               <option value="USD" {% if settings.currency == 'USD' %}selected{% endif %}>USD — $ &nbsp;(1,234.56)</option>
               <option value="EUR" {% if settings.currency == 'EUR' %}selected{% endif %}>EUR — € &nbsp;(1.234,56)</option>
+              <option value="CAD" {% if settings.currency == 'CAD' %}selected{% endif %}>CAD — C$ &nbsp;(1,234.56)</option>
             </select>
             <div class="form-text">{{ _('Símbolo e formato usados nos preços. Independente do idioma da interface.') }}</div>
           </div>

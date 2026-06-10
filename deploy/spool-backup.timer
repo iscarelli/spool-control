@@ -2,9 +2,12 @@
 Description=Spool Control daily backup timer
 
 [Timer]
-# Diário às 03:00 (hora local da máquina). Persistent=true recupera uma execução
-# perdida se a máquina estava desligada no horário.
-OnCalendar=*-*-* 03:00:00
+# Acorda de hora em hora; o backup.py decide se é a hora certa (setting
+# `backup_hour`, configurável na UI) e roda no máximo uma vez por dia. Manter o
+# horário no app (e não aqui) evita exigir root/daemon-reload pra trocar a hora.
+# Persistent=true + a lógica de catch-up do backup.py recuperam uma execução
+# perdida se a máquina estava desligada na hora marcada.
+OnCalendar=*-*-* *:00:00
 Persistent=true
 RandomizedDelaySec=300
 

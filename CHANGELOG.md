@@ -10,6 +10,16 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.34.0] — 2026-06-10
+
+### Added
+- **Dólar canadense (CAD) nas moedas.** Nova opção em Configurações (símbolo `C$`, formato `1,234.56`). Como o formato é orientado pelo registro de moedas, formatação e parsing de preços já funcionam sem mudanças adicionais.
+- **Horário do backup automático configurável.** Em `/admin/backup` é possível escolher a hora local (00:00–23:00) em que o backup diário é gerado. A rotação continua sendo um arquivo por dia da semana — só muda o instante da gravação.
+
+### Changed
+- **Timer de backup agora acorda de hora em hora** (`OnCalendar=*-*-* *:00:00`); o `backup.py` decide se é a hora certa (setting `backup_hour`, default 03:00) e roda no máximo uma vez por dia, com catch-up se a máquina estava desligada na hora marcada e retry horário em caso de falha. Mantém o horário no app (não no systemd), evitando exigir root/`daemon-reload` para trocá-lo. Instalações existentes seguem em 03:00 por padrão.
+- Deploy re-arma o `spool-backup.timer` (`systemctl restart`) após o `daemon-reload`, garantindo o re-cálculo do próximo disparo quando o agendamento muda. Nenhuma ação manual é necessária ao atualizar.
+
 ## [1.33.3] — 2026-06-10
 
 ### Fixed
