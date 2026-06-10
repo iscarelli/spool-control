@@ -48,11 +48,17 @@
                 {% endfor %}
               </select>
             </div>
-            <div class="col-md-6" id="customTareCol">
-              <label class="form-label fw-semibold">{{ _('Tara Personalizada (g)') }}</label>
-              <input type="number" name="custom_tare_g" id="customTare" class="form-control" step="0.1" min="0"
-                     value="{{ spool.custom_tare_g if spool and spool.custom_tare_g else '' }}"
-                     placeholder="{{ _('Deixe em branco se usar o modelo ao lado') }}">
+            <div class="col-md-6">
+              <div id="customTareForm">
+                <label class="form-label fw-semibold">{{ _('Tara Personalizada (g)') }}</label>
+                <input type="number" name="custom_tare_g" id="customTare" class="form-control" step="0.1" min="0"
+                       value="{{ spool.custom_tare_g if spool and spool.custom_tare_g else '' }}"
+                       placeholder="{{ _('Preencha com o peso do carretel') }}">
+              </div>
+              <div id="tareModelDisplay" style="display:none">
+                <label class="form-label fw-semibold text-muted">{{ _('Tara do modelo') }}</label>
+                <p id="tareModelValue" class="form-control-plaintext fw-semibold mb-0"></p>
+              </div>
             </div>
             <div class="col-md-6">
               <label class="form-label fw-semibold">{{ _('Peso Nominal do Filamento (g)') }}</label>
@@ -122,17 +128,22 @@ function updateFilamentPreview() {
 filamentSel.addEventListener('change', updateFilamentPreview);
 updateFilamentPreview();
 
-// Tara — esconde/mostra campo personalizado conforme modelo selecionado
+// Tara — alterna entre campo livre e exibição da tara do modelo
 const sel = document.getElementById('spoolModelSelect');
 const customTare = document.getElementById('customTare');
-const customTareCol = document.getElementById('customTareCol');
+const customTareForm = document.getElementById('customTareForm');
+const tareModelDisplay = document.getElementById('tareModelDisplay');
+const tareModelValue = document.getElementById('tareModelValue');
 function updateTareState() {
   const opt = sel.options[sel.selectedIndex];
   if (opt.dataset.tare) {
-    customTareCol.style.visibility = 'hidden';
+    customTareForm.style.display = 'none';
     customTare.value = '';
+    tareModelDisplay.style.display = '';
+    tareModelValue.textContent = parseFloat(opt.dataset.tare).toFixed(0) + ' g';
   } else {
-    customTareCol.style.visibility = '';
+    customTareForm.style.display = '';
+    tareModelDisplay.style.display = 'none';
   }
 }
 sel.addEventListener('change', updateTareState);

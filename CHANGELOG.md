@@ -10,6 +10,12 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.33.3] — 2026-06-10
+
+### Fixed
+- **Tara do modelo exibida no lugar do campo oculto.** Ao selecionar um modelo de carretel, o campo "Tara Personalizada" e seu rótulo são substituídos pelo rótulo "Tara do modelo" e o valor em gramas. Ao voltar para "Tara personalizada / desconhecida", o campo de entrada reaparece.
+- Placeholder do campo tara personalizada corrigido para "Preencha com o peso do carretel".
+
 ## [1.33.2] — 2026-06-10
 
 ### Fixed
