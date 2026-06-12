@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Fila de Etiquetas') }} — Spool Control{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
   <h4 class="mb-0 fw-bold"><i class="bi bi-printer me-2"></i>{{ _('Fila de Etiquetas') }}</h4>
-  <div class="d-flex gap-2">
+  <div class="d-flex flex-wrap gap-2">
     {% if items %}
     <a href="{{ url_for('label_queue_print') }}" class="btn btn-primary" target="_blank"
        title="{{ _('Imprimir PDF') }}">
@@ -25,23 +25,23 @@
 {% if items %}
 <div class="card">
   <div class="table-responsive">
-    <table class="table table-hover mb-0">
+    <table class="table table-hover mb-0 sc-stack">
       <thead class="table-dark">
         <tr><th>ID</th><th>{{ _('Material') }}</th><th>{{ _('Marca / Família') }}</th><th>{{ _('Local') }}</th><th></th></tr>
       </thead>
       <tbody>
         {% for s in items %}
         <tr>
-          <td class="fw-bold">SP-{{ '%04d'|format(s.id) }}</td>
-          <td><span class="badge bg-secondary">{{ s.material }}</span></td>
-          <td>
+          <td class="fw-bold sc-stack-head">SP-{{ '%04d'|format(s.id) }}</td>
+          <td data-label="{{ _('Material') }}"><span class="badge bg-secondary">{{ s.material }}</span></td>
+          <td data-label="{{ _('Marca / Família') }}">
             {% if s.color_hex %}
             <span class="d-inline-block rounded me-1" style="width:12px;height:12px;background:{{ s.color_hex }};border:1px solid #ccc;vertical-align:middle"></span>
             {% endif %}
             {{ s.brand }} / {{ s.family }}
           </td>
-          <td>{{ s.location or '—' }}</td>
-          <td>
+          <td data-label="{{ _('Local') }}">{{ s.location or '—' }}</td>
+          <td class="sc-stack-actions">
             <a href="{{ url_for('spools_detail', spool_id=s.id) }}" class="btn btn-sm btn-outline-secondary">{{ _('Ver') }}</a>
             <a href="{{ url_for('spool_label_pdf', spool_id=s.id) }}" class="btn btn-sm btn-outline-dark" target="_blank">PDF</a>
             <form method="post" action="{{ url_for('label_queue_remove', spool_id=s.id) }}" class="d-inline">

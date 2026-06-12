@@ -7,16 +7,16 @@
 </div>
 <div class="card">
   <div class="table-responsive">
-    <table class="table mb-0">
+    <table class="table mb-0 sc-stack">
       <thead class="table-dark">
         <tr><th>{{ _('Local') }}</th><th>{{ _('Spools Ativos') }}</th><th>{{ _('Total Net (g)') }}</th></tr>
       </thead>
       <tbody>
         {% for r in rows %}
         <tr>
-          <td class="fw-semibold">{{ r.location }}</td>
-          <td>{{ r.spool_count }}</td>
-          <td>{{ r.total_net_g|int }}g</td>
+          <td class="fw-semibold sc-stack-head">{{ r.location }}</td>
+          <td data-label="{{ _('Spools Ativos') }}">{{ r.spool_count }}</td>
+          <td data-label="{{ _('Total Net (g)') }}">{{ r.total_net_g|int }}g</td>
         </tr>
         {% else %}
         <tr><td colspan="3" class="text-center text-muted py-4">{{ _('Sem dados') }}</td></tr>

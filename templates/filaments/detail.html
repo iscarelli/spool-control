@@ -81,7 +81,7 @@
 <h5 class="fw-semibold mb-3">{{ _('Spools') }} ({{ spools|length }})</h5>
 <div class="card">
   <div class="table-responsive">
-    <table class="table table-hover mb-0">
+    <table class="table table-hover mb-0 sc-stack">
       <thead class="table-dark">
         <tr>
           <th style="width:44px"></th>
@@ -104,25 +104,25 @@
         <tr class="spool-row {% if not s.active %}table-secondary{% endif %}"
             style="cursor:pointer"
             data-href="{{ url_for('spools_detail', spool_id=s.id) }}">
-          <td class="text-center align-middle" style="width:44px;padding:4px">
+          <td class="text-center align-middle sc-stack-head" style="width:44px;padding:4px">
             {{ donut(pct, fill, tip=pct|int|string + _('% disponível')) }}
           </td>
-          <td class="fw-bold">SP-{{ '%04d'|format(s.id) }}</td>
-          <td>{{ s.model_name or '—' }}</td>
-          <td>{{ s.location or '—' }}</td>
-          <td>{{ s.nominal_weight_g|int }}g</td>
-          <td>
+          <td class="fw-bold sc-stack-head">SP-{{ '%04d'|format(s.id) }}</td>
+          <td data-label="{{ _('Carretel Vazio') }}">{{ s.model_name or '—' }}</td>
+          <td data-label="{{ _('Local') }}">{{ s.location or '—' }}</td>
+          <td data-label="{{ _('Nominal') }}">{{ s.nominal_weight_g|int }}g</td>
+          <td data-label="{{ _('Peso Atual') }}">
             {% if s.current_net_g is not none %}{{ s.current_net_g|int }}g
             {% else %}<span class="text-muted" data-bs-toggle="tooltip" title="{{ _('não pesado') }}">{{ s.nominal_weight_g|int }}g</span>{% endif %}
           </td>
-          <td>
+          <td data-label="{{ _('Status') }}">
             {% if s.active %}
             <span class="badge bg-success">{{ _('Ativo') }}</span>
             {% else %}
             <span class="badge bg-secondary">{{ _('Finalizado') }}</span>
             {% endif %}
           </td>
-          <td onclick="event.stopPropagation()">
+          <td class="sc-stack-actions" onclick="event.stopPropagation()">
             <a href="{{ url_for('spools_detail', spool_id=s.id) }}" class="btn btn-sm btn-outline-secondary">{{ _('Ver') }}</a>
             {% if can_write and s.active %}
             <a href="{{ url_for('spools_weigh', spool_id=s.id) }}" class="btn btn-sm btn-outline-secondary">{{ _('Pesar') }}</a>

@@ -225,6 +225,51 @@ h1, h2, h3, h4, h5, h6 { letter-spacing: -0.02em; }
   border-top-right-radius: 10px;
 }
 
+/* ── Tabelas viram cartões no celular (.sc-stack) ───────────────────────────
+   No desktop a tabela é normal. Em telas ≤576px cada <tr> vira um cartão e cada
+   <td> mostra "rótulo: valor" via data-label. Células sem data-label (donut, ID,
+   ações) ocupam a linha inteira; donut+ID compartilham a linha de cabeçalho via
+   .sc-stack-head. */
+@media (max-width: 576px) {
+  table.sc-stack thead { display: none; }
+  table.sc-stack, table.sc-stack tbody { display: block; width: 100%; }
+  table.sc-stack tr {
+    display: block;
+    border: 1px solid var(--sc-border);
+    border-radius: 10px;
+    padding: .5rem .75rem;
+    margin: .6rem;
+  }
+  table.sc-stack td {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    border: none;
+    padding: .2rem 0;
+    text-align: right;
+  }
+  table.sc-stack td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--sc-text-muted);
+    text-align: left;
+    white-space: nowrap;
+  }
+  /* células sem rótulo: linha inteira, sem "rótulo:" */
+  table.sc-stack td:not([data-label]) { display: block; text-align: left; }
+  table.sc-stack td:not([data-label])::before { content: none; }
+  /* donut + ID na mesma linha de cabeçalho do cartão */
+  table.sc-stack td.sc-stack-head {
+    display: inline-flex; width: auto; padding: .1rem .4rem .2rem 0;
+    vertical-align: middle;
+  }
+  /* barra de ações: botões à esquerda, com folga acima */
+  table.sc-stack td.sc-stack-actions { margin-top: .35rem; }
+  /* linha "nenhum resultado" (colspan) volta a ser texto simples centralizado */
+  table.sc-stack td[colspan] { display: block; text-align: center; }
+}
+
 /* ── Buttons ─────────────────────────────────────────────────────────────── */
 .btn {
   font-weight: 500;

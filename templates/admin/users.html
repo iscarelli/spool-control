@@ -35,17 +35,17 @@
     <div class="card overflow-hidden">
       <div class="card-header fw-semibold">{{ _('Usuários Cadastrados') }}</div>
       <div class="table-responsive">
-        <table class="table table-sm mb-0">
+        <table class="table table-sm mb-0 sc-stack">
           <thead class="table-light">
             <tr><th>{{ _('Usuário') }}</th><th>{{ _('Perfil') }}</th><th>{{ _('Criado em') }}</th><th></th></tr>
           </thead>
           <tbody>
             {% for u in users %}
             <tr>
-              <td class="fw-semibold">{{ u.username }} {% if u.id == session.user_id %}<span class="badge bg-secondary">{{ _('você') }}</span>{% endif %}</td>
-              <td><span class="badge {% if u.role == 'admin' %}bg-dark{% else %}bg-light text-dark border{% endif %}">{{ u.role }}</span></td>
-              <td class="text-muted small">{{ u.created_at | localdate }}</td>
-              <td>
+              <td class="fw-semibold sc-stack-head">{{ u.username }} {% if u.id == session.user_id %}<span class="badge bg-secondary">{{ _('você') }}</span>{% endif %}</td>
+              <td data-label="{{ _('Perfil') }}"><span class="badge {% if u.role == 'admin' %}bg-dark{% else %}bg-light text-dark border{% endif %}">{{ u.role }}</span></td>
+              <td class="text-muted small" data-label="{{ _('Criado em') }}">{{ u.created_at | localdate }}</td>
+              <td class="sc-stack-actions">
                 <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#pwModal{{ u.id }}">{{ _('Senha') }}</button>
                 {% if u.id != session.user_id %}
                 <form method="post" action="{{ url_for('admin_users_delete', user_id=u.id) }}" class="d-inline"

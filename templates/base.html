@@ -187,14 +187,14 @@
   {% for cat, msg in messages %}
   {% if cat == 'success' %}
   <div class="toast align-items-center text-bg-success border-0 sc-toast" role="alert"
-       data-bs-autohide="true" data-bs-delay="3000" style="pointer-events:auto;min-width:260px">
+       data-bs-autohide="true" data-bs-delay="3000" style="pointer-events:auto;min-width:260px;max-width:calc(100vw - 2rem)">
     <div class="d-flex">
       <div class="toast-body fw-semibold"><i class="bi bi-check-circle-fill me-2"></i>{{ msg }}</div>
       <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
     </div>
   </div>
   {% else %}
-  <div class="alert alert-{{ cat }} alert-dismissible fade show mb-0" role="alert" style="pointer-events:auto;min-width:260px">
+  <div class="alert alert-{{ cat }} alert-dismissible fade show mb-0" role="alert" style="pointer-events:auto;min-width:260px;max-width:calc(100vw - 2rem)">
     {{ msg }}
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
   </div>

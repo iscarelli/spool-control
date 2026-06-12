@@ -10,6 +10,29 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.36.1] — 2026-06-11
+
+Responsividade no celular. A base já era mobile-first (Bootstrap 5.3, navbar
+colapsável, formulários em grid), mas as **listas eram tabelas largas** que rolavam
+na horizontal — ruins de ler no telefone — e algumas barras de ação/cabeçalho
+estouravam a tela. Só markup/CSS; o desktop não muda.
+
+### Changed
+- **Listas viram cartões empilhados no celular (≤576px).** Toda tabela de itens
+  (Spools, Filamentos, Fila de Etiquetas, Estoque Baixo, Relatórios por
+  Material/Local, Histórico de Pesagens, Carretéis Vazios, Busca, Usuários, Backups,
+  além dos históricos nos detalhes) agora vira um cartão por linha com `rótulo: valor`
+  — **sem rolagem horizontal**. No desktop continua tabela. Implementado com um único
+  bloco `@media (max-width:576px)` sobre a classe `.sc-stack` + `data-label` nas
+  células; o `<thead>` é ocultado no celular.
+- **Barras de ferramentas e de ações quebram em linha** (`flex-wrap`) nas páginas de
+  lista e no detalhe do spool, em vez de espremer/transbordar em telas estreitas.
+- **Cartões de login e 2FA** passam de largura fixa (`360px`) para
+  `max-width:360px` com margem lateral, não colando mais nas bordas em telas de
+  320–375px.
+- **Toasts e alertas** ganham `max-width:calc(100vw - 2rem)` para não vazar a
+  largura da viewport no celular.
+
 ## [1.36.0] — 2026-06-10
 
 Endurecimento de segurança a partir de um teste externo (caixa-preta). Vários

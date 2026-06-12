@@ -14,9 +14,9 @@
 </span>
 {% endmacro %}
 
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
   <h4 class="mb-0 fw-bold">{{ _('Filamentos') }}</h4>
-  <div class="d-flex gap-2">
+  <div class="d-flex flex-wrap gap-2">
     <input class="form-control form-control-sm" type="search" id="filterInput"
            data-filter-for="#filamentTable"
            placeholder="{{ _('Filtrar...') }}" value="{{ q or '' }}" style="min-width:160px" autocomplete="off">
@@ -30,7 +30,7 @@
 </div>
 <div class="card">
   <div class="table-responsive">
-    <table class="table table-hover mb-0" id="filamentTable" data-sortable>
+    <table class="table table-hover mb-0 sc-stack" id="filamentTable" data-sortable>
       <thead class="table-dark">
         <tr>
           <th style="width:44px"></th>
@@ -53,19 +53,19 @@
         {% set fill = f.color_hex if f.color_hex else '#6c757d' %}
         <tr class="filament-row" style="cursor:pointer"
             data-href="{{ url_for('filaments_detail', filament_id=f.id) }}">
-          <td class="text-center align-middle" style="width:44px;padding:4px">
+          <td class="text-center align-middle sc-stack-head" style="width:44px;padding:4px">
             {% if f.active_count > 0 %}
               {{ donut(pct, fill, tip=pct|int|string + _('% disponível')) }}
             {% else %}
               {{ donut(0, '#6c757d') }}
             {% endif %}
           </td>
-          <td>
+          <td class="sc-stack-head">
             <a href="{{ url_for('spools_list') }}?q={{ f.material }}"
                class="badge bg-secondary text-decoration-none"
                onclick="event.stopPropagation()">{{ f.material }}</a>
           </td>
-          <td>
+          <td data-label="{{ _('Marca') }}">
             {% if f.brand_logo %}
             <img src="{{ url_for('static', filename=f.brand_logo) }}"
                  height="18" style="object-fit:contain;max-width:48px;vertical-align:middle" alt="" class="me-1">
@@ -73,14 +73,14 @@
             <a href="{{ url_for('spools_list') }}?q={{ f.brand }}"
                class="text-decoration-none" onclick="event.stopPropagation()">{{ f.brand }}</a>
           </td>
-          <td>
+          <td data-label="{{ _('Família') }}">
             <a href="{{ url_for('spools_list') }}?q={{ f.family }}"
                class="text-decoration-none" onclick="event.stopPropagation()">{{ f.family }}</a>
           </td>
-          <td>{{ f.diameter_mm }}mm</td>
-          <td>{{ f.active_count }}</td>
-          <td>{{ f.spool_count }}</td>
-          <td onclick="event.stopPropagation()">
+          <td data-label="Ø">{{ f.diameter_mm }}mm</td>
+          <td data-label="{{ _('Spools Ativos') }}">{{ f.active_count }}</td>
+          <td data-label="{{ _('Total') }}">{{ f.spool_count }}</td>
+          <td class="sc-stack-actions" onclick="event.stopPropagation()">
             <a href="{{ url_for('filaments_detail', filament_id=f.id) }}" class="btn btn-sm btn-outline-secondary">{{ _('Ver') }}</a>
             {% if can_write %}
             <a href="{{ url_for('spools_new') }}?filament_id={{ f.id }}" class="btn btn-sm btn-outline-secondary" title="{{ _('+ Novo Spool') }}"><i class="bi bi-plus-lg"></i></a>
