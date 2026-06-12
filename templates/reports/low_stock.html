@@ -12,24 +12,24 @@
 {% if rows %}
 <div class="card">
   <div class="table-responsive">
-    <table class="table mb-0">
+    <table class="table mb-0 sc-stack">
       <thead class="table-dark">
         <tr><th>ID</th><th>{{ _('Material') }}</th><th>{{ _('Marca / Família') }}</th><th>{{ _('Local') }}</th><th>{{ _('Restante') }}</th><th>%</th><th></th></tr>
       </thead>
       <tbody>
         {% for s in rows %}
         <tr>
-          <td class="fw-bold">SP-{{ '%04d'|format(s.id) }}</td>
-          <td><span class="badge bg-secondary">{{ s.material }}</span></td>
-          <td>{{ s.brand }} / {{ s.family }}</td>
-          <td>{{ s.location or '—' }}</td>
-          <td class="fw-semibold {% if s.current_net_g < threshold_g %}text-danger{% endif %}">{{ s.current_net_g|int }}g</td>
-          <td>
+          <td class="fw-bold sc-stack-head">SP-{{ '%04d'|format(s.id) }}</td>
+          <td data-label="{{ _('Material') }}"><span class="badge bg-secondary">{{ s.material }}</span></td>
+          <td data-label="{{ _('Marca / Família') }}">{{ s.brand }} / {{ s.family }}</td>
+          <td data-label="{{ _('Local') }}">{{ s.location or '—' }}</td>
+          <td class="fw-semibold {% if s.current_net_g < threshold_g %}text-danger{% endif %}" data-label="{{ _('Restante') }}">{{ s.current_net_g|int }}g</td>
+          <td data-label="%">
             <div class="progress" style="height:14px;width:80px">
               <div class="progress-bar bg-danger" style="width:{{ s.pct_remaining }}%">{{ s.pct_remaining }}%</div>
             </div>
           </td>
-          <td>
+          <td class="sc-stack-actions">
             <a href="{{ url_for('spools_detail', spool_id=s.id) }}" class="btn btn-sm btn-outline-secondary">{{ _('Ver') }}</a>
             {% if can_write %}
             <a href="{{ url_for('spools_weigh', spool_id=s.id) }}" class="btn btn-sm btn-outline-dark">{{ _('Pesar') }}</a>

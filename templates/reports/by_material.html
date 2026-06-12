@@ -7,7 +7,7 @@
 </div>
 <div class="card">
   <div class="table-responsive">
-    <table class="table mb-0">
+    <table class="table mb-0 sc-stack">
       <thead class="table-dark">
         <tr><th>{{ _('Material') }}</th><th>{{ _('Spools Ativos') }}</th><th>{{ _('Total Net (kg)') }}</th><th>{{ _('Nominal (kg)') }}</th><th>{{ _('Distribuição') }}</th></tr>
       </thead>
@@ -15,11 +15,11 @@
         {% set grand_total = rows|sum(attribute='total_net_g') %}
         {% for r in rows %}
         <tr>
-          <td class="fw-semibold"><span class="badge bg-secondary">{{ r.material }}</span></td>
-          <td>{{ r.spool_count }}</td>
-          <td>{{ "%.2f"|format(r.total_net_g / 1000) }} kg</td>
-          <td class="text-muted">{{ "%.2f"|format(r.total_nominal_g / 1000) }} kg</td>
-          <td style="width:200px">
+          <td class="fw-semibold sc-stack-head"><span class="badge bg-secondary">{{ r.material }}</span></td>
+          <td data-label="{{ _('Spools Ativos') }}">{{ r.spool_count }}</td>
+          <td data-label="{{ _('Total Net (kg)') }}">{{ "%.2f"|format(r.total_net_g / 1000) }} kg</td>
+          <td class="text-muted" data-label="{{ _('Nominal (kg)') }}">{{ "%.2f"|format(r.total_nominal_g / 1000) }} kg</td>
+          <td data-label="{{ _('Distribuição') }}" style="width:200px">
             {% if grand_total > 0 %}
             {% set pct = (r.total_net_g / grand_total * 100)|int %}
             <div class="progress" style="height:16px">
@@ -35,10 +35,10 @@
       {% if rows %}
       <tfoot class="table-light fw-bold">
         <tr>
-          <td>{{ _('Total') }}</td>
-          <td>{{ rows|sum(attribute='spool_count') }}</td>
-          <td>{{ "%.2f"|format(grand_total / 1000) }} kg</td>
-          <td class="text-muted">{{ "%.2f"|format(rows|sum(attribute='total_nominal_g') / 1000) }} kg</td>
+          <td class="sc-stack-head">{{ _('Total') }}</td>
+          <td data-label="{{ _('Spools Ativos') }}">{{ rows|sum(attribute='spool_count') }}</td>
+          <td data-label="{{ _('Total Net (kg)') }}">{{ "%.2f"|format(grand_total / 1000) }} kg</td>
+          <td class="text-muted" data-label="{{ _('Nominal (kg)') }}">{{ "%.2f"|format(rows|sum(attribute='total_nominal_g') / 1000) }} kg</td>
           <td></td>
         </tr>
       </tfoot>

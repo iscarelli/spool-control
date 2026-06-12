@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Histórico de Pesagens') }} — Spool Control{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
   <h4 class="mb-0 fw-bold">{{ _('Histórico de Pesagens') }}</h4>
   <button class="btn btn-sm btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i>{{ _('Imprimir') }}</button>
 </div>
@@ -41,7 +41,7 @@
 
 <div class="card">
   <div class="table-responsive">
-    <table class="table table-sm mb-0">
+    <table class="table table-sm mb-0 sc-stack">
       <thead class="table-dark">
         <tr>
           <th>{{ _('Data/Hora') }}</th><th>{{ _('Spool') }}</th><th>{{ _('Material') }}</th><th>{{ _('Marca / Família') }}</th>
@@ -51,14 +51,14 @@
       <tbody>
         {% for r in readings %}
         <tr>
-          <td class="small text-muted">{{ r.ts | localdt }}</td>
-          <td><a href="{{ url_for('spools_detail', spool_id=r.spool_id) }}" class="fw-bold text-decoration-none">SP-{{ '%04d'|format(r.spool_id) }}</a></td>
-          <td><span class="badge bg-secondary">{{ r.material }}</span></td>
-          <td>{{ r.brand }} / {{ r.family }}</td>
-          <td class="text-muted small">{{ r.location or '—' }}</td>
-          <td>{{ r.gross_weight_g|int }}</td>
-          <td class="text-muted">{{ r.tare_weight_g|int }}</td>
-          <td class="fw-semibold">{{ r.net_weight_g|int }}</td>
+          <td class="small text-muted sc-stack-head">{{ r.ts | localdt }}</td>
+          <td class="sc-stack-head"><a href="{{ url_for('spools_detail', spool_id=r.spool_id) }}" class="fw-bold text-decoration-none">SP-{{ '%04d'|format(r.spool_id) }}</a></td>
+          <td data-label="{{ _('Material') }}"><span class="badge bg-secondary">{{ r.material }}</span></td>
+          <td data-label="{{ _('Marca / Família') }}">{{ r.brand }} / {{ r.family }}</td>
+          <td class="text-muted small" data-label="{{ _('Local') }}">{{ r.location or '—' }}</td>
+          <td data-label="{{ _('Bruto (g)') }}">{{ r.gross_weight_g|int }}</td>
+          <td class="text-muted" data-label="{{ _('Tara (g)') }}">{{ r.tare_weight_g|int }}</td>
+          <td class="fw-semibold" data-label="{{ _('Net (g)') }}">{{ r.net_weight_g|int }}</td>
         </tr>
         {% else %}
         <tr><td colspan="8" class="text-center text-muted py-4">{{ _('Nenhuma pesagem registrada') }}</td></tr>

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Carretéis Vazios') }} — Spool Control{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
   <h4 class="mb-0 fw-bold">{{ _('Carretéis Vazios') }}</h4>
   {% if can_write %}
   <a href="{{ url_for('spool_models_new') }}" class="btn btn-dark btn-sm">{{ _('+ Novo Modelo') }}</a>
@@ -10,17 +10,17 @@
 <p class="text-muted small">{{ _('Cadastre os modelos de carretel vazio para que o sistema possa calcular o peso real de filamento disponível.') }}</p>
 <div class="card">
   <div class="table-responsive">
-    <table class="table table-hover mb-0">
+    <table class="table table-hover mb-0 sc-stack">
       <thead class="table-dark">
         <tr><th>{{ _('Nome') }}</th><th>{{ _('Tara (g)') }}</th><th>{{ _('Notas') }}</th><th></th></tr>
       </thead>
       <tbody>
         {% for m in models %}
         <tr>
-          <td class="fw-semibold">{{ m.name }}</td>
-          <td>{{ m.tare_weight_g|int }}g</td>
-          <td class="text-muted small">{{ m.notes or '—' }}</td>
-          <td>
+          <td class="fw-semibold sc-stack-head">{{ m.name }}</td>
+          <td data-label="{{ _('Tara (g)') }}">{{ m.tare_weight_g|int }}g</td>
+          <td class="text-muted small" data-label="{{ _('Notas') }}">{{ m.notes or '—' }}</td>
+          <td class="sc-stack-actions">
             {% if can_write %}
             <a href="{{ url_for('spool_models_edit', model_id=m.id) }}" class="btn btn-sm btn-outline-secondary">{{ _('Editar') }}</a>
             <form method="post" action="{{ url_for('spool_models_delete', model_id=m.id) }}" class="d-inline"

@@ -53,23 +53,23 @@
 <div class="card mb-4 border-warning overflow-hidden">
   <div class="card-header bg-warning fw-bold"><i class="bi bi-exclamation-triangle-fill me-1"></i>{{ _('Estoque Baixo') }}</div>
   <div class="table-responsive">
-    <table class="table table-sm mb-0">
+    <table class="table table-sm mb-0 sc-stack">
       <thead class="table-light">
         <tr><th>{{ _('Material') }}</th><th>{{ _('Marca / Família') }}</th><th>{{ _('Local') }}</th><th>{{ _('Restante') }}</th><th>%</th><th></th></tr>
       </thead>
       <tbody>
         {% for s in low_stock %}
         <tr>
-          <td>{{ s.material }}</td>
-          <td>{{ s.brand }} / {{ s.family }}</td>
-          <td>{{ s.location or '—' }}</td>
-          <td>{{ "%.0f"|format(s.current_net_g) }}g</td>
-          <td>
+          <td class="sc-stack-head fw-semibold">{{ s.material }}</td>
+          <td data-label="{{ _('Marca / Família') }}">{{ s.brand }} / {{ s.family }}</td>
+          <td data-label="{{ _('Local') }}">{{ s.location or '—' }}</td>
+          <td data-label="{{ _('Restante') }}">{{ "%.0f"|format(s.current_net_g) }}g</td>
+          <td data-label="%">
             <div class="progress" style="height:14px;width:80px">
               <div class="progress-bar bg-warning" style="width:{{ s.pct_remaining }}%">{{ s.pct_remaining }}%</div>
             </div>
           </td>
-          <td><a href="{{ url_for('spools_detail', spool_id=s.id) }}" class="btn btn-sm btn-outline-secondary">{{ _('Ver') }}</a></td>
+          <td class="sc-stack-actions"><a href="{{ url_for('spools_detail', spool_id=s.id) }}" class="btn btn-sm btn-outline-secondary">{{ _('Ver') }}</a></td>
         </tr>
         {% endfor %}
       </tbody>
@@ -82,18 +82,18 @@
 <div class="card overflow-hidden">
   <div class="card-header fw-bold"><i class="bi bi-clock-history me-1"></i>{{ _('Pesagens Recentes') }}</div>
   <div class="table-responsive">
-    <table class="table table-sm mb-0">
+    <table class="table table-sm mb-0 sc-stack">
       <thead class="table-light">
         <tr><th>{{ _('Quando') }}</th><th>{{ _('Material') }}</th><th>{{ _('Marca / Família') }}</th><th>{{ _('Peso Net') }}</th><th></th></tr>
       </thead>
       <tbody>
         {% for r in stats.recent_weighings %}
         <tr>
-          <td class="text-muted small">{{ r.ts | localdt }}</td>
-          <td>{{ r.material }}</td>
-          <td>{{ r.brand }} / {{ r.family }}</td>
-          <td>{{ "%.0f"|format(r.net_weight_g) }}g</td>
-          <td><a href="{{ url_for('spools_detail', spool_id=r.spool_id) }}" class="btn btn-sm btn-outline-secondary">{{ _('Ver') }}</a></td>
+          <td class="text-muted small sc-stack-head">{{ r.ts | localdt }}</td>
+          <td data-label="{{ _('Material') }}">{{ r.material }}</td>
+          <td data-label="{{ _('Marca / Família') }}">{{ r.brand }} / {{ r.family }}</td>
+          <td data-label="{{ _('Peso Net') }}">{{ "%.0f"|format(r.net_weight_g) }}g</td>
+          <td class="sc-stack-actions"><a href="{{ url_for('spools_detail', spool_id=r.spool_id) }}" class="btn btn-sm btn-outline-secondary">{{ _('Ver') }}</a></td>
         </tr>
         {% endfor %}
       </tbody>

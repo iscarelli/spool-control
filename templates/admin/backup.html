@@ -38,7 +38,7 @@
         <h6 class="text-muted text-uppercase fw-semibold mb-3" style="font-size:.75rem">{{ _('Backups automáticos (diários)') }}</h6>
         <p class="mb-3" style="font-size:.85rem">{{ _('O sistema mantém um backup por dia da semana (7 no total), sobrescrevendo o do mesmo dia a cada semana.') }}</p>
         <div class="table-responsive">
-          <table class="table table-sm align-middle mb-0">
+          <table class="table table-sm align-middle mb-0 sc-stack">
             <thead class="table-light">
               <tr>
                 <th>#</th><th>{{ _('Data') }}</th><th class="text-end">{{ _('Tamanho') }}</th><th></th>
@@ -47,11 +47,11 @@
             <tbody>
               {% for b in local_backups %}
               <tr>
-                <td class="text-muted">{{ b.slot }}</td>
+                <td class="text-muted sc-stack-head">{{ b.slot }}</td>
                 {% if b.exists %}
-                <td>{{ b.mtime | localdt }}</td>
-                <td class="text-end text-muted">{{ b.size_kb }} KB</td>
-                <td class="text-end">
+                <td data-label="{{ _('Data') }}">{{ b.mtime | localdt }}</td>
+                <td class="text-end text-muted" data-label="{{ _('Tamanho') }}">{{ b.size_kb }} KB</td>
+                <td class="text-end sc-stack-actions">
                   <div class="d-flex justify-content-end gap-1">
                     <a href="{{ url_for('admin_backup_download_local', slot=b.slot) }}"
                        class="btn btn-sm btn-outline-secondary" title="{{ _('Baixar') }}">

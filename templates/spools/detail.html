@@ -8,7 +8,7 @@
   {% set pct = 100 %}
 {% endif %}
 {% set fill = spool.color_hex if spool.color_hex else '#6c757d' %}
-<div class="d-flex align-items-center mb-3">
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
   {% if logged_in %}
   <div class="btn-group btn-group-sm me-2" role="group">
     <a href="{{ url_for('spools_list') }}" class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="{{ _('Voltar à lista') }}"><i class="bi bi-arrow-left"></i></a>
@@ -28,7 +28,7 @@
   <h4 class="mb-0 fw-bold ms-2">SP-{{ '%04d'|format(spool.id) }}</h4>
   {% if not spool.active %}<span class="badge bg-secondary ms-2">{{ _('Finalizado') }}</span>{% endif %}
   {% if logged_in %}
-  <div class="ms-auto d-flex gap-2">
+  <div class="ms-auto d-flex flex-wrap gap-2">
     {% if can_write and spool.active %}
     <a href="{{ url_for('spools_weigh', spool_id=spool.id) }}" class="btn btn-dark btn-sm">
       <span class="icon-scale me-1"></span>{{ _('Pesar') }}
@@ -137,19 +137,19 @@
 <h5 class="fw-semibold mb-3">{{ _('Histórico de Pesagens') }}</h5>
 <div class="card">
   <div class="table-responsive">
-    <table class="table table-sm mb-0">
+    <table class="table table-sm mb-0 sc-stack">
       <thead class="table-light">
         <tr><th>{{ _('Data/Hora') }}</th><th>{{ _('Bruto (g)') }}</th><th>{{ _('Tara (g)') }}</th><th>{{ _('Net (g)') }}</th><th>{{ _('Registrado por') }}</th><th>{{ _('Notas') }}</th></tr>
       </thead>
       <tbody>
         {% for r in readings %}
         <tr>
-          <td class="text-muted small">{{ r.ts | localdt }}</td>
-          <td>{{ r.gross_weight_g|int }}</td>
-          <td>{{ r.tare_weight_g|int }}</td>
-          <td class="fw-semibold">{{ r.net_weight_g|int }}</td>
-          <td class="text-muted small">{{ r.recorded_by or '—' }}</td>
-          <td class="text-muted small">{{ r.notes or '—' }}</td>
+          <td class="text-muted small sc-stack-head">{{ r.ts | localdt }}</td>
+          <td data-label="{{ _('Bruto (g)') }}">{{ r.gross_weight_g|int }}</td>
+          <td data-label="{{ _('Tara (g)') }}">{{ r.tare_weight_g|int }}</td>
+          <td class="fw-semibold" data-label="{{ _('Net (g)') }}">{{ r.net_weight_g|int }}</td>
+          <td class="text-muted small" data-label="{{ _('Registrado por') }}">{{ r.recorded_by or '—' }}</td>
+          <td class="text-muted small" data-label="{{ _('Notas') }}">{{ r.notes or '—' }}</td>
         </tr>
         {% endfor %}
       </tbody>

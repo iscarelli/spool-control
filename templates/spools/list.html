@@ -3,13 +3,13 @@
 {% from "spools/_macros.html" import donut %}
 {% block content %}
 
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
   <h4 class="mb-0 fw-bold">
     {{ _('Spools') }}
     {% if not active_only %}<span class="badge bg-secondary fs-6 ms-1">{{ _('todos') }}</span>{% endif %}
     {% if color is defined and color %}<span class="badge bg-secondary fs-6 ms-1">{{ _(color) }}</span>{% endif %}
   </h4>
-  <div class="d-flex gap-2 align-items-center">
+  <div class="d-flex flex-wrap gap-2 align-items-center">
     <input class="form-control form-control-sm" type="search" id="filterInput"
            data-filter-for="#spoolTable"
            placeholder="{{ _('Filtrar...') }}" value="{{ q or '' }}" style="min-width:160px;height:2rem" autocomplete="off">
@@ -37,7 +37,7 @@
 </div>
 <div class="card">
   <div class="table-responsive">
-    <table class="table table-hover mb-0" id="spoolTable" data-sortable>
+    <table class="table table-hover mb-0 sc-stack" id="spoolTable" data-sortable>
       <thead class="table-dark">
         <tr>
           <th style="width:44px"></th>
@@ -66,17 +66,17 @@
             data-nominal="{{ s.nominal_weight_g|int }}"
             data-fill="{{ fill }}"
             data-weigh-url="{{ url_for('spools_weigh', spool_id=s.id) }}">
-          <td class="text-center align-middle" style="width:44px;padding:4px">
+          <td class="text-center align-middle sc-stack-head" style="width:44px;padding:4px">
             {{ donut(pct, fill, spool_id=s.id, tip=pct|int|string + _('% disponível')) }}
           </td>
-          <td class="fw-bold">SP-{{ '%04d'|format(s.id) }}</td>
-          <td><span class="badge bg-secondary">{{ s.material }}</span></td>
-          <td>{{ s.brand }} / {{ s.family }}</td>
-          <td>{{ s.location or '—' }}</td>
-          <td class="weight-cell">
+          <td class="fw-bold sc-stack-head">SP-{{ '%04d'|format(s.id) }}</td>
+          <td data-label="{{ _('Material') }}"><span class="badge bg-secondary">{{ s.material }}</span></td>
+          <td data-label="{{ _('Marca / Família') }}">{{ s.brand }} / {{ s.family }}</td>
+          <td data-label="{{ _('Local') }}">{{ s.location or '—' }}</td>
+          <td class="weight-cell" data-label="{{ _('Peso Atual') }}">
             {% if s.current_net_g is not none %}{{ s.current_net_g|int }}g{% else %}<span class="text-muted" data-bs-toggle="tooltip" title="{{ _('não pesado') }}">{{ s.nominal_weight_g|int }}g</span>{% endif %}
           </td>
-          <td class="text-nowrap" onclick="event.stopPropagation()">
+          <td class="text-nowrap sc-stack-actions" onclick="event.stopPropagation()">
             <a href="{{ url_for('spools_detail', spool_id=s.id) }}" class="btn btn-sm btn-outline-secondary">{{ _('Ver') }}</a>
             {% if s.active %}
             {% if can_write %}
