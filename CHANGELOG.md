@@ -10,6 +10,17 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.36.2] — 2026-06-11
+
+### Fixed
+- **Card "Ver novidades" some quando a API do GitHub falha (fica só o link).** A
+  página de atualização busca as notas da release pela REST API do GitHub
+  (`/releases/latest`), que é fail-open. Numa falha pontual (rate limit de 60/h por
+  IP — não há token no servidor — ou timeout) `latest_release_notes()` devolvia `''`
+  e o template caía no link simples do GitHub em vez do card expansível. Agora a
+  busca **reusa a última nota obtida com sucesso** em vez de zerar (o card só vira
+  link se **nunca** conseguimos notas) e o timeout subiu de 4s para 8s.
+
 ## [1.36.1] — 2026-06-11
 
 Responsividade no celular. A base já era mobile-first (Bootstrap 5.3, navbar

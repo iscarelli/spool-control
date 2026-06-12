@@ -69,6 +69,28 @@ def test_update_page_checks_via_web(app_module, monkeypatch):
     assert app_module._release_cache["tag"] == "9.9.9"
 
 
+# ── Notas da release: resiliência (card "Ver novidades" sobrevive a falha) ────
+
+def _boom(*a, **k):
+    raise OSError("github fora do ar")
+
+
+def test_release_notes_reuses_last_good_on_failure(app_module, monkeypatch):
+    """Se a busca falhar mas já tivermos notas boas em cache, reusa (card continua)."""
+    app_module._release_cache.update(tag="1.36.1", ts=0.0, ok=True)
+    app_module._notes_cache.update(tag="1.36.0", notes="notas antigas ok")
+    monkeypatch.setattr(app_module._safe_opener, "open", _boom)
+    assert app_module.latest_release_notes() == "notas antigas ok"
+
+
+def test_release_notes_empty_when_never_fetched(app_module, monkeypatch):
+    """Sem nenhuma nota boa em cache, falha → '' (a página cai pro link do GitHub)."""
+    app_module._release_cache.update(tag="1.36.1", ts=0.0, ok=True)
+    app_module._notes_cache.update(tag=None, notes="")
+    monkeypatch.setattr(app_module._safe_opener, "open", _boom)
+    assert app_module.latest_release_notes() == ""
+
+
 # ── Status do update (lido pela /admin/update p/ mostrar falha) ───────────────
 
 def test_update_status_idle_when_no_file(app_module):

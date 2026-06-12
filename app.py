@@ -406,11 +406,13 @@ def cached_latest_tag():
 
 def latest_release_notes():
     """Notas (Markdown) da última release, via REST API — chamada SÓ na página de
-    update. Tolerante a falha (rate limit / sem rede): devolve '' e a página mostra
-    o update sem as notas. Cacheada pela tag corrente."""
+    update. Tolerante a falha (rate limit 60/h por IP / sem rede / timeout): em vez
+    de zerar, **reusa a última nota obtida com sucesso**, para o card "Ver novidades"
+    não cair pro link do GitHub por uma falha pontual da API. Só devolve '' (→ link)
+    se NUNCA conseguimos notas. Cacheada pela tag corrente."""
     tag = _release_cache.get("tag")
     if not tag:
-        return ""
+        return _notes_cache["notes"]
     if _notes_cache["tag"] == tag and _notes_cache["notes"]:
         return _notes_cache["notes"]
     try:
@@ -420,14 +422,17 @@ def latest_release_notes():
             GITHUB_RELEASES_API,
             headers={"User-Agent": "spool-control", "Accept": "application/vnd.github+json"},
         )
-        with _safe_opener.open(req, timeout=4) as resp:
+        with _safe_opener.open(req, timeout=8) as resp:
             data = json.loads(resp.read().decode())
         notes = (data.get("body") or "").strip()
-        _notes_cache.update(tag=tag, notes=notes)
-        return notes
+        if notes:
+            _notes_cache.update(tag=tag, notes=notes)
+            return notes
     except Exception:
         log.info("github_release.notes_unavailable", exc_info=True)
-        return ""
+    # fail-open: mantém a última nota boa (mesmo que de outra tag) p/ o card sobreviver
+    # a uma falha pontual; '' só quando nunca obtivemos notas → cai pro link.
+    return _notes_cache["notes"]
 
 
 # Subconjunto de Markdown usado nas release notes → HTML seguro, sem dependência
