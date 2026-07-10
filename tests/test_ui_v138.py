@@ -70,6 +70,13 @@ def test_spool_list_shows_color(auth_client, db):
     assert "#ff0000" in html           # amostra da cor
 
 
+def test_filament_list_shows_color(auth_client, db):
+    db.create_filament(brand="Acme", material="PLA", family="PLA",
+                       color_hex="#00ff00", color_name="Verde")
+    html = auth_client.get("/filaments").get_data(as_text=True)
+    assert "Verde" in html and "#00ff00" in html
+
+
 def test_spool_list_color_falls_back_to_bucket(auth_client, db):
     # sem color_name: usa o balde derivado do hexa (classify_color)
     fid = db.create_filament(brand="Acme", material="PLA", family="PLA",
