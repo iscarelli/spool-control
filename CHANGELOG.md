@@ -10,6 +10,24 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.38.0] — 2026-07-10
+
+### Added
+- **Ao cadastrar um filamento, pergunta se quer criar um rolo.** Depois de salvar
+  um filamento novo, o detalhe abre um modal oferecendo cadastrar um rolo daquele
+  filamento na hora (leva ao "Novo Spool" com o filamento já selecionado).
+- **Coluna "Cor" na lista de rolos.** Cada linha mostra uma amostra da cor + o
+  nome (informado no filamento ou, na falta, o balde derivado do hexadecimal).
+
+### Changed
+- **Data de compra já vem preenchida com a data de hoje** no cadastro de rolo
+  (editável). Vale tanto no cadastro manual quanto vindo do fluxo acima. Na edição
+  de um rolo existente nada muda.
+- **"Ver novidades" agora mostra o histórico acumulado.** Quem está várias versões
+  atrás vê todas as novidades entre a versão instalada e a última (não só a última
+  release). Fonte: o `CHANGELOG.md` na tag mais recente (via `raw.githubusercontent`,
+  sem o limite de 60/h da API); se a busca falhar, cai nas notas da última release.
+
 ## [1.37.0] — 2026-07-10
 
 ### Added
@@ -26,6 +44,8 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
   submissão. Ao cadastrar 1, o fluxo é o de sempre (vai ao detalhe e oferece a
   fila). Ao cadastrar vários, volta à lista e oferece adicionar **os N** à fila de
   impressão de uma vez (uma etiqueta/QR por rolo), reusando o `label_queue_add_all`.
+
+## [1.36.2] — 2026-06-11
 
 ### Fixed
 - **Card "Ver novidades" some quando a API do GitHub falha (fica só o link).** A

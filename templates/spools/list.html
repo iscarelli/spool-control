@@ -43,6 +43,7 @@
           <th style="width:44px"></th>
           <th data-sort="num">ID</th>
           <th data-sort="text">{{ _('Material') }}</th>
+          <th data-sort="text">{{ _('Cor') }}</th>
           <th data-sort="text">{{ _('Marca / Família') }}</th>
           <th data-sort="text">{{ _('Local') }}</th>
           <th data-sort="num">{{ _('Peso Atual') }}</th>
@@ -71,6 +72,9 @@
           </td>
           <td class="fw-bold sc-stack-head">SP-{{ '%04d'|format(s.id) }}</td>
           <td data-label="{{ _('Material') }}"><span class="badge bg-secondary">{{ s.material }}</span></td>
+          <td data-label="{{ _('Cor') }}">
+            <span class="d-inline-block rounded me-1" style="width:12px;height:12px;background:{{ s.color_hex or '#e0e0e0' }};border:1px solid #ccc;vertical-align:middle"></span>{{ s.color_display or '—' }}
+          </td>
           <td data-label="{{ _('Marca / Família') }}">{{ s.brand }} / {{ s.family }}</td>
           <td data-label="{{ _('Local') }}">{{ s.location or '—' }}</td>
           <td class="weight-cell" data-label="{{ _('Peso Atual') }}">
@@ -114,7 +118,7 @@
           </td>
         </tr>
         {% else %}
-        <tr data-no-result><td colspan="7" class="text-center text-muted py-4">{{ _('Nenhum spool encontrado') }}</td></tr>
+        <tr data-no-result><td colspan="8" class="text-center text-muted py-4">{{ _('Nenhum spool encontrado') }}</td></tr>
         {% endfor %}
       </tbody>
     </table>

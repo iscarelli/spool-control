@@ -2,6 +2,7 @@
 registro Niimbot e pesagem rápida."""
 import io
 import re
+from datetime import date
 from flask import (
     render_template, request, redirect, url_for, session, flash, Response, abort, jsonify,
 )
@@ -25,6 +26,17 @@ def _filaments_with_color_display():
     return result
 
 
+def _spools_with_color_display(spools):
+    """Anexa color_display a cada rolo p/ a coluna Cor da lista (nome informado ou,
+    na falta, o balde derivado do hexa)."""
+    out = []
+    for s in spools:
+        d = dict(s)
+        d["color_display"] = (d.get("color_name") or "").strip() or (db.classify_color(d.get("color_hex")) or "")
+        out.append(d)
+    return out
+
+
 @app.route("/spools")
 @login_required
 def spools_list():
@@ -43,8 +55,9 @@ def spools_list():
         spools = db.list_spools(active_only=active_only)
     # IDs recém-cadastrados em lote (?created=1,2,3) — a lista oferece a fila p/ todos.
     created_ids = [int(x) for x in request.args.get("created", "").split(",") if x.isdigit()]
-    return render_template("spools/list.html", spools=spools, active_only=active_only,
-                           q=q, color=color, queue_ids=db.queue_ids(), created_ids=created_ids)
+    return render_template("spools/list.html", spools=_spools_with_color_display(spools),
+                           active_only=active_only, q=q, color=color,
+                           queue_ids=db.queue_ids(), created_ids=created_ids)
 
 
 @app.route("/spools/new", methods=["GET", "POST"])
@@ -84,7 +97,7 @@ def spools_new():
     spool_models = db.list_spool_models()
     return render_template("spools/form.html", spool=None,
                            filaments=filaments, spool_models=spool_models,
-                           selected_filament_id=filament_id)
+                           selected_filament_id=filament_id, today=date.today().isoformat())
 
 
 @app.route("/spools/<int:spool_id>")

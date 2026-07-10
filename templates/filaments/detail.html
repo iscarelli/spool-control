@@ -136,6 +136,26 @@
     </table>
   </div>
 </div>
+{% if spool_prompt and can_write %}
+{# Após cadastrar o filamento: oferece já cadastrar um rolo dele. #}
+<div class="modal fade" id="spoolPromptModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-box-seam me-2"></i>{{ _('Cadastrar rolo') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        {{ _('Deseja cadastrar um rolo deste filamento agora?') }}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ _('Agora não') }}</button>
+        <a href="{{ url_for('spools_new') }}?filament_id={{ filament.id }}" class="btn btn-dark">{{ _('Sim, cadastrar rolo') }}</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
 {% endblock %}
 {% block scripts %}
 <script nonce="{{ nonce }}">
@@ -145,5 +165,8 @@ document.querySelectorAll('.spool-row').forEach(row => {
     location.href = row.dataset.href;
   });
 });
+{% if spool_prompt and can_write %}
+new bootstrap.Modal(document.getElementById('spoolPromptModal')).show();
+{% endif %}
 </script>
 {% endblock %}

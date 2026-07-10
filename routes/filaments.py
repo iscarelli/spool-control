@@ -56,7 +56,8 @@ def filaments_new():
                 notes=request.form.get("notes", "").strip(),
             )
             flash(t("Filamento cadastrado com sucesso"), "success")
-            return redirect(url_for("filaments_detail", filament_id=fid))
+            # Oferece cadastrar um rolo deste filamento já no detalhe (modal).
+            return redirect(url_for("filaments_detail", filament_id=fid, spool_prompt="1"))
         except Exception:
             log.error("filament.create_failed", exc_info=True)
             flash(t("Erro ao processar. Tente novamente."), "danger")
@@ -73,8 +74,9 @@ def filaments_detail(filament_id):
         abort(404)
     spools = db.list_spools_for_filament(filament_id)
     prev_id, next_id = db.filament_neighbors(filament_id)
+    spool_prompt = request.args.get("spool_prompt") == "1"
     return render_template("filaments/detail.html", filament=filament, spools=spools,
-                           prev_id=prev_id, next_id=next_id)
+                           prev_id=prev_id, next_id=next_id, spool_prompt=spool_prompt)
 
 
 @app.route("/filaments/<int:filament_id>/edit", methods=["GET", "POST"])

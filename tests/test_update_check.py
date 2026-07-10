@@ -64,6 +64,9 @@ def test_update_page_checks_via_web(app_module, monkeypatch):
     client.post("/login", data={"username": ADMIN_USER, "password": ADMIN_PASS})
     monkeypatch.setattr(app_module, "_latest_release_tag_via_web", lambda: "v9.9.9")
     monkeypatch.setattr(app_module, "latest_release_notes", lambda: "")
+    # Mantém o teste offline: o card acumulado buscaria o CHANGELOG cru na tag.
+    monkeypatch.setattr(app_module, "_changelog_md",
+                        lambda tag: (_ for _ in ()).throw(OSError("sem rede")))
     resp = client.get("/admin/update")
     assert resp.status_code == 200
     assert app_module._release_cache["tag"] == "9.9.9"

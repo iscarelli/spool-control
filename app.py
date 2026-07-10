@@ -316,12 +316,16 @@ RELEASES_URL = "https://github.com/iscarelli/spool-control/releases"
 # página /admin/update (latest_release_notes), de forma tolerante a falha.
 GITHUB_LATEST_RELEASE = RELEASES_URL + "/latest"
 GITHUB_RELEASES_API = "https://api.github.com/repos/iscarelli/spool-control/releases/latest"
+# CHANGELOG cru na tag mais recente — fonte das notas ACUMULADAS (várias versões
+# atrás). É o CDN raw (sem o limite de 60/h da REST API) e traz o histórico por versão.
+GITHUB_CHANGELOG_RAW = "https://raw.githubusercontent.com/iscarelli/spool-control/{tag}/CHANGELOG.md"
 
 # Cache em memória (por worker). Sucesso vale 6h; falha re-tenta em 15min; um
 # debounce de 30s evita martelar em refreshes seguidos. Fail-open: erro nunca
 # quebra a página, só não mostra atualização.
 _release_cache = {"tag": None, "ts": 0.0, "ok": False}
 _notes_cache = {"tag": None, "notes": ""}
+_cumulative_cache = {"key": None, "notes": ""}
 _RELEASE_TTL_OK = 6 * 3600
 _RELEASE_TTL_FAIL = 15 * 60
 _RELEASE_DEBOUNCE = 30
@@ -433,6 +437,61 @@ def latest_release_notes():
     # fail-open: mantém a última nota boa (mesmo que de outra tag) p/ o card sobreviver
     # a uma falha pontual; '' só quando nunca obtivemos notas → cai pro link.
     return _notes_cache["notes"]
+
+
+def _changelog_md(tag):
+    """Baixa o CHANGELOG.md cru na tag `tag` (ex.: 'v1.38.0'). Levanta em falha —
+    chame dentro de try/except. Isolado numa função p/ os testes monkeypatcharem."""
+    url = GITHUB_CHANGELOG_RAW.format(tag=tag)
+    if not _is_public_host(urlsplit(url).hostname):
+        raise ValueError("host do raw.githubusercontent não-público")
+    req = urllib.request.Request(url, headers={"User-Agent": "spool-control"})
+    with _safe_opener.open(req, timeout=8) as resp:
+        return resp.read().decode()
+
+
+def _slice_changelog(md, current, latest):
+    """Extrai do CHANGELOG as seções de versão em (current, latest] — o que há de
+    novo entre a versão instalada (exclusive) e a última (inclusive). Devolve o
+    markdown concatenado (mais nova primeiro, como no arquivo) ou '' se nada casar."""
+    cur_t, lat_t = _version_tuple(current), _version_tuple(latest)
+    header_re = re.compile(r"^##\s+\[(\d+\.\d+\.\d+)\]")
+    sections, ver, buf = [], None, []
+    for ln in (md or "").replace("\r\n", "\n").split("\n"):
+        m = header_re.match(ln)
+        if m:
+            if ver is not None:
+                sections.append((ver, buf))
+            ver, buf = m.group(1), [ln]
+        elif ver is not None:
+            buf.append(ln)
+    if ver is not None:
+        sections.append((ver, buf))
+    kept = [buf for v, buf in sections if cur_t < _version_tuple(v) <= lat_t]
+    return "\n".join(ln for buf in kept for ln in buf).strip()
+
+
+def cumulative_release_notes():
+    """Notas ACUMULADAS para o card "Ver novidades": todas as seções do CHANGELOG
+    entre a versão instalada (exclusive) e a última publicada (inclusive) — assim
+    quem está várias versões atrás vê o histórico todo, não só a última. Fonte: o
+    CHANGELOG.md cru na tag latest. Fail-open: sem tag, ou se a busca/parse falhar
+    ou nada casar, cai nas notas da última release (comportamento anterior)."""
+    tag = _release_cache.get("tag")
+    current = current_version()
+    if not tag:
+        return latest_release_notes()
+    key = (current, tag)
+    if _cumulative_cache["key"] == key and _cumulative_cache["notes"]:
+        return _cumulative_cache["notes"]
+    try:
+        notes = _slice_changelog(_changelog_md(f"v{tag}"), current, tag)
+        if notes:
+            _cumulative_cache.update(key=key, notes=notes)
+            return notes
+    except Exception:
+        log.info("github_changelog.unavailable", exc_info=True)
+    return latest_release_notes()
 
 
 # Subconjunto de Markdown usado nas release notes → HTML seguro, sem dependência
