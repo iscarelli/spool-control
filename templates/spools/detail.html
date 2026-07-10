@@ -74,7 +74,7 @@
         <div class="text-muted">{{ spool.family }}</div>
         {% if spool.color_hex %}
         <div class="text-muted small">
-          <span class="d-inline-block rounded me-1" style="width:12px;height:12px;background:{{ spool.color_hex }};border:1px solid #ccc;vertical-align:middle"></span>
+          <span class="d-inline-block rounded me-1" style="width:12px;height:12px;background:{{ spool.color_hex | hexcolor('#e0e0e0') }};border:1px solid #ccc;vertical-align:middle"></span>
           <span class="font-monospace text-uppercase">{{ spool.color_hex }}</span>
         </div>
         {% endif %}

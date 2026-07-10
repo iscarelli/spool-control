@@ -23,7 +23,7 @@
        data-material="{{ s.material }}"
        data-family="{{ s.family }}"
        data-hex="{{ s.color_hex }}"
-       data-fill="{{ fill }}"
+       data-fill="{{ fill | hexcolor('#6c757d') }}"
        data-pct="{{ pct }}"
        data-remaining="{% if s.current_net_g is not none %}{{ s.current_net_g|int }} g / {{ s.nominal_weight_g|int }} g ({{ pct|int }}%){% else %}{{ s.nominal_weight_g|int }} g · {{ _('não pesado') }}{% endif %}"
        data-diameter="{{ s.diameter_mm }} mm"
@@ -34,7 +34,7 @@
        data-link="{{ url_for('spools_detail', spool_id=s.id) }}">
     <svg width="46" height="46" viewBox="0 0 50 50" class="d-block mx-auto">
       <circle cx="25" cy="25" r="15.9155" fill="none" class="donut-track" stroke-width="15"/>
-      <circle cx="25" cy="25" r="15.9155" fill="none" stroke="{{ fill }}" stroke-width="15"
+      <circle cx="25" cy="25" r="15.9155" fill="none" stroke="{{ fill | hexcolor('#6c757d') }}" stroke-width="15"
               stroke-dasharray="{{ pct }} {{ 100 - pct }}" transform="rotate(-90 25 25)" class="donut-arc"/>
     </svg>
     <div class="small fw-semibold text-truncate sc-inv-name">{{ s.brand }}</div>

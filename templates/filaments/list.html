@@ -7,7 +7,7 @@
   <svg width="{{ size }}" height="{{ size }}" viewBox="0 0 50 50">
     <circle cx="25" cy="25" r="15.9155" fill="none" class="donut-track" stroke-width="15"/>
     <circle cx="25" cy="25" r="15.9155" fill="none"
-            stroke="{{ fill }}" stroke-width="15"
+            stroke="{{ fill | hexcolor('#6c757d') }}" stroke-width="15"
             stroke-dasharray="{{ pct }} {{ 100 - pct }}"
             transform="rotate(-90 25 25)"/>
   </svg>
@@ -67,7 +67,7 @@
                onclick="event.stopPropagation()">{{ f.material }}</a>
           </td>
           <td data-label="{{ _('Cor') }}">
-            <span class="d-inline-block rounded me-1" style="width:12px;height:12px;background:{{ f.color_hex or '#e0e0e0' }};border:1px solid #ccc;vertical-align:middle"></span>{{ f.color_display or '—' }}
+            <span class="d-inline-block rounded me-1" style="width:12px;height:12px;background:{{ f.color_hex | hexcolor('#e0e0e0') }};border:1px solid #ccc;vertical-align:middle"></span>{{ f.color_display or '—' }}
           </td>
           <td data-label="{{ _('Marca') }}">
             {% if f.brand_logo %}

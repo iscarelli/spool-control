@@ -16,7 +16,7 @@
               <option value="">{{ _('Selecione um filamento...') }}</option>
               {% for f in filaments %}
               <option value="{{ f.id }}"
-                      data-color="{{ f.color_hex or '' }}"
+                      data-color="{{ f.color_hex | hexcolor('') }}"
                       data-color-name="{{ f.color_display or '' }}"
                       data-edit-url="{{ url_for('filaments_edit', filament_id=f.id, next=request.url) }}"
                       {% if selected_filament_id == f.id %}selected{% endif %}>
