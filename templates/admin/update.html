@@ -43,7 +43,7 @@
           <div class="border rounded p-3 bg-body-tertiary release-notes"
                style="max-height:50vh;overflow:auto;font-size:.85rem">
             <div class="text-muted mb-2" style="font-size:.8rem">
-              <i class="bi bi-stars me-1"></i>{{ _('Novidades da v{v}').replace('{v}', latest) }}
+              <i class="bi bi-stars me-1"></i>{{ _('Novidades (v{de} → v{ate})').replace('{de}', current).replace('{ate}', latest) }}
             </div>
             {{ release_notes }}
           </div>
