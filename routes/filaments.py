@@ -19,12 +19,22 @@ def filament_catalog_api():
     })
 
 
+def _with_color_display(filaments):
+    """Anexa color_display (nome informado ou balde derivado do hexa) p/ a coluna Cor."""
+    out = []
+    for f in filaments:
+        d = dict(f)
+        d["color_display"] = (d.get("color_name") or "").strip() or (db.classify_color(d.get("color_hex")) or "")
+        out.append(d)
+    return out
+
+
 @app.route("/filaments")
 @login_required
 def filaments_list():
     q = request.args.get("q", "").strip()
     filaments = db.search_filaments(q) if q else db.list_filaments()
-    return render_template("filaments/list.html", filaments=filaments, q=q)
+    return render_template("filaments/list.html", filaments=_with_color_display(filaments), q=q)
 
 
 def _resolve_brand(form) -> str:

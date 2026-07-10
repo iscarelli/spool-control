@@ -10,6 +10,12 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.38.1] — 2026-07-10
+
+### Changed
+- **Coluna "Cor" também na lista de filamentos.** Amostra da cor + nome (informado
+  ou o balde derivado do hexadecimal), como já havia na lista de rolos.
+
 ## [1.38.0] — 2026-07-10
 
 ### Added

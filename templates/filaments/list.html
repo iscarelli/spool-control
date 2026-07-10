@@ -35,6 +35,7 @@
         <tr>
           <th style="width:44px"></th>
           <th data-sort="text">{{ _('Material') }}</th>
+          <th data-sort="text">{{ _('Cor') }}</th>
           <th data-sort="text">{{ _('Marca') }}</th>
           <th data-sort="text">{{ _('Família') }}</th>
           <th data-sort="num">Ø</th>
@@ -64,6 +65,9 @@
             <a href="{{ url_for('spools_list') }}?q={{ f.material }}"
                class="badge bg-secondary text-decoration-none"
                onclick="event.stopPropagation()">{{ f.material }}</a>
+          </td>
+          <td data-label="{{ _('Cor') }}">
+            <span class="d-inline-block rounded me-1" style="width:12px;height:12px;background:{{ f.color_hex or '#e0e0e0' }};border:1px solid #ccc;vertical-align:middle"></span>{{ f.color_display or '—' }}
           </td>
           <td data-label="{{ _('Marca') }}">
             {% if f.brand_logo %}
@@ -105,7 +109,7 @@
           </td>
         </tr>
         {% else %}
-        <tr data-no-result><td colspan="8" class="text-center text-muted py-4">{{ _('Nenhum filamento cadastrado') }}</td></tr>
+        <tr data-no-result><td colspan="9" class="text-center text-muted py-4">{{ _('Nenhum filamento cadastrado') }}</td></tr>
         {% endfor %}
       </tbody>
     </table>
