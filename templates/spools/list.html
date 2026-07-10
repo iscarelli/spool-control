@@ -99,7 +99,17 @@
             {% endif %}
             {% if can_write %}
             <a href="{{ url_for('spools_edit', spool_id=s.id) }}" class="btn btn-sm btn-outline-secondary" title="{{ _('Editar') }}"><i class="bi bi-pencil"></i></a>
+            <form method="post" action="{{ url_for('spools_deactivate', spool_id=s.id) }}" class="d-inline"
+                  data-sc-confirm="{{ _('Marcar spool como finalizado?') }}">
+              <button class="btn btn-sm btn-outline-secondary" title="{{ _('Finalizar') }}"><i class="bi bi-check2-circle"></i></button>
+            </form>
             {% endif %}
+            {% endif %}
+            {% if is_admin %}
+            <form method="post" action="{{ url_for('spools_delete', spool_id=s.id) }}" class="d-inline"
+                  data-sc-confirm="{{ _('Excluir este rolo permanentemente? Esta ação não pode ser desfeita.') }}">
+              <button class="btn btn-sm btn-outline-danger" title="{{ _('Excluir') }}"><i class="bi bi-trash"></i></button>
+            </form>
             {% endif %}
           </td>
         </tr>
@@ -135,6 +145,31 @@
     </div>
   </div>
 </div>
+
+{% if created_ids %}
+{# Após cadastrar N rolos: oferece adicionar todos à fila de impressão (add-all). #}
+<div class="modal fade" id="createdQueueModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-printer me-2"></i>{{ _('Fila de Impressão') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        {{ _('Deseja adicionar os {n} rolos recém-criados à fila de impressão de etiquetas?').replace('{n}', created_ids|length|string) }}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ _('Não') }}</button>
+        <form method="post" action="{{ url_for('label_queue_add_all') }}">
+          <input type="hidden" name="next" value="{{ url_for('spools_list') }}">
+          {% for cid in created_ids %}<input type="hidden" name="spool_ids" value="{{ cid }}">{% endfor %}
+          <button type="submit" class="btn btn-dark">{{ _('Sim, adicionar') }}</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
@@ -256,5 +291,10 @@ document.getElementById('weighSubmit').addEventListener('click', async () => {
 
   btn.disabled = false; btn.textContent = '{{ _('Registrar') }}';
 });
+
+{% if created_ids %}
+/* ── Cadastro em lote: abre o modal da fila de impressão ─────────────────── */
+new bootstrap.Modal(document.getElementById('createdQueueModal')).show();
+{% endif %}
 </script>
 {% endblock %}

@@ -10,7 +10,22 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
-## [1.36.2] — 2026-06-11
+## [1.37.0] — 2026-07-10
+
+### Added
+- **Excluir rolo (permanente) na lista.** Cada linha da lista de rolos ganhou um
+  botão de exclusão definitiva (lixeira, vermelho). Diferente de "Finalizar" (que
+  só marca `active=0` e mantém o histórico), a exclusão apaga o rolo e todo o
+  histórico de pesagens do banco — irreversível, com confirmação. É **restrita a
+  admin** (`/spools/<id>/delete`, `admin_required`); o botão só aparece para admins.
+- **Finalizar direto da lista.** O botão "Finalizar" (que só existia na tela de
+  edição) agora também está em cada linha da lista, para quem tem permissão de
+  escrita.
+- **Cadastrar vários rolos iguais de uma vez.** A tela de "Novo Spool" ganhou um
+  campo **Quantidade** (1–50): cria N rolos idênticos com IDs distintos numa só
+  submissão. Ao cadastrar 1, o fluxo é o de sempre (vai ao detalhe e oferece a
+  fila). Ao cadastrar vários, volta à lista e oferece adicionar **os N** à fila de
+  impressão de uma vez (uma etiqueta/QR por rolo), reusando o `label_queue_add_all`.
 
 ### Fixed
 - **Card "Ver novidades" some quando a API do GitHub falha (fica só o link).** A
