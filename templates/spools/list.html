@@ -65,7 +65,7 @@
             data-name="SP-{{ '%04d'|format(s.id) }} {{ s.brand }} {{ s.material }}"
             data-tare="{{ s.effective_tare_g|round(1) }}"
             data-nominal="{{ s.nominal_weight_g|int }}"
-            data-fill="{{ fill }}"
+            data-fill="{{ fill | hexcolor('#6c757d') }}"
             data-weigh-url="{{ url_for('spools_weigh', spool_id=s.id) }}">
           <td class="text-center align-middle sc-stack-head" style="width:44px;padding:4px">
             {{ donut(pct, fill, spool_id=s.id, tip=pct|int|string + _('% disponível')) }}
@@ -73,7 +73,7 @@
           <td class="fw-bold sc-stack-head">SP-{{ '%04d'|format(s.id) }}</td>
           <td data-label="{{ _('Material') }}"><span class="badge bg-secondary">{{ s.material }}</span></td>
           <td data-label="{{ _('Cor') }}">
-            <span class="d-inline-block rounded me-1" style="width:12px;height:12px;background:{{ s.color_hex or '#e0e0e0' }};border:1px solid #ccc;vertical-align:middle"></span>{{ s.color_display or '—' }}
+            <span class="d-inline-block rounded me-1" style="width:12px;height:12px;background:{{ s.color_hex | hexcolor('#e0e0e0') }};border:1px solid #ccc;vertical-align:middle"></span>{{ s.color_display or '—' }}
           </td>
           <td data-label="{{ _('Marca / Família') }}">{{ s.brand }} / {{ s.family }}</td>
           <td data-label="{{ _('Local') }}">{{ s.location or '—' }}</td>

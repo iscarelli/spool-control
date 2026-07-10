@@ -10,6 +10,18 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.38.2] — 2026-07-10
+
+### Security
+- **Sanitiza `color_hex` na saída (anti CSS injection).** A cor do filamento é campo
+  de texto livre e ia direto para `style="…background:…"` e para o `stroke` do SVG.
+  O autoescape do Jinja impede sair do atributo, mas não impede injetar propriedades
+  CSS dentro dele. Novo filtro `hexcolor` só deixa passar um `#RGB`/`#RRGGBB` válido
+  (senão usa um neutro), aplicado em todas as amostras de cor e roscas (lista/detalhe
+  de rolos e filamentos, busca, fila de etiquetas, inventário). Baixa severidade
+  (só quem tem escrita define a cor; o CSP já bloqueia carregamento externo), mas é
+  a correção correta na camada de saída.
+
 ## [1.38.1] — 2026-07-10
 
 ### Changed

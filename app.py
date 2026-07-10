@@ -731,6 +731,20 @@ def localdate(value):
     return dt.strftime(fmt)
 
 
+_HEX_COLOR_RE = re.compile(r"^#(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$")
+
+
+@app.template_filter("hexcolor")
+def hexcolor(value, default=""):
+    """Sanitiza uma cor vinda do banco ANTES de injetá-la em `style=`/SVG. `color_hex`
+    é campo de texto livre no cadastro de filamento; sem isso, um valor tipo
+    `red;background:url(...)` faria CSS injection dentro do atributo (o autoescape do
+    Jinja barra a saída do atributo, mas não a injeção de propriedades). Só passa um
+    #RGB/#RRGGBB válido; qualquer outra coisa vira `default`."""
+    v = (value or "").strip()
+    return v if _HEX_COLOR_RE.match(v) else default
+
+
 @app.route("/lang/<code>")
 def set_lang(code):
     if code in i18n.SUPPORTED:

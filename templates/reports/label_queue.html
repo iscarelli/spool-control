@@ -36,7 +36,7 @@
           <td data-label="{{ _('Material') }}"><span class="badge bg-secondary">{{ s.material }}</span></td>
           <td data-label="{{ _('Marca / Família') }}">
             {% if s.color_hex %}
-            <span class="d-inline-block rounded me-1" style="width:12px;height:12px;background:{{ s.color_hex }};border:1px solid #ccc;vertical-align:middle"></span>
+            <span class="d-inline-block rounded me-1" style="width:12px;height:12px;background:{{ s.color_hex | hexcolor('#e0e0e0') }};border:1px solid #ccc;vertical-align:middle"></span>
             {% endif %}
             {{ s.brand }} / {{ s.family }}
           </td>
