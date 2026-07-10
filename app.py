@@ -629,6 +629,7 @@ def inject_globals():
         "_": i18n.get_translator(lang),
         "update_available": is_update_available() if is_admin else False,
         "can_write": can_write,
+        "is_admin": is_admin,
         "backup_alert": backup_alert,
         "nonce": getattr(g, "_nonce", ""),
         "demo_mode": DEMO_MODE,

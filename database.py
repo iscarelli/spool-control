@@ -821,6 +821,19 @@ def deactivate_spool(spool_id):
         db.commit()
 
 
+def delete_spool(spool_id):
+    """Apaga o rolo DE VEZ, junto com o histórico de pesagens e a entrada na fila.
+
+    As FKs (weight_readings/label_queue → spools) não têm ON DELETE CASCADE e o
+    PRAGMA foreign_keys pode estar desligado, então removemos os filhos
+    explicitamente — tudo numa transação para não deixar órfãos."""
+    with closing(get_db()) as db:
+        db.execute("DELETE FROM label_queue WHERE spool_id=?", (spool_id,))
+        db.execute("DELETE FROM weight_readings WHERE spool_id=?", (spool_id,))
+        db.execute("DELETE FROM spools WHERE id=?", (spool_id,))
+        db.commit()
+
+
 # ── Weight Readings ────────────────────────────────────────────────────────
 
 def add_weight_reading(spool_id, gross_weight_g, tare_weight_g, recorded_by="", notes=""):

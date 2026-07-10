@@ -149,7 +149,16 @@ _EN = {
     "Novo Spool":           "New Spool",
     "Editar Spool":         "Edit Spool",
     "Finalizar Spool":      "Finish Spool",
+    "Finalizar":            "Finish",
+    "Excluir":              "Delete",
     "Marcar spool como finalizado?": "Mark spool as finished?",
+    "Excluir este rolo permanentemente? Esta ação não pode ser desfeita.":
+        "Delete this spool permanently? This action cannot be undone.",
+    "Quantidade":           "Quantity",
+    "Crie vários rolos idênticos de uma vez (IDs distintos).":
+        "Create several identical spools at once (distinct IDs).",
+    "Deseja adicionar os {n} rolos recém-criados à fila de impressão de etiquetas?":
+        "Add the {n} newly created spools to the label print queue?",
     "Nenhum spool encontrado": "No spools found",
     "Nenhum spool cadastrado":   "No spools registered",
     "Filtrar por Spool":    "Filter by Spool",
@@ -360,6 +369,8 @@ _EN = {
     "Modelo removido": "Model removed",
     "Modelo em uso por spools existentes": "Model in use by existing spools",
     "Rolo cadastrado com sucesso": "Spool registered successfully",
+    "{n} rolos cadastrados (SP-{first} a SP-{last})": "{n} spools registered (SP-{first} to SP-{last})",
+    "Rolo SP-{code} excluído": "Spool SP-{code} deleted",
     "Rolo atualizado": "Spool updated",
     "Rolo marcado como finalizado": "Spool marked as finished",
     "Peso bruto ({g:.0f}g) menor que tara ({t:.0f}g). Verifique.": "Gross weight ({g:.0f}g) lower than tare ({t:.0f}g). Please check.",
@@ -601,7 +612,16 @@ _ES = {
     "Novo Spool":           "Nueva Bobina",
     "Editar Spool":         "Editar Bobina",
     "Finalizar Spool":      "Finalizar Bobina",
+    "Finalizar":            "Finalizar",
+    "Excluir":              "Eliminar",
     "Marcar spool como finalizado?": "¿Marcar la bobina como finalizada?",
+    "Excluir este rolo permanentemente? Esta ação não pode ser desfeita.":
+        "¿Eliminar esta bobina permanentemente? Esta acción no se puede deshacer.",
+    "Quantidade":           "Cantidad",
+    "Crie vários rolos idênticos de uma vez (IDs distintos).":
+        "Crea varias bobinas idénticas a la vez (IDs distintos).",
+    "Deseja adicionar os {n} rolos recém-criados à fila de impressão de etiquetas?":
+        "¿Agregar las {n} bobinas recién creadas a la cola de impresión de etiquetas?",
     "Nenhum spool encontrado": "Ninguna bobina encontrada",
     "Nenhum spool cadastrado":   "Ninguna bobina registrada",
     "Filtrar por Spool":    "Filtrar por Bobina",
@@ -812,6 +832,8 @@ _ES = {
     "Modelo removido": "Modelo eliminado",
     "Modelo em uso por spools existentes": "Modelo en uso por bobinas existentes",
     "Rolo cadastrado com sucesso": "Bobina registrada con éxito",
+    "{n} rolos cadastrados (SP-{first} a SP-{last})": "{n} bobinas registradas (SP-{first} a SP-{last})",
+    "Rolo SP-{code} excluído": "Bobina SP-{code} eliminada",
     "Rolo atualizado": "Bobina actualizada",
     "Rolo marcado como finalizado": "Bobina marcada como finalizada",
     "Peso bruto ({g:.0f}g) menor que tara ({t:.0f}g). Verifique.": "Peso bruto ({g:.0f}g) menor que la tara ({t:.0f}g). Verifica.",

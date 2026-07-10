@@ -9,7 +9,8 @@ import database as db
 import labels as lbl
 import niimbot_registry as reg
 import logger as log_cfg
-from app import app, login_required, write_required, t, _parse_price, public_base_url, _label_spool, _currency_meta
+from app import (app, login_required, write_required, admin_required, t, _parse_price,
+                 public_base_url, _label_spool, _currency_meta)
 
 log = log_cfg.get_logger()
 
@@ -40,8 +41,10 @@ def spools_list():
         active_only = True
     else:
         spools = db.list_spools(active_only=active_only)
+    # IDs recém-cadastrados em lote (?created=1,2,3) — a lista oferece a fila p/ todos.
+    created_ids = [int(x) for x in request.args.get("created", "").split(",") if x.isdigit()]
     return render_template("spools/list.html", spools=spools, active_only=active_only,
-                           q=q, color=color, queue_ids=db.queue_ids())
+                           q=q, color=color, queue_ids=db.queue_ids(), created_ids=created_ids)
 
 
 @app.route("/spools/new", methods=["GET", "POST"])
@@ -50,7 +53,13 @@ def spools_new():
     filament_id = request.args.get("filament_id", type=int)
     if request.method == "POST":
         try:
-            spool_id = db.create_spool(
+            # Quantidade: cria N rolos idênticos de uma vez (clamp 1..50).
+            try:
+                quantity = int(request.form.get("quantity") or 1)
+            except ValueError:
+                quantity = 1
+            quantity = max(1, min(quantity, 50))
+            common = dict(
                 filament_id=int(request.form["filament_id"]),
                 spool_model_id=request.form.get("spool_model_id") or None,
                 custom_tare_g=request.form.get("custom_tare_g") or None,
@@ -60,8 +69,14 @@ def spools_new():
                 purchase_price=_parse_price(request.form.get("purchase_price", "")),
                 notes=request.form.get("notes", "").strip(),
             )
-            flash(t("Rolo cadastrado com sucesso"), "success")
-            return redirect(url_for("spools_detail", spool_id=spool_id, queue_prompt="1"))
+            ids = [db.create_spool(**common) for _ in range(quantity)]
+            if quantity == 1:
+                flash(t("Rolo cadastrado com sucesso"), "success")
+                return redirect(url_for("spools_detail", spool_id=ids[0], queue_prompt="1"))
+            # Vários: volta à lista, que oferece a fila de impressão p/ os N (add-all).
+            flash(t("{n} rolos cadastrados (SP-{first} a SP-{last})").format(
+                n=quantity, first=f"{ids[0]:04d}", last=f"{ids[-1]:04d}"), "success")
+            return redirect(url_for("spools_list", created=",".join(str(i) for i in ids)))
         except Exception:
             log.error("spool.create_failed", exc_info=True)
             flash(t("Erro ao processar. Tente novamente."), "danger")
@@ -167,6 +182,19 @@ def spools_weigh(spool_id):
 def spools_deactivate(spool_id):
     db.deactivate_spool(spool_id)
     flash(t("Rolo marcado como finalizado"), "success")
+    return redirect(url_for("spools_list"))
+
+
+@app.route("/spools/<int:spool_id>/delete", methods=["POST"])
+@admin_required
+def spools_delete(spool_id):
+    """Exclusão permanente (só admin) — apaga o rolo e todo o histórico."""
+    spool = db.get_spool(spool_id)
+    if not spool:
+        abort(404)
+    db.delete_spool(spool_id)
+    log.info("spool.deleted", spool_id=spool_id, by=session.get("username", ""))
+    flash(t("Rolo SP-{code} excluído").format(code=f"{spool_id:04d}"), "success")
     return redirect(url_for("spools_list"))
 
 

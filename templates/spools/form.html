@@ -89,6 +89,13 @@
               <label class="form-label fw-semibold">{{ _('Notas') }}</label>
               <textarea name="notes" class="form-control" rows="2">{{ spool.notes if spool else '' }}</textarea>
             </div>
+            {% if not spool %}
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ _('Quantidade') }}</label>
+              <input type="number" name="quantity" class="form-control" step="1" min="1" max="50" value="1">
+              <div class="form-text">{{ _('Crie vários rolos idênticos de uma vez (IDs distintos).') }}</div>
+            </div>
+            {% endif %}
           </div>
 
           <div class="mt-4 d-flex gap-2 align-items-center">
