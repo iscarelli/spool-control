@@ -24,35 +24,8 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      # O Dependabot NÃO classifica atualização de FAIXA de versão do pip
-      # (`pyotp>=2.9` → `pyotp>=2.10.0`): `update-type`, `previous-version` e
-      # `new-version` vêm todos vazios — conferido no log do PR #54. Sem este
-      # fallback, todo PR de `requirements.txt` fica aberto para sempre (5 ficaram,
-      # de 14/jun a 25/jul/2026). Deduzimos o salto do título do PR e falhamos
-      # FECHADO: qualquer formato fora de `from >=X to >=Y` não mescla.
-      - name: Classificar salto de faixa (fallback do pip)
-        id: range
-        if: steps.meta.outputs.update-type == ''
-        env:
-          # Título vai por env, nunca interpolado no script: é entrada externa
-          # dentro de um `pull_request_target` com permissão de escrita.
-          TITLE: ${{ github.event.pull_request.title }}
-        run: |
-          # `[^ ]+` no nome do pacote porque há extras com colchetes (`qrcode[pil]`).
-          re='update [^ ]+ requirement from >=([0-9]+)\.[0-9]+(\.[0-9]+)? to >=([0-9]+)\.[0-9]+(\.[0-9]+)?$'
-          if [[ "$TITLE" =~ $re ]] && [[ "${BASH_REMATCH[1]}" == "${BASH_REMATCH[3]}" ]]; then
-            echo "minor-ou-patch: mesma major (${BASH_REMATCH[1]}) — auto-merge liberado"
-            echo "safe=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "major ou título fora do padrão — deixando o PR aberto para revisão"
-          fi
-
       - name: Habilitar auto-merge (patch e minor)
-        if: |
-          steps.meta.outputs.update-type == 'version-update:semver-patch' ||
-          steps.meta.outputs.update-type == 'version-update:semver-minor' ||
-          steps.range.outputs.safe == 'true'
-        run: gh pr merge --auto --squash "$PR_URL"
+        if: steps.meta.outputs.update-type == 'version-update:semver-patch' || steps.meta.outputs.update-type == 'version-update:semver-minor'
+        run: gh pr merge --auto --squash "${{ github.event.pull_request.html_url }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
