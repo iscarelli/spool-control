@@ -4,6 +4,6 @@ werkzeug>=3.1.8
 gunicorn>=26.0.0
 reportlab>=4.5.1
 qrcode[pil]>=8.2
-Pillow>=12.2.0
+Pillow>=12.3.0
 structlog>=26.1.0
 pyotp>=2.10.0
