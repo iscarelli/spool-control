@@ -1,4 +1,4 @@
 # Dependências só de desenvolvimento/teste — NÃO instaladas no servidor.
 # Uso: pip install -r requirements.txt -r requirements-dev.txt
 -r requirements.txt
-pytest>=9.0.3
+pytest>=9.1.1
