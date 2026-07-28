@@ -5,6 +5,7 @@
   - Coluna "Cor" na lista de rolos.
   - "Ver novidades" acumulado (CHANGELOG entre a versão instalada e a última).
 """
+import time
 from datetime import date
 
 from conftest import ADMIN_USER, ADMIN_PASS
@@ -180,3 +181,58 @@ def test_update_page_hides_warning_when_slicing_works(app_module, auth_client, m
     html = auth_client.get("/admin/update").get_data(as_text=True)
     assert "recurso novo" in html         # notas acumuladas carregadas de verdade
     assert "histórico completo" not in html
+
+
+# ── T-731: "Ver novidades" mesmo já atualizado (notas da versão instalada) ───
+#
+# Mesma armadilha do bloco acima: routes/admin.py faz `from app import
+# current_version` (nome próprio), então monkeypatchar app_module.current_version
+# não muda o que a rota lê. Usa-se a versão REAL (app_module.current_version()).
+
+def test_current_release_notes_returns_only_installed_version(app_module, monkeypatch):
+    cur = app_module.current_version()
+    changelog = (
+        "# Changelog\n\n"
+        f"## [{cur}] — 2026-07-28\n### Added\n- recurso da instalada\n\n"
+        "## [1.30.0] — 2026-01-01\n### Added\n- recurso antigo\n"
+    )
+    app_module._current_notes_cache.update(version=None, notes="")
+    monkeypatch.setattr(app_module, "_changelog_md", lambda tag: changelog)
+    notes = app_module.current_release_notes()
+    assert "recurso da instalada" in notes
+    assert "recurso antigo" not in notes
+    assert f"[{cur}]" in notes
+
+
+def test_current_release_notes_fails_open_on_error(app_module, monkeypatch):
+    app_module._current_notes_cache.update(version=None, notes="")
+    monkeypatch.setattr(app_module, "_changelog_md",
+                        lambda tag: (_ for _ in ()).throw(OSError("sem rede")))
+    assert app_module.current_release_notes() == ""
+
+
+def test_update_page_shows_current_version_notes_when_up_to_date(app_module, auth_client, monkeypatch):
+    cur = app_module.current_version()
+    changelog = (
+        "# Changelog\n\n"
+        f"## [{cur}] — 2026-07-28\n### Added\n- recurso desta versao instalada\n"
+    )
+    # Já atualizado: latest == current (nenhuma atualização pendente).
+    app_module._release_cache.update(tag=cur, ts=time.time(), ok=True)
+    app_module._current_notes_cache.update(version=None, notes="")
+    monkeypatch.setattr(app_module, "_changelog_md", lambda tag: changelog)
+    html = auth_client.get("/admin/update").get_data(as_text=True)
+    assert "recurso desta versao instalada" in html
+
+
+def test_update_page_falls_back_to_github_link_when_current_notes_fail(app_module, auth_client, monkeypatch):
+    cur = app_module.current_version()
+    app_module._release_cache.update(tag=cur, ts=time.time(), ok=True)
+    app_module._current_notes_cache.update(version=None, notes="")
+    monkeypatch.setattr(app_module, "_changelog_md",
+                        lambda tag: (_ for _ in ()).throw(OSError("sem rede")))
+    resp = auth_client.get("/admin/update")
+    html = resp.get_data(as_text=True)
+    assert resp.status_code == 200
+    assert app_module.RELEASES_URL in html
+    assert "Traceback" not in html

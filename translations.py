@@ -55,6 +55,7 @@ _EN = {
     "Novidades (v{de} → v{ate})": "What's new (v{de} → v{ate})",
     "Atualizar agora":      "Update now",
     "Sistema atualizado":   "System up to date",
+    "Ver novidades desta versão": "See what's new in this version",
     "Atualizado para a v{v} com sucesso": "Successfully updated to v{v}",
     "Atualizando… o serviço será reiniciado, aguarde.":
         "Updating… the service will restart, please wait.",
@@ -526,6 +527,7 @@ _ES = {
     "Novidades (v{de} → v{ate})": "Novedades (v{de} → v{ate})",
     "Atualizar agora":      "Actualizar ahora",
     "Sistema atualizado":   "Sistema actualizado",
+    "Ver novidades desta versão": "Ver novedades de esta versión",
     "Atualizado para a v{v} com sucesso": "Actualizado a la v{v} con éxito",
     "Atualizando… o serviço será reiniciado, aguarde.":
         "Actualizando… el servicio se reiniciará, espera.",

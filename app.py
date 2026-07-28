@@ -499,6 +499,51 @@ def cumulative_release_notes():
     return latest_release_notes(), False
 
 
+_current_notes_cache = {"version": None, "notes": ""}
+
+
+def _version_just_below(version):
+    """String cujo _version_tuple compara MENOR que o de `version`, mas maior que
+    qualquer versão anterior real publicada — usado como limite inferior exclusivo
+    em _slice_changelog p/ isolar só a seção da própria `version` (decrementa o
+    componente mais à direita com folga; toma emprestado do componente à esquerda
+    quando ele já é 0, sem nunca produzir um número negativo)."""
+    t = list(_version_tuple(version))
+    while len(t) < 3:
+        t.append(0)
+    major, minor, patch = t[0], t[1], t[2]
+    if patch > 0:
+        return f"{major}.{minor}.{patch - 1}"
+    if minor > 0:
+        return f"{major}.{minor - 1}.999999"
+    if major > 0:
+        return f"{major - 1}.999999.999999"
+    return "0.0.0"
+
+
+def current_release_notes():
+    """Notas do CHANGELOG só da versão JÁ INSTALADA — para quem está em dia poder
+    reler o que mudou nesta versão mesmo sem update pendente (a página de update
+    só mostra o card acumulado quando `latest` é mais nova que `current`). Fonte:
+    o CHANGELOG.md cru na tag da PRÓPRIA versão instalada. Reusa _slice_changelog
+    (latest=current, limite inferior logo abaixo via _version_just_below) — não
+    duplica o parser nem o renderizador. Fail-open: tag inexistente, rede fora do
+    ar, ou nada casado → '' (o template cai pro link do GitHub). Cacheada por
+    versão instalada, como cumulative_release_notes cacheia por (current, tag)."""
+    current = current_version()
+    if _current_notes_cache["version"] == current and _current_notes_cache["notes"]:
+        return _current_notes_cache["notes"]
+    try:
+        md = _changelog_md(f"v{current}")
+        notes = _slice_changelog(md, _version_just_below(current), current)
+        if notes:
+            _current_notes_cache.update(version=current, notes=notes)
+            return notes
+    except Exception:
+        log.info("github_changelog.current_unavailable", exc_info=True)
+    return ""
+
+
 def notes_incomplete_warning(complete, current, latest):
     """Decide se vale mostrar o aviso de "histórico pode estar incompleto":
     só quando `complete` é False (cumulative_release_notes caiu no fallback) E o

@@ -16,7 +16,8 @@ from app import (
     app, admin_required, demo_blocked, t, MIN_PASSWORD_LEN, DEMO_MODE,
     BRANDS_DIR, _fetch_brand_logo, _clean_domain, public_base_url,
     RELEASES_URL, check_latest_release, current_version, _version_tuple,
-    cumulative_release_notes, render_release_notes, notes_incomplete_warning,
+    cumulative_release_notes, current_release_notes, render_release_notes,
+    notes_incomplete_warning,
 )
 
 log = log_cfg.get_logger()
@@ -222,20 +223,28 @@ def admin_update():
     # nem depende mais do limite de 60/h.
     latest = check_latest_release(max_age=60)
     cur = current_version()
+    update_available = bool(latest) and _version_tuple(latest) > _version_tuple(cur)
     release_notes = ""
     notes_incomplete = False
-    if latest:
+    current_notes = ""
+    if update_available:
         notes, complete = cumulative_release_notes()
         release_notes = render_release_notes(notes)
         notes_incomplete = notes_incomplete_warning(complete, cur, latest)
+    elif latest:
+        # Já atualizado: sem update pendente, então nada de cumulative_release_notes
+        # (evita um fetch à toa) — mostra as notas da PRÓPRIA versão instalada, se
+        # o CHANGELOG na tag dela estiver disponível.
+        current_notes = render_release_notes(current_release_notes())
     return render_template(
         "admin/update.html",
         current=cur,
         latest=latest,
-        update_available=bool(latest) and _version_tuple(latest) > _version_tuple(cur),
+        update_available=update_available,
         releases_url=RELEASES_URL,
         release_notes=release_notes,
         notes_incomplete=notes_incomplete,
+        current_notes=current_notes,
     )
 
 

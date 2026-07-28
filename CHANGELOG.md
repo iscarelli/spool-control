@@ -10,6 +10,16 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.38.4] — 2026-07-28
+
+### Added
+- **"Ver novidades" mesmo já atualizado.** A tela de Atualizações mostrava as
+  notas de versão só enquanto havia uma atualização pendente — quem já estava na
+  última versão via apenas "Sistema atualizado", sem nenhum jeito de reler o que
+  mudou nela. Agora, estando em dia, um link mostra as notas da própria versão
+  instalada (ou, se não puder carregá-las, leva para a página de releases no
+  GitHub).
+
 ## [1.38.3] — 2026-07-28
 
 ### Changed
