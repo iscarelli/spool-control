@@ -45,6 +45,13 @@
             <div class="text-muted mb-2" style="font-size:.8rem">
               <i class="bi bi-stars me-1"></i>{{ _('Novidades (v{de} → v{ate})').replace('{de}', current).replace('{ate}', latest) }}
             </div>
+            {% if notes_incomplete %}
+            <div class="text-muted mb-2" style="font-size:.8rem">
+              <i class="bi bi-exclamation-triangle me-1"></i>
+              {{ _('Não foi possível carregar o histórico completo; mostrando só as notas da última versão.') }}
+              <a href="{{ releases_url }}" target="_blank" rel="noopener">{{ _('Ver tudo no GitHub') }}</a>
+            </div>
+            {% endif %}
             {{ release_notes }}
           </div>
         </div>

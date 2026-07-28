@@ -10,6 +10,16 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.38.3] — 2026-07-28
+
+### Changed
+- **Aviso quando o histórico de novidades não pôde ser carregado por completo.**
+  A tela de Atualizações mostra as notas de TODAS as versões entre a instalada e a
+  mais recente; se o GitHub estiver indisponível e o card cair para a nota de só a
+  última release, agora aparece um aviso discreto avisando que o histórico pode
+  estar incompleto, com um link para ver tudo no GitHub. Sem aviso quando a
+  atualização é só um patch acima (aí a última nota já é a história inteira).
+
 ## [1.38.2] — 2026-07-10
 
 ### Security
