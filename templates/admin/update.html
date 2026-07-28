@@ -62,7 +62,24 @@
         {% else %}
         <div class="alert alert-success mb-0">
           <i class="bi bi-check-circle-fill me-1"></i>{{ _('Sistema atualizado') }}.
+          {% if current_notes %}
+          <a data-bs-toggle="collapse" href="#currentNotes" role="button"
+             aria-expanded="false" aria-controls="currentNotes">{{ _('Ver novidades desta versão') }}</a>
+          {% else %}
+          <a href="{{ releases_url }}" target="_blank" rel="noopener">{{ _('Ver novidades desta versão') }}</a>
+          {% endif %}
         </div>
+        {% if current_notes %}
+        <div class="collapse mt-3" id="currentNotes">
+          <div class="border rounded p-3 bg-body-tertiary release-notes"
+               style="max-height:50vh;overflow:auto;font-size:.85rem">
+            <div class="text-muted mb-2" style="font-size:.8rem">
+              <i class="bi bi-stars me-1"></i>{{ _('Novidades da v{v}').replace('{v}', current) }}
+            </div>
+            {{ current_notes }}
+          </div>
+        </div>
+        {% endif %}
         {% endif %}
 
         <div id="updateProgress" class="mt-3 d-none">
