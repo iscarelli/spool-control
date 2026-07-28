@@ -105,21 +105,78 @@ def test_cumulative_notes_slices_from_changelog(app_module, monkeypatch):
     app_module._release_cache.update(tag="1.37.0", ts=0.0, ok=True)
     app_module._cumulative_cache.update(key=None, notes="")
     monkeypatch.setattr(app_module, "_changelog_md", lambda tag: _SAMPLE_CHANGELOG)
-    notes = app_module.cumulative_release_notes()
+    notes, complete = app_module.cumulative_release_notes()
+    assert complete is True
     assert "recurso do 1.37" in notes and "recurso do 1.36" in notes
     assert "recurso do 1.35" not in notes
+    # mais de uma seção de versão presente — é o histórico acumulado, não só a última
+    assert "[1.37.0]" in notes and "[1.36.0]" in notes
 
 
 def test_cumulative_notes_fallback_when_no_tag(app_module, monkeypatch):
     app_module._release_cache.update(tag=None, ts=0.0, ok=False)
     monkeypatch.setattr(app_module, "latest_release_notes", lambda: "notas da ultima")
-    assert app_module.cumulative_release_notes() == "notas da ultima"
+    notes, complete = app_module.cumulative_release_notes()
+    assert notes == "notas da ultima"
+    assert complete is False
 
 
 def test_cumulative_notes_fallback_on_fetch_error(app_module, monkeypatch):
+    monkeypatch.setattr(app_module, "current_version", lambda: "1.30.0")
     app_module._release_cache.update(tag="1.37.0", ts=0.0, ok=True)
     app_module._cumulative_cache.update(key=None, notes="")
     monkeypatch.setattr(app_module, "_changelog_md",
                         lambda tag: (_ for _ in ()).throw(OSError("sem rede")))
     monkeypatch.setattr(app_module, "latest_release_notes", lambda: "notas da ultima")
-    assert app_module.cumulative_release_notes() == "notas da ultima"
+    notes, complete = app_module.cumulative_release_notes()
+    # fail-open preservado: cai pra nota da última release, mas avisa que é incompleto
+    assert notes == "notas da ultima"
+    assert complete is False
+
+
+# ── Aviso "histórico incompleto": só quando vale a pena avisar ───────────────
+
+def test_no_warning_for_single_patch_bump(app_module):
+    # 1.38.2 → 1.38.3 é um patch só acima: a nota da última release JÁ é a
+    # história inteira, avisar seria ruído mesmo com complete=False.
+    assert app_module.notes_incomplete_warning(False, "1.38.2", "1.38.3") is False
+
+
+def test_warning_for_bigger_gap(app_module):
+    assert app_module.notes_incomplete_warning(False, "1.30.0", "1.37.0") is True
+
+
+def test_no_warning_when_notes_are_complete(app_module):
+    assert app_module.notes_incomplete_warning(True, "1.30.0", "1.37.0") is False
+
+
+# ── /admin/update: o aviso aparece só quando o fallback foi mesmo acionado ────
+#
+# Nota: `routes/admin.py` importa `current_version` do `app` com `from app import
+# current_version` — é um nome próprio no módulo routes.admin, então monkeypatchar
+# `app_module.current_version` NÃO o afeta. Por isso estes dois testes usam a versão
+# REAL do arquivo VERSION (via `app_module.current_version()`) em vez de fingir uma,
+# e fixam um `latest` bem à frente dela (gap grande, nunca um patch único).
+
+def test_update_page_shows_incomplete_warning_on_fallback(app_module, auth_client, monkeypatch):
+    monkeypatch.setattr(app_module, "_latest_release_tag_via_web", lambda: "v9.9.9")
+    monkeypatch.setattr(app_module, "latest_release_notes", lambda: "notas da ultima")
+    # Força o caminho de fallback: a busca do CHANGELOG cru falha.
+    monkeypatch.setattr(app_module, "_changelog_md",
+                        lambda tag: (_ for _ in ()).throw(OSError("sem rede")))
+    html = auth_client.get("/admin/update").get_data(as_text=True)
+    assert "histórico completo" in html   # aviso de notas possivelmente incompletas
+
+
+def test_update_page_hides_warning_when_slicing_works(app_module, auth_client, monkeypatch):
+    cur = app_module.current_version()
+    changelog = (
+        "# Changelog\n\n"
+        "## [9.9.9] — 2026-07-28\n### Added\n- recurso novo\n\n"
+        f"## [{cur}] — 2026-01-01\n### Added\n- recurso antigo\n"
+    )
+    monkeypatch.setattr(app_module, "_latest_release_tag_via_web", lambda: "v9.9.9")
+    monkeypatch.setattr(app_module, "_changelog_md", lambda tag: changelog)
+    html = auth_client.get("/admin/update").get_data(as_text=True)
+    assert "recurso novo" in html         # notas acumuladas carregadas de verdade
+    assert "histórico completo" not in html

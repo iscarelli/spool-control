@@ -16,7 +16,7 @@ from app import (
     app, admin_required, demo_blocked, t, MIN_PASSWORD_LEN, DEMO_MODE,
     BRANDS_DIR, _fetch_brand_logo, _clean_domain, public_base_url,
     RELEASES_URL, check_latest_release, current_version, _version_tuple,
-    cumulative_release_notes, render_release_notes,
+    cumulative_release_notes, render_release_notes, notes_incomplete_warning,
 )
 
 log = log_cfg.get_logger()
@@ -222,13 +222,20 @@ def admin_update():
     # nem depende mais do limite de 60/h.
     latest = check_latest_release(max_age=60)
     cur = current_version()
+    release_notes = ""
+    notes_incomplete = False
+    if latest:
+        notes, complete = cumulative_release_notes()
+        release_notes = render_release_notes(notes)
+        notes_incomplete = notes_incomplete_warning(complete, cur, latest)
     return render_template(
         "admin/update.html",
         current=cur,
         latest=latest,
         update_available=bool(latest) and _version_tuple(latest) > _version_tuple(cur),
         releases_url=RELEASES_URL,
-        release_notes=render_release_notes(cumulative_release_notes()) if latest else "",
+        release_notes=release_notes,
+        notes_incomplete=notes_incomplete,
     )
 
 

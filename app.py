@@ -476,22 +476,43 @@ def cumulative_release_notes():
     entre a versão instalada (exclusive) e a última publicada (inclusive) — assim
     quem está várias versões atrás vê o histórico todo, não só a última. Fonte: o
     CHANGELOG.md cru na tag latest. Fail-open: sem tag, ou se a busca/parse falhar
-    ou nada casar, cai nas notas da última release (comportamento anterior)."""
+    ou nada casar, cai nas notas da última release (comportamento anterior).
+
+    Devolve (notes, complete): `complete` é True só quando `notes` veio de fatiar
+    o CHANGELOG de verdade; é False em todo caminho de fallback (sem tag, busca
+    falhou, ou o corte não achou nada) — quem chama usa isso para avisar que o
+    histórico mostrado pode estar incompleto."""
     tag = _release_cache.get("tag")
     current = current_version()
     if not tag:
-        return latest_release_notes()
+        return latest_release_notes(), False
     key = (current, tag)
     if _cumulative_cache["key"] == key and _cumulative_cache["notes"]:
-        return _cumulative_cache["notes"]
+        return _cumulative_cache["notes"], True
     try:
         notes = _slice_changelog(_changelog_md(f"v{tag}"), current, tag)
         if notes:
             _cumulative_cache.update(key=key, notes=notes)
-            return notes
+            return notes, True
     except Exception:
         log.info("github_changelog.unavailable", exc_info=True)
-    return latest_release_notes()
+    return latest_release_notes(), False
+
+
+def notes_incomplete_warning(complete, current, latest):
+    """Decide se vale mostrar o aviso de "histórico pode estar incompleto":
+    só quando `complete` é False (cumulative_release_notes caiu no fallback) E o
+    salto não é um patch único logo acima da instalada (mesmo major.minor,
+    latest_patch - current_patch == 1) — nesse caso a nota da última release JÁ
+    é a história inteira, e o aviso seria só ruído."""
+    if complete:
+        return False
+    cur_t, lat_t = _version_tuple(current), _version_tuple(latest)
+    if (len(cur_t) >= 3 and len(lat_t) >= 3
+            and cur_t[0] == lat_t[0] and cur_t[1] == lat_t[1]
+            and lat_t[2] - cur_t[2] == 1):
+        return False
+    return True
 
 
 # Subconjunto de Markdown usado nas release notes → HTML seguro, sem dependência

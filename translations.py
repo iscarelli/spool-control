@@ -62,6 +62,9 @@ _EN = {
         "The update downloads the latest published release and restarts the service. It may take 1–2 minutes.",
     "Concluído! Recarregando…": "Done! Reloading…",
     "Falha ao iniciar a atualização": "Failed to start the update",
+    "Não foi possível carregar o histórico completo; mostrando só as notas da última versão.":
+        "Could not load the full history; showing only the latest version's notes.",
+    "Ver tudo no GitHub":   "See everything on GitHub",
 
     # ── Backup / restore ─────────────────────────────────────────────────────
     "Backup":               "Backup",
@@ -530,6 +533,9 @@ _ES = {
         "La actualización descarga la última versión publicada y reinicia el servicio. Puede tardar 1–2 minutos.",
     "Concluído! Recarregando…": "¡Listo! Recargando…",
     "Falha ao iniciar a atualização": "Error al iniciar la actualización",
+    "Não foi possível carregar o histórico completo; mostrando só as notas da última versão.":
+        "No se pudo cargar el historial completo; mostrando solo las notas de la última versión.",
+    "Ver tudo no GitHub":   "Ver todo en GitHub",
 
     # ── Backup / restore ─────────────────────────────────────────────────────
     "Backup":               "Copia de seguridad",
