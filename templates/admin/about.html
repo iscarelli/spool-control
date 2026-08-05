@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Sobre') }} — Spool Control{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7 col-lg-6">
+    <h4 class="fw-bold mb-4">{{ _('Sobre o Spool Control') }}</h4>
+
+    <div class="card mb-3">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <span class="text-muted">{{ _('Versão atual') }}</span>
+          <span class="fw-semibold">v{{ current }}</span>
+        </div>
+        <p class="mb-0">
+          {{ _('O Spool Control foi criado para facilitar o catálogo e o controle de estoque de filamentos de impressão 3D. Ele registra cada rolo — marca, material, cor e peso —, acompanha o consumo por pesagem e gera etiquetas com QR code para identificar os rolos na prateleira.') }}
+        </p>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-body">
+        <h6 class="text-muted text-uppercase fw-semibold mb-2" style="font-size:.75rem">
+          <i class="bi bi-unlock me-1"></i>{{ _('Projeto aberto') }}
+        </h6>
+        <p class="mb-0">
+          {{ _('O código-fonte é público e está licenciado sob a') }}
+          <a href="https://github.com/iscarelli/spool-control/blob/main/LICENSE" target="_blank" rel="noopener">{{ _('licença MIT') }}</a>
+          — {{ _('qualquer pessoa pode usar, estudar, modificar e redistribuir.') }}
+        </p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-3">
+          <i class="bi bi-github me-2 fs-5"></i>
+          <div>
+            <div class="fw-semibold">{{ _('Código-fonte') }}</div>
+            <a href="https://github.com/iscarelli/spool-control" target="_blank" rel="noopener">github.com/iscarelli/spool-control</a>
+          </div>
+        </div>
+        <div class="d-flex align-items-center">
+          <i class="bi bi-envelope me-2 fs-5"></i>
+          <div>
+            <div class="fw-semibold">{{ _('Suporte') }}</div>
+            <a href="mailto:iscarelli@gmail.com">iscarelli@gmail.com</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

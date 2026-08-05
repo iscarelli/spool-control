@@ -400,3 +400,11 @@ def admin_backup_download_local(slot):
     return send_file(str(path), as_attachment=True,
                      download_name=f"spool-backup-slot{slot}.zip",
                      mimetype="application/zip")
+
+
+# ── Sobre ────────────────────────────────────────────────────────────────────
+
+@app.route("/admin/about")
+@admin_required
+def admin_about():
+    return render_template("admin/about.html", current=current_version())
