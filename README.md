@@ -396,3 +396,7 @@ check fails:
 catch a `DEMO_MODE` leak into a real install, and `backup_age_h` (hours since the last
 successful automatic backup, `null` if none) lets it alert when backups stop. Useful for
 uptime monitors (`/health` does not require authentication).
+
+## License
+
+This project is licensed under the MIT License — see [`LICENSE`](LICENSE).

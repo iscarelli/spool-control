@@ -1176,6 +1176,29 @@ _ES["Próximo rolo"] = "Bobina siguiente"
 _ES["Filamento anterior"] = "Filamento anterior"
 _ES["Próximo filamento"] = "Filamento siguiente"
 
+# ── Admin → Sobre ──────────────────────────────────────────────────────────
+_EN["Sobre"] = "About"
+_EN["Sobre o Spool Control"] = "About Spool Control"
+_EN["O Spool Control foi criado para facilitar o catálogo e o controle de estoque de filamentos de impressão 3D. Ele registra cada rolo — marca, material, cor e peso —, acompanha o consumo por pesagem e gera etiquetas com QR code para identificar os rolos na prateleira."] = \
+    "Spool Control was created to make cataloging and stock control of 3D-printing filaments easier. It records every spool — brand, material, color and weight —, tracks consumption by weighing, and generates QR-code labels to identify spools on the shelf."
+_EN["Projeto aberto"] = "Open project"
+_EN["O código-fonte é público e está licenciado sob a"] = "The source code is public and licensed under the"
+_EN["licença MIT"] = "MIT license"
+_EN["qualquer pessoa pode usar, estudar, modificar e redistribuir."] = "anyone may use, study, modify and redistribute it."
+_EN["Código-fonte"] = "Source code"
+_EN["Suporte"] = "Support"
+
+_ES["Sobre"] = "Acerca de"
+_ES["Sobre o Spool Control"] = "Acerca de Spool Control"
+_ES["O Spool Control foi criado para facilitar o catálogo e o controle de estoque de filamentos de impressão 3D. Ele registra cada rolo — marca, material, cor e peso —, acompanha o consumo por pesagem e gera etiquetas com QR code para identificar os rolos na prateleira."] = \
+    "Spool Control fue creado para facilitar el catálogo y el control de stock de filamentos de impresión 3D. Registra cada bobina — marca, material, color y peso —, hace seguimiento del consumo mediante pesaje y genera etiquetas con código QR para identificar las bobinas en el estante."
+_ES["Projeto aberto"] = "Proyecto abierto"
+_ES["O código-fonte é público e está licenciado sob a"] = "El código fuente es público y está licenciado bajo la"
+_ES["licença MIT"] = "licencia MIT"
+_ES["qualquer pessoa pode usar, estudar, modificar e redistribuir."] = "cualquier persona puede usarlo, estudiarlo, modificarlo y redistribuirlo."
+_ES["Código-fonte"] = "Código fuente"
+_ES["Suporte"] = "Soporte"
+
 _TABLES = {"en": _EN, "es": _ES, "pt": _PT}
 
 

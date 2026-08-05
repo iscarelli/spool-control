@@ -89,7 +89,7 @@
         {% endif %}
         {% if session.role == 'admin' %}
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle {% if ep in ('admin_users','admin_brands','admin_settings','admin_backup','admin_update') %}sc-active{% endif %}"
+          <a class="nav-link dropdown-toggle {% if ep in ('admin_users','admin_brands','admin_settings','admin_backup','admin_update','admin_about') %}sc-active{% endif %}"
              href="#" data-bs-toggle="dropdown">
             <i class="bi bi-gear-fill me-1"></i>{{ _('Admin') }}
             {% if update_available or backup_alert %}<span class="badge rounded-pill text-bg-danger ms-1" style="font-size:.55rem;vertical-align:top">&bull;</span>{% endif %}
@@ -112,6 +112,7 @@
                 {% if update_available %}<span class="badge rounded-pill text-bg-danger ms-auto">{{ _('Nova') }}</span>{% endif %}
               </a>
             </li>
+            <li><a class="dropdown-item" href="{{ url_for('admin_about') }}">{{ _('Sobre') }}</a></li>
           </ul>
         </li>
         {% endif %}

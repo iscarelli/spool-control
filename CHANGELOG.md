@@ -10,6 +10,15 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.38.5] — 2026-08-04
+
+### Added
+- **Página Admin → Sobre.** Nova tela em `/admin/about` com a versão instalada, o
+  propósito do sistema, um link para o código-fonte no GitHub e o e-mail de
+  suporte. O projeto passa a **declarar formalmente a licença MIT** com um
+  arquivo `LICENSE` na raiz do repositório — antes o repositório era público
+  mas não trazia nenhum arquivo de licença.
+
 ## [1.38.4] — 2026-07-28
 
 ### Added
