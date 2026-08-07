@@ -74,13 +74,17 @@
             <button type="submit" class="btn btn-dark">{{ _('Salvar') }}</button>
             <a href="{{ url_for('filaments_detail', filament_id=filament.id) if filament else url_for('filaments_list') }}" class="btn btn-outline-secondary">{{ _('Cancelar') }}</a>
             {% if filament and session.role == 'admin' %}
-            <form method="post" action="{{ url_for('filaments_delete', filament_id=filament.id) }}" class="ms-auto"
-                  data-sc-confirm="{{ _('Remover este filamento?') }}">
-              <button type="submit" class="btn btn-outline-danger btn-sm">{{ _('Remover') }}</button>
-            </form>
+            {# O <form> de remoção mora FORA do form de edição (HTML5 proíbe form
+               aninhado: o parser descarta a tag interna e o botão passa a submeter
+               a edição). O vínculo é feito pelo atributo `form`. #}
+            <button type="submit" form="deleteFilamentForm" class="btn btn-outline-danger btn-sm ms-auto">{{ _('Remover') }}</button>
             {% endif %}
           </div>
         </form>
+        {% if filament and session.role == 'admin' %}
+        <form method="post" id="deleteFilamentForm" action="{{ url_for('filaments_delete', filament_id=filament.id) }}"
+              data-sc-confirm="{{ _('Remover este filamento?') }}"></form>
+        {% endif %}
       </div>
     </div>
   </div>

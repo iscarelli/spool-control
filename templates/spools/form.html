@@ -102,13 +102,17 @@
             <button type="submit" class="btn btn-dark">{{ _('Salvar') }}</button>
             <a href="{{ url_for('spools_detail', spool_id=spool.id) if spool else url_for('spools_list') }}" class="btn btn-outline-secondary">{{ _('Cancelar') }}</a>
             {% if spool and spool.active %}
-            <form method="post" action="{{ url_for('spools_deactivate', spool_id=spool.id) }}" class="ms-auto"
-                  data-sc-confirm="{{ _('Marcar spool como finalizado?') }}">
-              <button type="submit" class="btn btn-outline-danger btn-sm">{{ _('Finalizar Spool') }}</button>
-            </form>
+            {# O <form> de finalizar mora FORA do form de edição (HTML5 proíbe form
+               aninhado: o parser descarta a tag interna e o botão passa a submeter
+               a edição). O vínculo é feito pelo atributo `form`. #}
+            <button type="submit" form="deactivateForm" class="btn btn-outline-danger btn-sm ms-auto">{{ _('Finalizar Spool') }}</button>
             {% endif %}
           </div>
         </form>
+        {% if spool and spool.active %}
+        <form method="post" id="deactivateForm" action="{{ url_for('spools_deactivate', spool_id=spool.id) }}"
+              data-sc-confirm="{{ _('Marcar spool como finalizado?') }}"></form>
+        {% endif %}
       </div>
     </div>
   </div>
