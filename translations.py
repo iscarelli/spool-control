@@ -1199,6 +1199,47 @@ _ES["qualquer pessoa pode usar, estudar, modificar e redistribuir."] = "cualquie
 _ES["Código-fonte"] = "Código fuente"
 _ES["Suporte"] = "Soporte"
 
+# ── Relatório: Histórico de Consumo ─────────────────────────────────────────
+_EN["Histórico de Consumo"] = "Consumption History"
+_EN["Rolos gastos"] = "Spools used up"
+_EN["Filamento consumido"] = "Filament consumed"
+_EN["Período coberto"] = "Period covered"
+_EN["Período"] = "Period"
+_EN["Últimos 12 meses"] = "Last 12 months"
+_EN["Tudo"] = "All time"
+_EN["O total em kg só enxerga rolos que foram pesados: o consumo é medido pela diferença entre duas pesagens do mesmo rolo. Um rolo que nunca foi pesado entra na contagem de rolos, mas não soma nada aos kg. Meses marcados com ≈ têm rolos cuja data de término foi estimada a partir da última pesagem, e não medida."] = \
+    "The kg total only sees spools that were weighed: consumption is measured as the difference between two weighings of the same spool. A spool that was never weighed is counted among the spools but adds nothing to the kg. Months marked with ≈ contain spools whose finish date was estimated from the last weighing instead of measured."
+_EN["Por mês"] = "By month"
+_EN["Mês"] = "Month"
+_EN["Rolos finalizados"] = "Spools finished"
+_EN["Consumido (kg)"] = "Consumed (kg)"
+_EN["{n} com data estimada a partir da última pesagem"] = "{n} with a date estimated from the last weighing"
+_EN["Sem data"] = "No date"
+_EN["Finalizados sem nenhuma pesagem — não há como situá-los num mês."] = \
+    "Finished without a single weighing — there is no way to place them in a month."
+_EN["Por material"] = "By material"
+_EN["Por marca"] = "By brand"
+
+_ES["Histórico de Consumo"] = "Historial de Consumo"
+_ES["Rolos gastos"] = "Bobinas gastadas"
+_ES["Filamento consumido"] = "Filamento consumido"
+_ES["Período coberto"] = "Período cubierto"
+_ES["Período"] = "Período"
+_ES["Últimos 12 meses"] = "Últimos 12 meses"
+_ES["Tudo"] = "Todo"
+_ES["O total em kg só enxerga rolos que foram pesados: o consumo é medido pela diferença entre duas pesagens do mesmo rolo. Um rolo que nunca foi pesado entra na contagem de rolos, mas não soma nada aos kg. Meses marcados com ≈ têm rolos cuja data de término foi estimada a partir da última pesagem, e não medida."] = \
+    "El total en kg solo ve bobinas que fueron pesadas: el consumo se mide por la diferencia entre dos pesadas de la misma bobina. Una bobina que nunca fue pesada entra en el conteo de bobinas, pero no suma nada a los kg. Los meses marcados con ≈ tienen bobinas cuya fecha de término fue estimada a partir de la última pesada, no medida."
+_ES["Por mês"] = "Por mes"
+_ES["Mês"] = "Mes"
+_ES["Rolos finalizados"] = "Bobinas finalizadas"
+_ES["Consumido (kg)"] = "Consumido (kg)"
+_ES["{n} com data estimada a partir da última pesagem"] = "{n} con fecha estimada a partir de la última pesada"
+_ES["Sem data"] = "Sin fecha"
+_ES["Finalizados sem nenhuma pesagem — não há como situá-los num mês."] = \
+    "Finalizadas sin ninguna pesada — no hay forma de ubicarlas en un mes."
+_ES["Por material"] = "Por material"
+_ES["Por marca"] = "Por marca"
+
 _TABLES = {"en": _EN, "es": _ES, "pt": _PT}
 
 

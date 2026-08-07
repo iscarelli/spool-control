@@ -10,6 +10,28 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.39.0] — 2026-08-07
+
+### Added
+- **Novo relatório "Histórico de Consumo"** (menu Relatórios), que responde duas
+  perguntas que o sistema não sabia responder: *quantos rolos já gastamos* e *quanto
+  filamento saiu por mês*. A tela mostra o total de rolos finalizados, o total consumido
+  em quilos, o período coberto, uma tabela mês a mês e as quebras por material e por
+  marca. Dá para ver os últimos 12 meses ou o histórico inteiro.
+- **Rolo finalizado agora guarda a data.** Até aqui, finalizar um rolo só o tirava da
+  lista de ativos e o "quando" se perdia — havia um total, nunca um histórico. A partir
+  desta versão a data é registrada no momento em que o rolo é finalizado.
+
+### Limitações declaradas na própria tela
+- **Rolos finalizados antes desta versão não têm data registrada**, então o sistema a
+  estima a partir da última pesagem de cada um. Essas datas aparecem marcadas com **≈**:
+  são um limite inferior (o rolo acabou em algum momento dali em diante), não a data
+  real. Rolo finalizado que nunca foi pesado não recebe data inventada — ele é contado à
+  parte, na linha "Sem data".
+- **O total em quilos só enxerga rolos que foram pesados**, porque o consumo é medido
+  pela diferença entre duas pesagens do mesmo rolo. Um rolo nunca pesado aparece na
+  contagem de rolos e não soma nada aos quilos.
+
 ## [1.38.7] — 2026-08-07
 
 ### Fixed

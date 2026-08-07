@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Histórico de Consumo') }} — Spool Control{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <h4 class="mb-0 fw-bold">{{ _('Histórico de Consumo') }}</h4>
+  <button class="btn btn-sm btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i>{{ _('Imprimir') }}</button>
+</div>
+
+{# Resumo do topo #}
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="text-muted small text-uppercase fw-semibold">{{ _('Rolos gastos') }}</div>
+        <div class="fs-3 fw-bold">{{ rep.total_spools_finished }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="text-muted small text-uppercase fw-semibold">{{ _('Filamento consumido') }}</div>
+        <div class="fs-3 fw-bold">{{ "%.2f"|format(rep.total_grams / 1000) }} kg</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="text-muted small text-uppercase fw-semibold">{{ _('Período coberto') }}</div>
+        <div class="fs-5 fw-bold">
+          {% if rep.period_start %}{{ rep.period_start }} → {{ rep.period_end }}{% else %}—{% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# Filtro de janela: links GET, sem formulário nenhum. O formulário de busca e o de
+   logout do base.html ficam no navbar, então não há como aninhar um dentro do outro
+   (a armadilha do form aninhado, docs/ARMADILHAS.md). #}
+<div class="btn-group btn-group-sm mb-4" role="group" aria-label="{{ _('Período') }}">
+  <a href="{{ url_for('report_consumption', range='12m') }}"
+     class="btn {% if rng != 'all' %}btn-dark{% else %}btn-outline-dark{% endif %}">{{ _('Últimos 12 meses') }}</a>
+  <a href="{{ url_for('report_consumption', range='all') }}"
+     class="btn {% if rng == 'all' %}btn-dark{% else %}btn-outline-dark{% endif %}">{{ _('Tudo') }}</a>
+</div>
+
+<div class="alert alert-info" role="alert">
+  <i class="bi bi-info-circle me-1"></i>
+  {{ _('O total em kg só enxerga rolos que foram pesados: o consumo é medido pela diferença entre duas pesagens do mesmo rolo. Um rolo que nunca foi pesado entra na contagem de rolos, mas não soma nada aos kg. Meses marcados com ≈ têm rolos cuja data de término foi estimada a partir da última pesagem, e não medida.') }}
+</div>
+
+{# ── Por mês ────────────────────────────────────────────────────────────── #}
+<div class="card mb-4">
+  <div class="card-header fw-semibold">{{ _('Por mês') }}</div>
+  <div class="table-responsive">
+    <table class="table mb-0 sc-stack">
+      <thead class="table-dark">
+        <tr><th>{{ _('Mês') }}</th><th>{{ _('Rolos finalizados') }}</th><th>{{ _('Consumido (kg)') }}</th></tr>
+      </thead>
+      <tbody>
+        {% for m in rep.by_month %}
+        <tr>
+          <td class="fw-semibold sc-stack-head">{{ m.month }}</td>
+          <td data-label="{{ _('Rolos finalizados') }}">
+            {{ m.spools_finished }}
+            {% if m.estimated_count %}
+            <span class="text-muted" data-bs-toggle="tooltip"
+                  title="{{ _('{n} com data estimada a partir da última pesagem').format(n=m.estimated_count) }}">≈</span>
+            {% endif %}
+          </td>
+          <td data-label="{{ _('Consumido (kg)') }}">{{ "%.2f"|format(m.grams / 1000) }} kg</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3" class="text-center text-muted py-4">{{ _('Sem dados') }}</td></tr>
+        {% endfor %}
+        {% if rep.no_date_count %}
+        <tr class="table-light">
+          <td class="fw-semibold text-muted sc-stack-head">{{ _('Sem data') }}</td>
+          <td class="text-muted" data-label="{{ _('Rolos finalizados') }}">
+            {{ rep.no_date_count }}
+            <span class="text-muted" data-bs-toggle="tooltip"
+                  title="{{ _('Finalizados sem nenhuma pesagem — não há como situá-los num mês.') }}"><i class="bi bi-question-circle"></i></span>
+          </td>
+          <td class="text-muted" data-label="{{ _('Consumido (kg)') }}">—</td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{# ── Quebras ────────────────────────────────────────────────────────────── #}
+<div class="row g-4">
+  {% for block in [('material', _('Por material'), rep.by_material), ('brand', _('Por marca'), rep.by_brand)] %}
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header fw-semibold">{{ block[1] }}</div>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0 sc-stack">
+          <thead class="table-dark">
+            <tr><th>{{ block[1] }}</th><th>{{ _('Rolos gastos') }}</th><th>{{ _('Consumido (kg)') }}</th></tr>
+          </thead>
+          <tbody>
+            {% for r in block[2] %}
+            <tr>
+              <td class="sc-stack-head"><span class="badge bg-secondary">{{ r.name }}</span></td>
+              <td data-label="{{ _('Rolos gastos') }}">{{ r.spools_finished }}</td>
+              <td data-label="{{ _('Consumido (kg)') }}">{{ "%.2f"|format(r.grams / 1000) }} kg</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="3" class="text-center text-muted py-4">{{ _('Sem dados') }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

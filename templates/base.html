@@ -63,7 +63,7 @@
         </li>
         {% endif %}
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle {% if ep in ('report_by_material','report_by_location','report_low_stock','report_weight_history','report_stats','report_inventory') %}sc-active{% endif %}"
+          <a class="nav-link dropdown-toggle {% if ep in ('report_by_material','report_by_location','report_low_stock','report_weight_history','report_consumption','report_stats','report_inventory') %}sc-active{% endif %}"
              href="#" data-bs-toggle="dropdown">
             <i class="bi bi-bar-chart-fill me-1"></i>{{ _('Relatórios') }}
           </a>
@@ -75,6 +75,7 @@
             <li><a class="dropdown-item" href="{{ url_for('report_by_location') }}">{{ _('Por Local') }}</a></li>
             <li><a class="dropdown-item" href="{{ url_for('report_low_stock') }}">{{ _('Estoque Baixo') }}</a></li>
             <li><a class="dropdown-item" href="{{ url_for('report_weight_history') }}">{{ _('Histórico de Peso') }}</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('report_consumption') }}">{{ _('Histórico de Consumo') }}</a></li>
           </ul>
         </li>
         {# Fila de etiquetas: atalho destacado (amarelo) só quando há itens na fila; some ao esvaziar #}

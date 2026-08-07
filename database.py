@@ -218,11 +218,34 @@ def init_db():
             # Default '' p/ instalações existentes: na próxima requisição o cookie legado
             # (sem auth_token) não bate e o usuário reloga, recebendo um token gerado.
             "ALTER TABLE users ADD COLUMN session_token TEXT NOT NULL DEFAULT ''",
+            # Data em que o rolo foi finalizado (active=0). Até aqui `deactivate_spool`
+            # só escrevia active=0 e a informação "quando" se perdia — sem ela não há
+            # histórico de consumo, só um total. '' = desconhecida.
+            "ALTER TABLE spools ADD COLUMN finished_at TEXT NOT NULL DEFAULT ''",
+            # 1 = a data foi INFERIDA (backfill a partir da última pesagem), não medida.
+            # A UI marca essas com ≈; sem esta coluna o relatório apresentaria
+            # estimativa como fato.
+            "ALTER TABLE spools ADD COLUMN finished_at_estimated INTEGER NOT NULL DEFAULT 0",
         ]:
             try:
                 db.execute(sql)
             except sqlite3.OperationalError:
                 pass  # coluna já existe
+        db.commit()
+
+        # Backfill (idempotente pelo `finished_at = ''`): rolos finalizados ANTES de a
+        # coluna existir não têm data. A última pesagem é um limite inferior defensável
+        # — o rolo acabou em algum momento a partir dali —, não a verdade; por isso
+        # entra marcada como estimada. Rolo finalizado que nunca foi pesado fica com
+        # finished_at = '' e cai no balde "sem data" do relatório: não se inventa data.
+        db.execute("""
+            UPDATE spools
+               SET finished_at = (SELECT MAX(ts) FROM weight_readings WHERE spool_id = spools.id),
+                   finished_at_estimated = 1
+             WHERE active = 0
+               AND finished_at = ''
+               AND EXISTS (SELECT 1 FROM weight_readings WHERE spool_id = spools.id)
+        """)
         db.commit()
 
 
@@ -816,8 +839,13 @@ def update_spool(spool_id, filament_id, spool_model_id, custom_tare_g, nominal_w
 
 
 def deactivate_spool(spool_id):
+    """Finaliza o rolo CARIMBANDO a data. `finished_at_estimated=0` porque daqui em
+    diante a data é medida no ato — só o backfill de rolos antigos usa estimativa."""
     with closing(get_db()) as db:
-        db.execute("UPDATE spools SET active=0 WHERE id=?", (spool_id,))
+        db.execute(
+            "UPDATE spools SET active=0, finished_at=?, finished_at_estimated=0 WHERE id=?",
+            (now_iso(), spool_id),
+        )
         db.commit()
 
 
@@ -944,6 +972,128 @@ def report_low_stock(threshold_g=200, threshold_pct=20):
                    (s.nominal_weight_g > 0 AND COALESCE(l.net_weight_g, s.nominal_weight_g)*100.0/s.nominal_weight_g < ?))
             ORDER BY COALESCE(l.net_weight_g, s.nominal_weight_g) ASC
         """, (threshold_g, threshold_pct)).fetchall()
+
+
+def _month_cutoff(months):
+    """Primeiro mês ('YYYY-MM') de uma janela dos últimos `months` meses, contando o
+    mês corrente. Devolve None quando `months` é falsy (= sem recorte, "tudo")."""
+    if not months:
+        return None
+    now = datetime.now(timezone.utc)
+    idx = now.year * 12 + (now.month - 1) - (months - 1)
+    return f"{idx // 12:04d}-{idx % 12 + 1:02d}"
+
+
+def consumption_report(months=None):
+    """Histórico de consumo: quantos rolos foram gastos e quanto filamento saiu por mês.
+
+    `months=12` recorta a janela nos últimos 12 meses (mês corrente incluído);
+    `None` traz tudo.
+
+    **Os deltas são calculados em Python, de propósito.** A alternativa natural em SQL
+    seria a window function `LAG`, que exige SQLite >= 3.25 — e a versão do SQLite varia
+    entre as instalações deste app (há instalações de terceiros que não controlamos).
+    Um relatório que estoura em `OperationalError` num servidor antigo é pior do que um
+    laço de algumas centenas de linhas aqui.
+
+    Duas limitações que o relatório NÃO esconde (a UI as declara):
+
+    * o total em gramas só enxerga rolos que foram **pesados** — consumo é medido pela
+      diferença entre pesagens consecutivas do mesmo rolo, então rolo nunca pesado entra
+      na contagem de rolos e não entra nos gramas;
+    * datas anteriores a esta versão são **estimadas** (ver o backfill em `init_db`) e
+      vêm contadas em `estimated_count` para a UI marcar com ≈.
+    """
+    cutoff = _month_cutoff(months)
+
+    def _in_window(month):
+        return bool(month) and (cutoff is None or month >= cutoff)
+
+    with closing(get_db()) as db:
+        readings = db.execute(
+            "SELECT spool_id, net_weight_g, ts FROM weight_readings ORDER BY spool_id, ts, id"
+        ).fetchall()
+        spools = db.execute("""
+            SELECT s.id, s.active, s.finished_at, s.finished_at_estimated,
+                   f.material, f.brand
+              FROM spools s
+              JOIN filaments f ON f.id = s.filament_id
+        """).fetchall()
+        finished_rows = db.execute("""
+            SELECT substr(finished_at,1,7)   AS month,
+                   COUNT(*)                  AS spools_finished,
+                   SUM(finished_at_estimated) AS estimated_count
+              FROM spools
+             WHERE active = 0 AND finished_at != ''
+             GROUP BY month
+        """).fetchall()
+        # Rolo finalizado sem pesagem nenhuma não tem data e NÃO ganha uma inventada:
+        # aparece aqui, fora de qualquer mês. Nunca recortado pela janela — não há mês
+        # ao qual atribuí-lo, e escondê-lo faria o total mentir por omissão.
+        no_date_count = db.execute(
+            "SELECT COUNT(*) FROM spools WHERE active = 0 AND finished_at = ''"
+        ).fetchone()[0]
+
+    # ── Deltas: pares consecutivos de pesagens DO MESMO rolo ────────────────
+    grams_by_month, grams_by_spool = {}, {}
+    prev_id, prev_net = None, None
+    for r in readings:
+        sid, net, ts = r["spool_id"], r["net_weight_g"], r["ts"]
+        if sid != prev_id:                     # primeiro registro do rolo: só ancora
+            prev_id, prev_net = sid, net
+            continue
+        delta, prev_net = prev_net - net, net  # a âncora avança mesmo se o delta cair fora
+        if delta <= 0:
+            continue        # peso que sobe é troca de tara ou erro de leitura, nunca
+                            # consumo negativo — descarta em vez de subtrair
+        month = (ts or "")[:7]                 # o consumo é do mês da leitura MAIS RECENTE
+        if not _in_window(month):
+            continue
+        grams_by_month[month] = grams_by_month.get(month, 0.0) + delta
+        grams_by_spool[sid] = grams_by_spool.get(sid, 0.0) + delta
+
+    # ── Rolos finalizados por mês ───────────────────────────────────────────
+    finished_by_month = {r["month"]: r for r in finished_rows if _in_window(r["month"])}
+
+    by_month = []
+    for month in sorted(set(grams_by_month) | set(finished_by_month), reverse=True):
+        row = finished_by_month.get(month)
+        by_month.append({
+            "month": month,
+            "spools_finished": row["spools_finished"] if row else 0,
+            "estimated_count": (row["estimated_count"] or 0) if row else 0,
+            "grams": grams_by_month.get(month, 0.0),
+        })
+
+    # ── Quebras por material e por marca ────────────────────────────────────
+    def _counts_as_finished(s):
+        """Sem janela, todo rolo finalizado conta (inclusive o sem data). Com janela,
+        só os que têm data DENTRO dela — sem data não é atribuível a um período."""
+        if s["active"]:
+            return False
+        return True if cutoff is None else _in_window((s["finished_at"] or "")[:7])
+
+    def _breakdown(field, fallback):
+        out = {}
+        for s in spools:
+            name = (s[field] or "").strip() or fallback
+            e = out.setdefault(name, {"name": name, "spools_finished": 0, "grams": 0.0})
+            if _counts_as_finished(s):
+                e["spools_finished"] += 1
+            e["grams"] += grams_by_spool.get(s["id"], 0.0)
+        return sorted((e for e in out.values() if e["spools_finished"] or e["grams"]),
+                      key=lambda e: (-e["grams"], e["name"]))
+
+    return {
+        "by_month": by_month,
+        "no_date_count": no_date_count,
+        "by_material": _breakdown("material", "(sem material)"),
+        "by_brand": _breakdown("brand", "(sem marca)"),
+        "total_spools_finished": sum(1 for s in spools if _counts_as_finished(s)),
+        "total_grams": sum(grams_by_month.values()),
+        "period_start": by_month[-1]["month"] if by_month else "",
+        "period_end": by_month[0]["month"] if by_month else "",
+    }
 
 
 # ── Label Queue ────────────────────────────────────────────────────────────
