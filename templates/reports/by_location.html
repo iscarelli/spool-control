@@ -14,7 +14,9 @@
       <tbody>
         {% for r in rows %}
         <tr>
-          <td class="fw-semibold sc-stack-head">{{ r.location }}</td>
+          {# `_()` envolve só o literal, nunca o dado: `_(r.location)` traduziria um
+             local de verdade chamado, digamos, "Tudo". Ver docs/ARMADILHAS.md. #}
+          <td class="fw-semibold sc-stack-head">{{ r.location if r.location else _('(sem local)') }}</td>
           <td data-label="{{ _('Spools Ativos') }}">{{ r.spool_count }}</td>
           <td data-label="{{ _('Total Net (g)') }}">{{ r.total_net_g|int }}g</td>
         </tr>

@@ -10,6 +10,18 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.39.1] — 2026-08-07
+
+### Fixed
+- **Os rótulos de valor vazio dos relatórios agora aparecem traduzidos.** Quem usava o
+  sistema em inglês ou espanhol via `(sem marca)`, `(sem material)` e `(sem local)` em
+  português no meio da tela — agora são `(no brand)` / `(no material)` / `(no location)`
+  e `(sin marca)` / `(sin material)` / `(sin ubicación)`. Afeta os relatórios "Histórico
+  de Consumo" e "Estoque por Local".
+- **`GET /api/stock` deixou de devolver rótulo de tela.** Um rolo sem local agora vem
+  com `location` em branco, em vez do texto `(sem local)`: a API é lida por máquina
+  (Home Assistant), e texto de interface em português não tem lugar nela.
+
 ## [1.39.0] — 2026-08-07
 
 ### Added
