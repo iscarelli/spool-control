@@ -42,6 +42,24 @@ mordeu.
   **Teste de rota não pega isto** — as rotas sempre estiveram certas; quem quebrava era o
   HTML renderizado.
 
+- 🔥 **Asset estático sem carimbo na URL não chega ao navegador depois do deploy.** O
+  servidor publica o `spool.js`/`spool.css` novo e o navegador continua executando o que
+  já tem em cache — a URL não mudou, então ele nem pergunta. Nada falha: a página abre
+  200, sem erro no console, só com o comportamento antigo. **Custo:** um cliente testou
+  uma modificação **já publicada**, viu o comportamento velho e concluiu que a entrega não
+  funcionava. Corrigido na v1.38.7 (`app.py:286`, `@app.url_defaults`) carimbando
+  `?v=<sha256[:8] do conteúdo>` em todo `url_for('static', …)` — hash do **conteúdo**, não
+  a versão do app, porque o deploy por `git archive | tar` troca o mtime de todo arquivo a
+  cada release e `static/brands/` muda **sem** bump de versão.
+  **A outra metade do buraco — e sozinha ela anula o resto:** o HTML precisa sair com
+  `Cache-Control: no-cache` (`app.py:330-336`), porque é ele que carrega as URLs
+  carimbadas; HTML em cache heurístico entrega os carimbos velhos e o mecanismo inteiro
+  vira decoração. **Irmãs — quem mais depende de o cliente reler algo:** `GET /health`
+  (o campo `version` é o jeito externo de confirmar o deploy) e a resposta com a chave de
+  API (`routes/integrations.py:61`), que define `no-store` de propósito — o
+  `set_security_headers` não sobrescreve `Cache-Control` já definido, e
+  `tests/test_cache_busting.py` falha se alguém quebrar isso.
+
 - **`git describe --tags` é relativo ao HEAD e mente numa branch atrasada.** Numa branch
   que não contém as tags recentes ele devolve uma tag antiga como se fosse a última. Use
   `git tag --sort=-v:refname | head -1`. Confirmado na auditoria de 2026-07-19: `describe`

@@ -5,6 +5,7 @@ import time
 import uuid
 import socket
 import secrets
+import hashlib
 import ipaddress
 import urllib.request
 import urllib.error
@@ -236,6 +237,68 @@ def _force_password_change():
     return redirect(url_for("account_password"))
 
 
+# ── Cache-busting de assets estáticos ───────────────────────────────────────
+# Sem carimbo na URL, o navegador serve o `spool.js`/`spool.css` que já tem em
+# cache depois de uma atualização, e a mudança recém-publicada simplesmente não
+# aparece — sem erro nenhum. O carimbo é o hash do CONTEÚDO, não a versão do app:
+#   1) o deploy aplica a árvore com `git archive | tar`, então o mtime de TODO
+#      arquivo muda a cada release — um carimbo baseado em mtime invalidaria o
+#      cache inteiro à toa, a cada deploy;
+#   2) `static/brands/` é gerado no servidor (`deploy/seed_brands.py`), vive fora
+#      do git e muda SEM bump de versão — a versão do app não o cobriria.
+# Memoização: um `os.stat()` por chamada (barato); o arquivo só é relido e
+# re-hasheado quando `(mtime_ns, size)` mudam.
+_static_hash_cache: dict[str, tuple[int, int, str]] = {}
+
+
+def _static_version(filename):
+    """8 primeiros hex do SHA-256 do conteúdo de `static/<filename>`, memoizado.
+
+    Fail-safe por contrato: arquivo ausente, caminho que escapa do `static_folder`
+    ou qualquer `OSError` devolvem `None` e a URL sai SEM o `?v=`. Um logo faltando
+    não pode levantar exceção dentro de um `url_for()` e derrubar a página."""
+    root = getattr(app, "static_folder", None)
+    if not root or not filename:
+        return None
+    try:
+        root_real = os.path.realpath(root)
+        path = os.path.realpath(os.path.join(root, filename))
+        # Confinamento: `filename` vem de template, mas um `../` não pode virar
+        # leitura fora de static/.
+        if path != root_real and not path.startswith(root_real + os.sep):
+            return None
+        st = os.stat(path)
+        cached = _static_hash_cache.get(path)
+        if cached and cached[0] == st.st_mtime_ns and cached[1] == st.st_size:
+            return cached[2]
+        h = hashlib.sha256()
+        with open(path, "rb") as fh:
+            for chunk in iter(lambda: fh.read(65536), b""):
+                h.update(chunk)
+        digest = h.hexdigest()[:8]
+        _static_hash_cache[path] = (st.st_mtime_ns, st.st_size, digest)
+        return digest
+    except OSError:
+        return None
+
+
+@app.url_defaults
+def _static_cache_bust(endpoint, values):
+    """Carimba `?v=<hash>` em todo `url_for('static', ...)`.
+
+    É o hook canônico do Flask, então NENHUM template precisa ser tocado — e as
+    páginas que carregam assets fora do `base.html` (`login.html`, `login_2fa.html`)
+    vêm de graça."""
+    if endpoint != "static" or "v" in values:
+        return
+    filename = values.get("filename")
+    if not filename:
+        return
+    v = _static_version(filename)
+    if v:
+        values["v"] = v
+
+
 @app.after_request
 def set_security_headers(resp):
     resp.headers["X-Content-Type-Options"] = "nosniff"
@@ -255,6 +318,22 @@ def set_security_headers(resp):
     )
     if request.is_secure:
         resp.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    # ── Cache ────────────────────────────────────────────────────────────────
+    # Asset com `?v=<hash>` é imutável por construção (mudou o conteúdo → mudou a
+    # URL), então pode ficar um ano no navegador. Aqui SOBRESCREVEMOS de propósito:
+    # o werkzeug carimba `no-cache` em toda resposta de `send_file`, e é justamente
+    # esse default que queremos substituir. Asset sem `v` fica como está (ETag +
+    # revalidação condicional do Flask).
+    # O `no-cache` no HTML é a OUTRA METADE do fix: é o HTML que carrega as URLs
+    # carimbadas — se ele mesmo ficar em cache heurístico, o hash novo nunca chega
+    # ao navegador e o carimbo não serve para nada.
+    if request.endpoint == "static":
+        if request.args.get("v"):
+            resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    elif "Cache-Control" not in resp.headers and resp.mimetype == "text/html":
+        # Nunca sobrescreve quem definiu o header de propósito — p.ex. o `no-store`
+        # de `routes/integrations.py:61` (chave de API revelada sob demanda).
+        resp.headers["Cache-Control"] = "no-cache"
     rid = getattr(g, "_request_id", None)
     if rid:
         resp.headers["X-Request-ID"] = rid

@@ -10,6 +10,19 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.38.7] — 2026-08-07
+
+### Fixed
+- **Depois de atualizar, a novidade não aparecia até limpar o cache do navegador.**
+  O navegador continuava usando o JavaScript e o CSS da versão anterior, que ele
+  já tinha guardado — a tela abria com o comportamento antigo e nada indicava que
+  havia algo desatualizado. Quem testasse uma modificação recém-publicada concluía,
+  com razão, que ela não tinha funcionado. Agora cada arquivo de estilo, script,
+  ícone e logo carrega um identificador do próprio conteúdo: assim que o arquivo
+  muda, o navegador é obrigado a baixar a versão nova — e enquanto ele não muda,
+  segue usando o que já tem (as páginas continuam abrindo rápido). Não é preciso
+  fazer nada: nem Ctrl+F5, nem limpar cache, nem aba anônima.
+
 ## [1.38.6] — 2026-08-07
 
 ### Fixed
