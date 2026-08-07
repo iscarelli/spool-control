@@ -10,6 +10,20 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.38.6] — 2026-08-07
+
+### Fixed
+- **"Finalizar Spool" não finalizava nada.** Na tela de edição do rolo, o botão
+  mostrava a mensagem "Rolo atualizado" e o rolo continuava ativo — ele salvava a
+  edição em vez de finalizar. A confirmação "Marcar spool como finalizado?"
+  também nunca aparecia. Causa: o formulário de finalizar estava escrito **dentro**
+  do formulário de edição, e o HTML não permite formulário aninhado — o navegador
+  descarta o de dentro e o botão passa a pertencer ao de fora. Finalizar pela
+  **lista** de rolos sempre funcionou; só a tela de edição estava afetada.
+- **"Remover" filamento salvava em vez de remover.** O mesmo defeito atingia o
+  botão de remoção (visível só para admin) na tela de edição do filamento, também
+  sem pedir confirmação.
+
 ## [1.38.5] — 2026-08-04
 
 ### Added
