@@ -1,5 +1,5 @@
 """Rotas de relatórios (estatísticas, inventário, por material/local, baixo
-estoque e histórico de pesagens)."""
+estoque, histórico de pesagens e histórico de consumo)."""
 from flask import render_template, request
 import database as db
 from app import app, login_required
@@ -41,6 +41,15 @@ def report_low_stock():
     rows = db.report_low_stock(threshold_g, threshold_pct)
     return render_template("reports/low_stock.html", rows=rows,
                            threshold_g=threshold_g, threshold_pct=threshold_pct)
+
+
+@app.route("/reports/consumption")
+@login_required
+def report_consumption():
+    rng = request.args.get("range", "12m")
+    months = 12 if rng == "12m" else None
+    return render_template("reports/consumption.html",
+                           rep=db.consumption_report(months), rng=rng)
 
 
 @app.route("/reports/weight-history")

@@ -77,6 +77,17 @@ mordeu.
 - **Botão `disabled` não dispara mouse events**, então tooltip nele não aparece. Envolver
   em `<span data-bs-toggle="tooltip">`.
 
+- **Window function em SQL (`LAG`, `OVER`) quebra em instalação com SQLite antigo.** Elas
+  só existem a partir do SQLite 3.25 (2018), e a versão vem do sistema de cada
+  instalação — há instalações de terceiros que não controlamos. Não é erro de sintaxe no
+  desenvolvimento, é `OperationalError` em produção alheia. Onde a alternativa é um laço
+  de algumas centenas de linhas, calcule em Python: `database.py:consumption_report()`
+  percorre as pesagens ordenadas em vez de usar `LAG` justamente por isso.
+  **Irmãs — o mesmo cuidado vale para** qualquer recurso de SQLite recente: `CTE`
+  recursiva (3.8.3), `UPSERT`/`ON CONFLICT` (3.24), `RETURNING` (3.35), `JSON` (3.38 sem
+  a extensão). As queries atuais ficam em `WITH ... AS` simples e `GROUP BY`, que são
+  antigos e seguros.
+
 - **`static/brands/` e `spool.env` não estão no git** — o primeiro é gerado por
   `deploy/seed_brands.py` no servidor, o segundo na instalação. O deploy por
   `git archive` **não os apaga**, mas um clone limpo não os tem.
