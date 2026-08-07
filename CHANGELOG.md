@@ -13,220 +13,232 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 ## [1.39.1] — 2026-08-07
 
 ### Fixed
-- **Os rótulos de valor vazio dos relatórios agora aparecem traduzidos.** Quem usava o
-  sistema em inglês ou espanhol via `(sem marca)`, `(sem material)` e `(sem local)` em
-  português no meio da tela — agora são `(no brand)` / `(no material)` / `(no location)`
-  e `(sin marca)` / `(sin material)` / `(sin ubicación)`. Afeta os relatórios "Histórico
-  de Consumo" e "Estoque por Local".
-- **`GET /api/stock` deixou de devolver rótulo de tela.** Um rolo sem local agora vem
-  com `location` em branco, em vez do texto `(sem local)`: a API é lida por máquina
-  (Home Assistant), e texto de interface em português não tem lugar nela.
+- **The empty-value labels in the reports now show up translated.** Anyone using the
+  system in English or Spanish saw `(sem marca)`, `(sem material)` and `(sem local)` in
+  Portuguese in the middle of the screen — they are now `(no brand)` / `(no material)` /
+  `(no location)` and `(sin marca)` / `(sin material)` / `(sin ubicación)`. Affects the
+  "Consumption History" and "Stock by Location" reports.
+- **`GET /api/stock` no longer returns a display label.** A spool with no location now
+  comes back with a blank `location` instead of the text `(sem local)`: the API is read
+  by machines (Home Assistant), and Portuguese interface text has no place in it.
 
 ## [1.39.0] — 2026-08-07
 
 ### Added
-- **Novo relatório "Histórico de Consumo"** (menu Relatórios), que responde duas
-  perguntas que o sistema não sabia responder: *quantos rolos já gastamos* e *quanto
-  filamento saiu por mês*. A tela mostra o total de rolos finalizados, o total consumido
-  em quilos, o período coberto, uma tabela mês a mês e as quebras por material e por
-  marca. Dá para ver os últimos 12 meses ou o histórico inteiro.
-- **Rolo finalizado agora guarda a data.** Até aqui, finalizar um rolo só o tirava da
-  lista de ativos e o "quando" se perdia — havia um total, nunca um histórico. A partir
-  desta versão a data é registrada no momento em que o rolo é finalizado.
+- **New "Consumption History" report** (Reports menu), which answers two
+  questions the system could not answer: *how many spools have we already used up* and
+  *how much filament went out per month*. The screen shows the total of finished spools,
+  the total consumed in kilos, the period covered, a month-by-month table and the
+  breakdowns by material and by brand. You can see the last 12 months or the whole history.
+- **A finished spool now stores the date.** Until now, finishing a spool only took it out
+  of the active list and the "when" was lost — there was a total, never a history. As of
+  this version the date is recorded at the moment the spool is finished.
 
-### Limitações declaradas na própria tela
-- **Rolos finalizados antes desta versão não têm data registrada**, então o sistema a
-  estima a partir da última pesagem de cada um. Essas datas aparecem marcadas com **≈**:
-  são um limite inferior (o rolo acabou em algum momento dali em diante), não a data
-  real. Rolo finalizado que nunca foi pesado não recebe data inventada — ele é contado à
-  parte, na linha "Sem data".
-- **O total em quilos só enxerga rolos que foram pesados**, porque o consumo é medido
-  pela diferença entre duas pesagens do mesmo rolo. Um rolo nunca pesado aparece na
-  contagem de rolos e não soma nada aos quilos.
+### Limitations stated on the screen itself
+- **Spools finished before this version have no recorded date**, so the system
+  estimates it from the last weighing of each one. Those dates appear marked with **≈**:
+  they are a lower bound (the spool ran out at some point from there on), not the real
+  date. A finished spool that was never weighed does not get an invented date — it is
+  counted separately, in the "No date" row.
+- **The total in kilos only sees spools that were weighed**, because consumption is
+  measured by the difference between two weighings of the same spool. A spool that was
+  never weighed shows up in the spool count and adds nothing to the kilos.
 
 ## [1.38.7] — 2026-08-07
 
 ### Fixed
-- **Depois de atualizar, a novidade não aparecia até limpar o cache do navegador.**
-  O navegador continuava usando o JavaScript e o CSS da versão anterior, que ele
-  já tinha guardado — a tela abria com o comportamento antigo e nada indicava que
-  havia algo desatualizado. Quem testasse uma modificação recém-publicada concluía,
-  com razão, que ela não tinha funcionado. Agora cada arquivo de estilo, script,
-  ícone e logo carrega um identificador do próprio conteúdo: assim que o arquivo
-  muda, o navegador é obrigado a baixar a versão nova — e enquanto ele não muda,
-  segue usando o que já tem (as páginas continuam abrindo rápido). Não é preciso
-  fazer nada: nem Ctrl+F5, nem limpar cache, nem aba anônima.
+- **After updating, the new feature did not show up until the browser cache was cleared.**
+  The browser kept using the JavaScript and the CSS of the previous version, which it
+  had already stored — the screen opened with the old behaviour and nothing indicated
+  that something was out of date. Anyone testing a freshly published change concluded,
+  rightly, that it had not worked. Now every stylesheet, script, icon and logo file
+  carries an identifier derived from its own content: as soon as the file
+  changes, the browser is forced to download the new version — and while it does not
+  change, it keeps using what it already has (pages still open fast). Nothing needs to
+  be done: no Ctrl+F5, no cache clearing, no incognito tab.
 
 ## [1.38.6] — 2026-08-07
 
 ### Fixed
-- **"Finalizar Spool" não finalizava nada.** Na tela de edição do rolo, o botão
-  mostrava a mensagem "Rolo atualizado" e o rolo continuava ativo — ele salvava a
-  edição em vez de finalizar. A confirmação "Marcar spool como finalizado?"
-  também nunca aparecia. Causa: o formulário de finalizar estava escrito **dentro**
-  do formulário de edição, e o HTML não permite formulário aninhado — o navegador
-  descarta o de dentro e o botão passa a pertencer ao de fora. Finalizar pela
-  **lista** de rolos sempre funcionou; só a tela de edição estava afetada.
-- **"Remover" filamento salvava em vez de remover.** O mesmo defeito atingia o
-  botão de remoção (visível só para admin) na tela de edição do filamento, também
-  sem pedir confirmação.
+- **"Finish Spool" did not finish anything.** On the spool edit screen, the button
+  showed the message "Spool updated" and the spool stayed active — it saved the
+  edit instead of finishing. The confirmation "Mark spool as finished?"
+  never appeared either. Cause: the finish form was written **inside**
+  the edit form, and HTML does not allow a nested form — the browser
+  discards the inner one and the button starts belonging to the outer one. Finishing from
+  the spool **list** always worked; only the edit screen was affected.
+- **"Remove" on a filament saved instead of removing.** The same defect hit the
+  removal button (visible only to admins) on the filament edit screen, also
+  without asking for confirmation.
 
 ## [1.38.5] — 2026-08-04
 
 ### Added
-- **Página Admin → Sobre.** Nova tela em `/admin/about` com a versão instalada, o
-  propósito do sistema, um link para o código-fonte no GitHub e o e-mail de
-  suporte. O projeto passa a **declarar formalmente a licença MIT** com um
-  arquivo `LICENSE` na raiz do repositório — antes o repositório era público
-  mas não trazia nenhum arquivo de licença.
+- **Admin → About page.** New screen at `/admin/about` with the installed version, the
+  purpose of the system, a link to the source code on GitHub and the support
+  e-mail. The project now **formally declares the MIT license** with a
+  `LICENSE` file at the root of the repository — before, the repository was public
+  but carried no license file at all.
 
 ## [1.38.4] — 2026-07-28
 
 ### Added
-- **"Ver novidades" mesmo já atualizado.** A tela de Atualizações mostrava as
-  notas de versão só enquanto havia uma atualização pendente — quem já estava na
-  última versão via apenas "Sistema atualizado", sem nenhum jeito de reler o que
-  mudou nela. Agora, estando em dia, um link mostra as notas da própria versão
-  instalada (ou, se não puder carregá-las, leva para a página de releases no
+- **"See what's new" even when already up to date.** The Updates screen showed the
+  release notes only while there was a pending update — anyone already on the
+  latest version saw just "System up to date", with no way to reread what
+  changed in it. Now, when up to date, a link shows the notes of the installed
+  version itself (or, if they cannot be loaded, leads to the releases page on
   GitHub).
 
 ## [1.38.3] — 2026-07-28
 
 ### Changed
-- **Aviso quando o histórico de novidades não pôde ser carregado por completo.**
-  A tela de Atualizações mostra as notas de TODAS as versões entre a instalada e a
-  mais recente; se o GitHub estiver indisponível e o card cair para a nota de só a
-  última release, agora aparece um aviso discreto avisando que o histórico pode
-  estar incompleto, com um link para ver tudo no GitHub. Sem aviso quando a
-  atualização é só um patch acima (aí a última nota já é a história inteira).
+- **Warning when the history of new features could not be loaded in full.**
+  The Updates screen shows the notes of ALL versions between the installed one and the
+  most recent; if GitHub is unavailable and the card falls back to the note of only the
+  last release, a discreet warning now appears saying that the history may
+  be incomplete, with a link to see everything on GitHub. No warning when the
+  update is just one patch ahead (there the last note is already the whole story).
 
 ## [1.38.2] — 2026-07-10
 
 ### Security
-- **Sanitiza `color_hex` na saída (anti CSS injection).** A cor do filamento é campo
-  de texto livre e ia direto para `style="…background:…"` e para o `stroke` do SVG.
-  O autoescape do Jinja impede sair do atributo, mas não impede injetar propriedades
-  CSS dentro dele. Novo filtro `hexcolor` só deixa passar um `#RGB`/`#RRGGBB` válido
-  (senão usa um neutro), aplicado em todas as amostras de cor e roscas (lista/detalhe
-  de rolos e filamentos, busca, fila de etiquetas, inventário). Baixa severidade
-  (só quem tem escrita define a cor; o CSP já bloqueia carregamento externo), mas é
-  a correção correta na camada de saída.
+- **Sanitizes `color_hex` on output (anti CSS injection).** The filament color is a
+  free-text field and went straight into `style="…background:…"` and into the SVG `stroke`.
+  Jinja's autoescape prevents breaking out of the attribute, but does not prevent injecting
+  CSS properties inside it. A new `hexcolor` filter only lets a valid `#RGB`/`#RRGGBB`
+  through (otherwise it uses a neutral one), applied to every color swatch and donut
+  (spool and filament list/detail, search, label queue, inventory). Low severity
+  (only someone with write access sets the color; the CSP already blocks external
+  loading), but it is the correct fix at the output layer.
 
 ## [1.38.1] — 2026-07-10
 
 ### Changed
-- **Coluna "Cor" também na lista de filamentos.** Amostra da cor + nome (informado
-  ou o balde derivado do hexadecimal), como já havia na lista de rolos.
+- **"Color" column in the filament list too.** Color swatch + name (the one entered
+  or the bucket derived from the hex value), as already existed in the spool list.
 
 ## [1.38.0] — 2026-07-10
 
 ### Added
-- **Ao cadastrar um filamento, pergunta se quer criar um rolo.** Depois de salvar
-  um filamento novo, o detalhe abre um modal oferecendo cadastrar um rolo daquele
-  filamento na hora (leva ao "Novo Spool" com o filamento já selecionado).
-- **Coluna "Cor" na lista de rolos.** Cada linha mostra uma amostra da cor + o
-  nome (informado no filamento ou, na falta, o balde derivado do hexadecimal).
+- **When registering a filament, it asks whether you want to create a spool.** After
+  saving a new filament, the detail screen opens a modal offering to register a spool of
+  that filament right away (leads to "New Spool" with the filament already selected).
+- **"Color" column in the spool list.** Each row shows a swatch of the color + the
+  name (entered on the filament or, failing that, the bucket derived from the hex value).
 
 ### Changed
-- **Data de compra já vem preenchida com a data de hoje** no cadastro de rolo
-  (editável). Vale tanto no cadastro manual quanto vindo do fluxo acima. Na edição
-  de um rolo existente nada muda.
-- **"Ver novidades" agora mostra o histórico acumulado.** Quem está várias versões
-  atrás vê todas as novidades entre a versão instalada e a última (não só a última
-  release). Fonte: o `CHANGELOG.md` na tag mais recente (via `raw.githubusercontent`,
-  sem o limite de 60/h da API); se a busca falhar, cai nas notas da última release.
+- **The purchase date now comes pre-filled with today's date** when registering a spool
+  (editable). Applies both to the manual registration and to coming from the flow above.
+  When editing an existing spool nothing changes.
+- **"See what's new" now shows the accumulated history.** Anyone several versions
+  behind sees all the news between the installed version and the latest (not just the
+  last release). Source: the `CHANGELOG.md` at the most recent tag (via
+  `raw.githubusercontent`, without the API's 60/h limit); if the fetch fails, it falls
+  back to the notes of the last release.
 
 ## [1.37.0] — 2026-07-10
 
 ### Added
-- **Excluir rolo (permanente) na lista.** Cada linha da lista de rolos ganhou um
-  botão de exclusão definitiva (lixeira, vermelho). Diferente de "Finalizar" (que
-  só marca `active=0` e mantém o histórico), a exclusão apaga o rolo e todo o
-  histórico de pesagens do banco — irreversível, com confirmação. É **restrita a
-  admin** (`/spools/<id>/delete`, `admin_required`); o botão só aparece para admins.
-- **Finalizar direto da lista.** O botão "Finalizar" (que só existia na tela de
-  edição) agora também está em cada linha da lista, para quem tem permissão de
-  escrita.
-- **Cadastrar vários rolos iguais de uma vez.** A tela de "Novo Spool" ganhou um
-  campo **Quantidade** (1–50): cria N rolos idênticos com IDs distintos numa só
-  submissão. Ao cadastrar 1, o fluxo é o de sempre (vai ao detalhe e oferece a
-  fila). Ao cadastrar vários, volta à lista e oferece adicionar **os N** à fila de
-  impressão de uma vez (uma etiqueta/QR por rolo), reusando o `label_queue_add_all`.
+- **Delete spool (permanent) from the list.** Every row of the spool list gained a
+  definitive deletion button (trash can, red). Unlike "Finish" (which
+  only marks `active=0` and keeps the history), deletion erases the spool and its whole
+  weighing history from the database — irreversible, with confirmation. It is **restricted
+  to admins** (`/spools/<id>/delete`, `admin_required`); the button only shows up for admins.
+- **Finish straight from the list.** The "Finish" button (which only existed on the edit
+  screen) is now also on every row of the list, for anyone with write
+  permission.
+- **Register several identical spools at once.** The "New Spool" screen gained a
+  **Quantity** field (1–50): it creates N identical spools with distinct IDs in a single
+  submission. When registering 1, the flow is the usual one (goes to the detail and offers
+  the queue). When registering several, it goes back to the list and offers to add **all N**
+  to the print queue at once (one label/QR per spool), reusing `label_queue_add_all`.
 
 ## [1.36.2] — 2026-06-11
 
 ### Fixed
-- **Card "Ver novidades" some quando a API do GitHub falha (fica só o link).** A
-  página de atualização busca as notas da release pela REST API do GitHub
-  (`/releases/latest`), que é fail-open. Numa falha pontual (rate limit de 60/h por
-  IP — não há token no servidor — ou timeout) `latest_release_notes()` devolvia `''`
-  e o template caía no link simples do GitHub em vez do card expansível. Agora a
-  busca **reusa a última nota obtida com sucesso** em vez de zerar (o card só vira
-  link se **nunca** conseguimos notas) e o timeout subiu de 4s para 8s.
+- **The "See what's new" card disappeared when the GitHub API failed (only the link was
+  left).** The update page fetches the release notes through GitHub's REST API
+  (`/releases/latest`), which is fail-open. On a one-off failure (rate limit of 60/h per
+  IP — there is no token on the server — or timeout) `latest_release_notes()` returned `''`
+  and the template fell back to the plain GitHub link instead of the expandable card. Now
+  the fetch **reuses the last note obtained successfully** instead of zeroing it out (the
+  card only turns into a link if we **never** managed to get notes) and the timeout went
+  from 4s to 8s.
 
 ## [1.36.1] — 2026-06-11
 
-Responsividade no celular. A base já era mobile-first (Bootstrap 5.3, navbar
-colapsável, formulários em grid), mas as **listas eram tabelas largas** que rolavam
-na horizontal — ruins de ler no telefone — e algumas barras de ação/cabeçalho
-estouravam a tela. Só markup/CSS; o desktop não muda.
+Responsiveness on mobile. The base was already mobile-first (Bootstrap 5.3, collapsible
+navbar, forms on a grid), but the **lists were wide tables** that scrolled
+horizontally — bad to read on a phone — and some action/header bars
+overflowed the screen. Markup/CSS only; the desktop does not change.
 
 ### Changed
-- **Listas viram cartões empilhados no celular (≤576px).** Toda tabela de itens
-  (Spools, Filamentos, Fila de Etiquetas, Estoque Baixo, Relatórios por
-  Material/Local, Histórico de Pesagens, Carretéis Vazios, Busca, Usuários, Backups,
-  além dos históricos nos detalhes) agora vira um cartão por linha com `rótulo: valor`
-  — **sem rolagem horizontal**. No desktop continua tabela. Implementado com um único
-  bloco `@media (max-width:576px)` sobre a classe `.sc-stack` + `data-label` nas
-  células; o `<thead>` é ocultado no celular.
-- **Barras de ferramentas e de ações quebram em linha** (`flex-wrap`) nas páginas de
-  lista e no detalhe do spool, em vez de espremer/transbordar em telas estreitas.
-- **Cartões de login e 2FA** passam de largura fixa (`360px`) para
-  `max-width:360px` com margem lateral, não colando mais nas bordas em telas de
-  320–375px.
-- **Toasts e alertas** ganham `max-width:calc(100vw - 2rem)` para não vazar a
-  largura da viewport no celular.
+- **Lists turn into stacked cards on mobile (≤576px).** Every item table
+  (Spools, Filaments, Label Queue, Low Stock, reports by
+  Material/Location, Weighing History, Empty Spools, Search, Users, Backups,
+  plus the histories in the detail screens) now becomes one card per row with
+  `label: value` — **no horizontal scrolling**. On the desktop it stays a table.
+  Implemented with a single `@media (max-width:576px)` block over the `.sc-stack` class +
+  `data-label` on the cells; the `<thead>` is hidden on mobile.
+- **Toolbars and action bars wrap onto another line** (`flex-wrap`) on the
+  list pages and on the spool detail, instead of squeezing/overflowing on narrow screens.
+- **Login and 2FA cards** go from a fixed width (`360px`) to
+  `max-width:360px` with a side margin, no longer sticking to the edges on
+  320–375px screens.
+- **Toasts and alerts** get `max-width:calc(100vw - 2rem)` so they do not overflow the
+  viewport width on mobile.
 
 ## [1.36.0] — 2026-06-10
 
-Endurecimento de segurança a partir de um teste externo (caixa-preta). Vários
-achados do relatório já estavam cobertos pelo código (throttle de login por IP,
-mensagem de erro genérica, guarda anti-SSRF e anti open-redirect); o que segue são
-as lacunas reais corrigidas, cada uma com teste automatizado.
+Security hardening driven by an external (black-box) test. Several
+findings in the report were already covered by the code (per-IP login throttle,
+generic error message, anti-SSRF and anti open-redirect guards); what follows are
+the real gaps that were fixed, each one with an automated test.
 
 ### Security
-- **Controle de acesso por papel nas rotas de escrita (RBAC).** O papel `viewer`
-  é rotulado "somente leitura", mas as rotas de mutação de inventário
-  (`/spools/new` e `/edit`/`/weigh`/`/deactivate`, `/weigh`, `/filaments/*`,
-  `/spool-models/*`) eram protegidas apenas por `@login_required` — um viewer
-  conseguia criar/editar/excluir/pesar. Novo decorator `@write_required` enforça o
-  papel **no servidor** (403 para viewer, GET do formulário e POST). Os botões de
-  escrita também somem na UI para viewer (`can_write`), como defesa em profundidade.
-- **Revogação de sessão server-side (CWE-613).** O cookie de sessão do Flask é
-  *stateless*: `logout` só apagava o cookie do navegador, então um cookie capturado
-  seguia válido até expirar (até ~30 dias com "manter conectado"); trocar a senha
-  também não derrubava sessões antigas. Cada usuário agora tem um `session_token`
-  no banco, revalidado a cada requisição autenticada; **logout e troca de senha
-  rotacionam o token**, invalidando na hora qualquer cookie antigo (a troca de senha
-  derruba as *outras* sessões e mantém a atual). Reset de senha por admin derruba a
-  sessão do alvo. Cookies anteriores a esta versão caem uma vez e o usuário reloga.
-- **Chave de API não trafega mais no DOM (CWE-200).** A página Admin → Integrações
-  embutia a chave inteira num atributo `data-key` (visível em *view-source*). Agora
-  o HTML só recebe a versão mascarada; o valor em claro é buscado **sob demanda**
-  por um endpoint admin (`/admin/integrations/<int>/key`, resposta `no-store`) ao
-  clicar em Revelar/Copiar.
-- **Exceções de roteamento não viram mais 500.** O `errorhandler(Exception)`
-  capturava `HTTPException` e a transformava em 500 — um GET em `/logout`
-  (POST-only) ou um POST em `/spool-models` (GET-only) retornava 500 em vez de 405.
-  O handler agora repassa `HTTPException` e há uma página 405 dedicada.
-- **`/.well-known/security.txt`** (RFC 9116) com canal de divulgação responsável.
+- **Role-based access control on the write routes (RBAC).** The `viewer` role
+  is labelled "read-only", but the inventory mutation routes
+  (`/spools/new` and `/edit`/`/weigh`/`/deactivate`, `/weigh`, `/filaments/*`,
+  `/spool-models/*`) were protected only by `@login_required` — a viewer
+  could create/edit/delete/weigh. A new `@write_required` decorator enforces the
+  role **on the server** (403 for a viewer, both the form GET and the POST). The write
+  buttons also disappear from the UI for a viewer (`can_write`), as defence in depth.
+- **Server-side session revocation (CWE-613).** Flask's session cookie is
+  *stateless*: `logout` only erased the cookie from the browser, so a captured cookie
+  stayed valid until it expired (up to ~30 days with "keep me signed in"); changing the
+  password also did not drop old sessions. Each user now has a `session_token`
+  in the database, revalidated on every authenticated request; **logout and a password
+  change rotate the token**, immediately invalidating any old cookie (the password change
+  drops the *other* sessions and keeps the current one). A password reset by an admin
+  drops the target's session. Cookies from before this version drop once and the user
+  logs in again.
+- **The API key no longer travels in the DOM (CWE-200).** The Admin → Integrations page
+  embedded the whole key in a `data-key` attribute (visible in *view-source*). Now
+  the HTML only receives the masked version; the clear value is fetched **on demand**
+  by an admin endpoint (`/admin/integrations/<int>/key`, `no-store` response) when
+  clicking Reveal/Copy.
+- **Routing exceptions no longer turn into 500s.** The `errorhandler(Exception)`
+  captured `HTTPException` and turned it into a 500 — a GET on `/logout`
+  (POST-only) or a POST on `/spool-models` (GET-only) returned 500 instead of 405.
+  The handler now passes `HTTPException` through and there is a dedicated 405 page.
+- **`/.well-known/security.txt`** (RFC 9116) with a responsible disclosure channel.
 
-### Notas
-- Achados de severidade baixa do relatório foram avaliados e mantidos como estão
-  (versão no rodapé / IDs sequenciais — atrás de auth e mitigados pelo RBAC; rotas
-  admin potentes já exigem `@admin_required`). Brute-force: o throttle por IP
-  (10 falhas / 15 min) já existia; não foi adicionado *lockout por conta* para não
-  abrir um DoS contra o usuário `admin` conhecido — o 2FA opt-in é o controle forte.
+### Notes
+- Low-severity findings from the report were assessed and kept as they are
+  (version in the footer / sequential IDs — behind auth and mitigated by the RBAC;
+  powerful admin routes already require `@admin_required`). Brute force: the per-IP
+  throttle (10 failures / 15 min) already existed; *per-account lockout* was not added
+  so as not to open a DoS against the well-known `admin` user — the opt-in 2FA is the
+  strong control.
+
+---
+
+> **Entries below this line are in Brazilian Portuguese.** Release notes switched to
+> English as of v1.36.0. Older entries are historical record and were deliberately left
+> untranslated — retranslating them would risk altering what was actually recorded.
+
+---
 
 ## [1.35.2] — 2026-06-10
 
