@@ -1220,6 +1220,12 @@ _EN["Finalizados sem nenhuma pesagem — não há como situá-los num mês."] = 
 _EN["Por material"] = "By material"
 _EN["Por marca"] = "By brand"
 
+# Rótulos de valor vazio nos relatórios. Vivem no template (nunca na camada de
+# dados) e o `_()` envolve só o literal, nunca o valor vindo do banco.
+_EN["(sem material)"] = "(no material)"
+_EN["(sem marca)"] = "(no brand)"
+_EN["(sem local)"] = "(no location)"
+
 _ES["Histórico de Consumo"] = "Historial de Consumo"
 _ES["Rolos gastos"] = "Bobinas gastadas"
 _ES["Filamento consumido"] = "Filamento consumido"
@@ -1239,6 +1245,10 @@ _ES["Finalizados sem nenhuma pesagem — não há como situá-los num mês."] = 
     "Finalizadas sin ninguna pesada — no hay forma de ubicarlas en un mes."
 _ES["Por material"] = "Por material"
 _ES["Por marca"] = "Por marca"
+
+_ES["(sem material)"] = "(sin material)"
+_ES["(sem marca)"] = "(sin marca)"
+_ES["(sem local)"] = "(sin ubicación)"
 
 _TABLES = {"en": _EN, "es": _ES, "pt": _PT}
 

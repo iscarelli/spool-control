@@ -241,6 +241,7 @@ NEW_KEYS = [
     "Consumido (kg)", "{n} com data estimada a partir da última pesagem", "Sem data",
     "Finalizados sem nenhuma pesagem — não há como situá-los num mês.",
     "Por material", "Por marca",
+    "(sem material)", "(sem marca)",
 ]
 
 
@@ -256,3 +257,60 @@ def test_en_es_key_parity_is_preserved():
     """A regra do projeto: _ES tem a mesma quantidade de chaves que _EN."""
     import translations as i18n
     assert [k for k in i18n._EN if k not in i18n._ES] == []
+
+
+# ── 10. Rótulos de valor vazio (T-883) ──────────────────────────────────────
+#
+# "(sem material)" / "(sem marca)" são APRESENTAÇÃO: nascem no template, não no
+# `database.py`. Os testes abaixo protegem as duas metades da regra — o rótulo é
+# traduzido, e o `_()` nunca encosta no dado vindo do banco.
+
+def _with_consumption(db, sid):
+    """Dá ao rolo consumo > 0 para que ele apareça nas quebras por material/marca."""
+    _reading(db, sid, 1000, "2026-06-01T00:00:00Z")
+    _reading(db, sid, 800, "2026-06-10T00:00:00Z")
+    return sid
+
+
+def test_empty_brand_and_material_labels_are_translated(auth_client, db):
+    _with_consumption(db, _spool(db, brand="", material="PLA"))
+    _with_consumption(db, _spool(db, brand="MarcaX", material=""))
+
+    auth_client.get("/lang/en")
+    body = auth_client.get("/reports/consumption?range=all").get_data(as_text=True)
+
+    # Âncora: prova que estamos no CORPO do relatório, e não numa página de
+    # redirecionamento (ex.: /account/password) que também renderiza a navbar.
+    assert "Consumed (kg)" in body
+    assert "(no brand)" in body and "(no material)" in body
+    assert "(sem marca)" not in body and "(sem material)" not in body
+
+
+def test_empty_brand_and_material_labels_in_spanish(auth_client, db):
+    _with_consumption(db, _spool(db, brand="", material=""))
+
+    auth_client.get("/lang/es")
+    body = auth_client.get("/reports/consumption?range=all").get_data(as_text=True)
+
+    assert "(sin marca)" in body and "(sin material)" in body
+    assert "(sem marca)" not in body and "(sem material)" not in body
+
+
+def test_real_brand_matching_a_translation_key_is_never_translated(auth_client, db):
+    """A armadilha central: `_()` só pode envolver o LITERAL do rótulo.
+
+    `{{ _(r.name) }}` traduziria uma MARCA de verdade que por acaso casasse com
+    uma chave da tabela de tradução. "Preço" é chave (→ "Price"), então uma marca
+    com esse nome tem que sair inalterada em inglês.
+    """
+    import translations as i18n
+    assert i18n._EN["Preço"] == "Price"      # o teste só faz sentido se a chave existe
+
+    _with_consumption(db, _spool(db, brand="Preço", material="Preço"))
+
+    auth_client.get("/lang/en")
+    body = auth_client.get("/reports/consumption?range=all").get_data(as_text=True)
+
+    assert "Consumed (kg)" in body                                   # âncora
+    assert '<span class="badge bg-secondary">Preço</span>' in body    # dado intacto
+    assert "Price" not in body

@@ -93,7 +93,9 @@
 
 {# ── Quebras ────────────────────────────────────────────────────────────── #}
 <div class="row g-4">
-  {% for block in [('material', _('Por material'), rep.by_material), ('brand', _('Por marca'), rep.by_brand)] %}
+  {# 4º item = rótulo do valor vazio, traduzido aqui e não na camada de dados. #}
+  {% for block in [('material', _('Por material'), rep.by_material, _('(sem material)')),
+                   ('brand',    _('Por marca'),    rep.by_brand,    _('(sem marca)'))] %}
   <div class="col-lg-6">
     <div class="card h-100">
       <div class="card-header fw-semibold">{{ block[1] }}</div>
@@ -105,7 +107,9 @@
           <tbody>
             {% for r in block[2] %}
             <tr>
-              <td class="sc-stack-head"><span class="badge bg-secondary">{{ r.name }}</span></td>
+              {# `_()` só no literal, nunca no dado: `_(r.name)` traduziria uma marca
+                 de verdade que colidisse com uma chave. Ver docs/ARMADILHAS.md. #}
+              <td class="sc-stack-head"><span class="badge bg-secondary">{{ r.name if r.name else block[3] }}</span></td>
               <td data-label="{{ _('Rolos gastos') }}">{{ r.spools_finished }}</td>
               <td data-label="{{ _('Consumido (kg)') }}">{{ "%.2f"|format(r.grams / 1000) }} kg</td>
             </tr>

@@ -88,6 +88,26 @@ mordeu.
   a extensão). As queries atuais ficam em `WITH ... AS` simples e `GROUP BY`, que são
   antigos e seguros.
 
+- 🔥 **Rótulo de valor vazio nascido na camada de dados não tem como ser traduzido.**
+  `database.py` carimbava o texto pronto — `COALESCE(NULLIF(s.location,''), '(sem local)')`
+  em `report_by_location()` e o parâmetro `fallback` de `_breakdown()` em
+  `consumption_report()`. Como a tradução é lookup de string **no template**, o rótulo
+  chegava pronto e passava direto: quem usava o app em inglês ou espanhol via português no
+  meio da tela. *Custo real: `(sem local)` ficou assim por várias versões e `(sem marca)` /
+  `(sem material)` chegaram a produção na v1.39.0; corrigido na v1.39.1.* A camada de dados
+  devolve **string vazia**; quem decide o rótulo é o template
+  (`templates/reports/by_location.html:19`, `templates/reports/consumption.html:97-98,112`).
+  Brinde: `GET /api/stock` parou de devolver rótulo de tela em JSON lido por máquina.
+  **A cilada do conserto — nunca aplique `_()` a valor vindo do banco.** `{{ _(r.name) }}`
+  traduziria uma marca de verdade chamada "Preço" para "Price". O `_()` só pode envolver o
+  **literal**, e só no ramo vazio: `{{ r.name if r.name else _('(sem marca)') }}`. Coberto
+  por `tests/test_reports.py::test_real_location_matching_a_translation_key_is_never_translated`.
+  **Irmãs — os `_()` sobre variável que SOBRARAM são legítimos e devem continuar:**
+  `templates/reports/stats.html:12` e `templates/spools/list.html:10` traduzem a família de
+  cor, um **vocabulário fechado** gerado pelo próprio app (`database.py:classify_color`,
+  "Preto"/"Branco"/"Cinza"/…), não texto digitado pelo usuário. A regra não é "nunca `_()`
+  em variável", é "nunca `_()` em dado livre do usuário".
+
 - **`static/brands/` e `spool.env` não estão no git** — o primeiro é gerado por
   `deploy/seed_brands.py` no servidor, o segundo na instalação. O deploy por
   `git archive` **não os apaga**, mas um clone limpo não os tem.

@@ -939,7 +939,9 @@ def report_by_location():
                 FROM weight_readings
                 WHERE id IN (SELECT MAX(id) FROM weight_readings GROUP BY spool_id)
             )
-            SELECT COALESCE(NULLIF(s.location,''), '(sem local)') AS location,
+            -- Local vazio sai como string vazia: o rótulo "(sem local)" é
+            -- apresentação e mora no template, que sabe traduzir. Ver T-883.
+            SELECT COALESCE(s.location, '') AS location,
                    COUNT(DISTINCT s.id)        AS spool_count,
                    COALESCE(SUM(COALESCE(l.net_weight_g, s.nominal_weight_g)), 0) AS total_net_g
             FROM spools s
@@ -1073,10 +1075,13 @@ def consumption_report(months=None):
             return False
         return True if cutoff is None else _in_window((s["finished_at"] or "")[:7])
 
-    def _breakdown(field, fallback):
+    def _breakdown(field):
+        """Material/marca ausente vira `name` vazio — o rótulo "(sem material)" /
+        "(sem marca)" é apresentação e mora no template, que sabe traduzir. A camada
+        de dados não fala i18n. Ver T-883."""
         out = {}
         for s in spools:
-            name = (s[field] or "").strip() or fallback
+            name = (s[field] or "").strip()
             e = out.setdefault(name, {"name": name, "spools_finished": 0, "grams": 0.0})
             if _counts_as_finished(s):
                 e["spools_finished"] += 1
@@ -1087,8 +1092,8 @@ def consumption_report(months=None):
     return {
         "by_month": by_month,
         "no_date_count": no_date_count,
-        "by_material": _breakdown("material", "(sem material)"),
-        "by_brand": _breakdown("brand", "(sem marca)"),
+        "by_material": _breakdown("material"),
+        "by_brand": _breakdown("brand"),
         "total_spools_finished": sum(1 for s in spools if _counts_as_finished(s)),
         "total_grams": sum(grams_by_month.values()),
         "period_start": by_month[-1]["month"] if by_month else "",
