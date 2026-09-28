@@ -64,6 +64,17 @@ def spools_list():
 @write_required
 def spools_new():
     filament_id = request.args.get("filament_id", type=int)
+    # "Adicionar mais iguais": ?from_spool=<id> pré-preenche com os dados de um rolo
+    # existente (sem notas, pesagens, data de compra nem status). Id desconhecido = ignora.
+    prefill = None
+    from_id = request.args.get("from_spool", type=int)
+    if request.method == "GET" and from_id:
+        src = db.get_spool(from_id)
+        if src:
+            prefill = {k: src[k] for k in ("filament_id", "spool_model_id", "custom_tare_g",
+                                            "nominal_weight_g", "location", "purchase_price")}
+            prefill["source_id"] = src["id"]
+            filament_id = src["filament_id"]
     if request.method == "POST":
         try:
             # Quantidade: cria N rolos idênticos de uma vez (clamp 1..50).
@@ -97,7 +108,8 @@ def spools_new():
     spool_models = db.list_spool_models()
     return render_template("spools/form.html", spool=None,
                            filaments=filaments, spool_models=spool_models,
-                           selected_filament_id=filament_id, today=date.today().isoformat())
+                           selected_filament_id=filament_id, prefill=prefill,
+                           today=date.today().isoformat())
 
 
 @app.route("/spools/<int:spool_id>")

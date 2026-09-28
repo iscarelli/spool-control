@@ -7,6 +7,9 @@
       <a href="{{ url_for('spools_list') }}" class="btn btn-sm btn-outline-secondary me-2"><i class="bi bi-arrow-left"></i></a>
       <h4 class="mb-0 fw-bold">{% if spool %}{{ _('Editar') }} SP-{{ '%04d'|format(spool.id) }}{% else %}{{ _('Novo Spool') }}{% endif %}</h4>
     </div>
+    {% if prefill %}
+    <div class="alert alert-info py-2 small"><i class="bi bi-copy me-1"></i>{{ _('Copiando dados de {code}').format(code='SP-%04d'|format(prefill.source_id)) }}</div>
+    {% endif %}
     <div class="card">
       <div class="card-body">
         <form method="post" id="spoolForm">
@@ -42,7 +45,7 @@
                 <option value="">{{ _('Tara personalizada / desconhecida') }}</option>
                 {% for m in spool_models %}
                 <option value="{{ m.id }}" data-tare="{{ m.tare_weight_g }}"
-                  {% if spool and spool.spool_model_id == m.id %}selected{% endif %}>
+                  {% if (spool and spool.spool_model_id == m.id) or (prefill and prefill.spool_model_id == m.id) %}selected{% endif %}>
                   {{ m.name }} ({{ m.tare_weight_g|int }}g)
                 </option>
                 {% endfor %}
@@ -52,7 +55,7 @@
               <div id="customTareForm">
                 <label class="form-label fw-semibold">{{ _('Tara Personalizada (g)') }}</label>
                 <input type="number" name="custom_tare_g" id="customTare" class="form-control" step="0.1" min="0"
-                       value="{{ spool.custom_tare_g if spool and spool.custom_tare_g else '' }}"
+                       value="{{ spool.custom_tare_g if spool and spool.custom_tare_g else (prefill.custom_tare_g if prefill and prefill.custom_tare_g else '') }}"
                        placeholder="{{ _('Preencha com o peso do carretel') }}">
               </div>
               <div id="tareModelDisplay" style="display:none">
@@ -63,13 +66,13 @@
             <div class="col-md-6">
               <label class="form-label fw-semibold">{{ _('Peso Nominal do Filamento (g)') }}</label>
               <input type="number" name="nominal_weight_g" class="form-control" step="1" min="1"
-                     value="{{ spool.nominal_weight_g|int if spool else 1000 }}" required>
+                     value="{{ spool.nominal_weight_g|int if spool else (prefill.nominal_weight_g|int if prefill else 1000) }}" required>
               <div class="form-text">{{ _('Peso declarado na embalagem (ex: 1000g).') }}</div>
             </div>
             <div class="col-md-6">
               <label class="form-label fw-semibold">{{ _('Local de Armazenamento') }}</label>
               <input type="text" name="location" class="form-control"
-                     value="{{ spool.location if spool else '' }}" placeholder="{{ _('ex: Gaveta A3, Prateleira 2') }}">
+                     value="{{ spool.location if spool else (prefill.location or '' if prefill else '') }}" placeholder="{{ _('ex: Gaveta A3, Prateleira 2') }}">
             </div>
             <div class="col-md-6">
               <label class="form-label fw-semibold">{{ _('Data de Compra') }}</label>
@@ -82,7 +85,7 @@
                 <span class="input-group-text">{{ currency.symbol }}</span>
                 <input type="text" name="purchase_price" id="priceInput" class="form-control"
                        placeholder="0{{ currency.decimal }}00" inputmode="numeric"
-                       value="{% if spool and spool.purchase_price %}{{ format_price(spool.purchase_price) }}{% endif %}">
+                       value="{% if spool and spool.purchase_price %}{{ format_price(spool.purchase_price) }}{% elif prefill and prefill.purchase_price %}{{ format_price(prefill.purchase_price) }}{% endif %}">
               </div>
             </div>
             <div class="col-12">

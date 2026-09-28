@@ -1294,6 +1294,12 @@ _ES["(sem material)"] = "(sin material)"
 _ES["(sem marca)"] = "(sin marca)"
 _ES["(sem local)"] = "(sin ubicación)"
 
+# ── v1.40.0: adicionar mais iguais ───────────────────────────────────────────
+_EN["Adicionar mais iguais"] = "Add more like this"
+_EN["Copiando dados de {code}"] = "Copying data from {code}"
+_ES["Adicionar mais iguais"] = "Agregar más iguales"
+_ES["Copiando dados de {code}"] = "Copiando datos de {code}"
+
 _TABLES = {"en": _EN, "es": _ES, "pt": _PT}
 
 

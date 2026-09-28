@@ -103,6 +103,7 @@
             {% endif %}
             {% if can_write %}
             <a href="{{ url_for('spools_edit', spool_id=s.id) }}" class="btn btn-sm btn-outline-secondary" title="{{ _('Editar') }}"><i class="bi bi-pencil"></i></a>
+            <a href="{{ url_for('spools_new', from_spool=s.id) }}" class="btn btn-sm btn-outline-secondary" title="{{ _('Adicionar mais iguais') }}"><i class="bi bi-copy"></i></a>
             <form method="post" action="{{ url_for('spools_deactivate', spool_id=s.id) }}" class="d-inline"
                   data-sc-confirm="{{ _('Marcar spool como finalizado?') }}">
               <button class="btn btn-sm btn-outline-secondary" title="{{ _('Finalizar') }}"><i class="bi bi-check2-circle"></i></button>
