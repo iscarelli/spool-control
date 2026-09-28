@@ -111,3 +111,22 @@ mordeu.
 - **`static/brands/` e `spool.env` não estão no git** — o primeiro é gerado por
   `deploy/seed_brands.py` no servidor, o segundo na instalação. O deploy por
   `git archive` **não os apaga**, mas um clone limpo não os tem.
+
+- 🔥 **`/admin/update` busca notas de release no GitHub NA HORA de renderizar — inclusive
+  em teste.** `current_release_notes()` (`app.py:603`) baixa o `CHANGELOG.md` cru da tag da
+  própria versão instalada via `raw.githubusercontent.com`; os irmãos
+  `latest_release_notes()` (`app.py:490`) e `cumulative_release_notes()` (`app.py:553`)
+  fazem o mesmo para a última release/histórico acumulado. Um teste que faz
+  `GET /admin/update` sem stubar essas três funções toca a rede de verdade e depende do
+  estado do GitHub — e um `assert "texto" not in resp.data` que varre a página inteira
+  pode casar por coincidência com o Markdown real dessas notas. **Custo:** CI verde no PR
+  (a tag `v1.39.3` ainda não existia, o fetch falhou fail-open) e vermelho no push pra
+  `main` minutos depois (a tag passou a existir, e o CHANGELOG real da própria versão
+  continha a string "(auto)" que o teste `test_update_page_shows_no_auto_suffix_after_manual_refresh`
+  garantia ausente na página inteira). Fix: `tests/test_spoolmandb_refresh.py` agora
+  stuba `_changelog_md` e fixa `_release_cache` como "já verificado" (`_stub_release_check`)
+  e escopa o assert de "(auto)" à linha "Última atualização" do card do catálogo
+  (`_catalog_last_update_row`, ancorada em `templates/admin/update.html:116-121`) em vez da
+  página inteira. Padrão de stub já usado em `tests/test_update_check.py` e
+  `tests/test_ui_v138.py` — mantenha-o ao adicionar novo teste que renderize
+  `/admin/update`.
