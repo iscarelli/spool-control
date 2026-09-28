@@ -51,6 +51,12 @@ def _resolve_material(form) -> str:
     return material
 
 
+def _resolve_translucent(form) -> bool:
+    """Checkbox HTML: presente e != '0' quando marcado; ausente quando desmarcado
+    (não há campo "false" no POST de um checkbox desmarcado)."""
+    return form.get("translucent", "0") not in ("", "0")
+
+
 @app.route("/filaments/new", methods=["GET", "POST"])
 @write_required
 def filaments_new():
@@ -64,6 +70,7 @@ def filaments_new():
                 color_name=request.form.get("color_name", "").strip(),
                 diameter_mm=float(request.form.get("diameter_mm") or 1.75),
                 notes=request.form.get("notes", "").strip(),
+                translucent=_resolve_translucent(request.form),
             )
             flash(t("Filamento cadastrado com sucesso"), "success")
             # Oferece cadastrar um rolo deste filamento já no detalhe (modal).
@@ -107,6 +114,7 @@ def filaments_edit(filament_id):
                 color_name=request.form.get("color_name", "").strip(),
                 diameter_mm=float(request.form.get("diameter_mm") or 1.75),
                 notes=request.form.get("notes", "").strip(),
+                translucent=_resolve_translucent(request.form),
             )
             flash(t("Filamento atualizado"), "success")
             return redirect(next_url or url_for("filaments_detail", filament_id=filament_id))
@@ -132,6 +140,7 @@ def filaments_duplicate(filament_id):
         color_name=src["color_name"],
         diameter_mm=src["diameter_mm"],
         notes=src["notes"],
+        translucent=bool(src["translucent"]),
     )
     flash(t("Filamento duplicado — editando cópia"), "success")
     return redirect(url_for("filaments_edit", filament_id=new_id))

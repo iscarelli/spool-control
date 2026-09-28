@@ -3,6 +3,10 @@
 Como funciona o mecanismo de atualização (desde **v1.26.0**) e como **validar** no console
 do LXC. Comandos rodados como **root** dentro da LXC (ex.: VMID 117).
 
+> `/admin/update` também tem, desde a v1.39.2, uma segunda seção ("Catálogo de
+> filamentos") que **não é parte deste mecanismo** — é o refresh do catálogo
+> SpoolmanDB, sem root e sem reiniciar o serviço. Ver `docs/spoolmandb.md`.
+
 ## Como funciona (resumo)
 
 1. O admin clica **Atualizar** em `/admin/update` (ou roda `update` no console).

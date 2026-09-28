@@ -95,6 +95,51 @@
     <p class="text-muted mt-3 mb-0" style="font-size:.8rem">
       <i class="bi bi-info-circle me-1"></i>{{ _('A atualização baixa a última release publicada e reinicia o serviço. Pode levar 1–2 minutos.') }}
     </p>
+
+    <h4 class="fw-bold mb-4 mt-5">{{ _('Catálogo de filamentos (SpoolmanDB)') }}</h4>
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="text-muted">{{ _('Snapshot atual') }}</span>
+          <span class="fw-semibold">
+            {% if catalog_info.fetched %}
+            {{ catalog_info.fetched | localdate }}
+            <span class="text-muted fw-normal">
+              ({{ _('no servidor') if catalog_info.source == 'server' else _('vendorado no repositório') }})
+            </span>
+            {% else %}
+            <span class="text-muted">{{ _('indisponível') }}</span>
+            {% endif %}
+          </span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <span class="text-muted">{{ _('Última atualização automática') }}</span>
+          <span class="fw-semibold">
+            {% if catalog_refresh_last_run %}{{ catalog_refresh_last_run | localdt }}
+            {% else %}<span class="text-muted">{{ _('nunca') }}</span>{% endif %}
+          </span>
+        </div>
+
+        {% if catalog_refresh_result == 'error' and catalog_refresh_error %}
+        <div class="alert alert-warning d-flex align-items-start gap-2 mb-3">
+          <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+          <div>
+            <strong>{{ _('A última tentativa de atualizar o catálogo falhou.') }}</strong>
+            <div class="small mt-1">{{ catalog_refresh_error }}</div>
+          </div>
+        </div>
+        {% endif %}
+
+        <p class="text-muted mb-3" style="font-size:.85rem">
+          {{ _('O catálogo (marcas, materiais e cores para o botão "Importar do catálogo") é atualizado automaticamente todo dia a partir do SpoolmanDB (fonte aberta, MIT). Você também pode forçar uma atualização agora.') }}
+        </p>
+        <form method="post" action="{{ url_for('admin_catalog_refresh') }}">
+          <button type="submit" class="btn btn-outline-secondary w-100">
+            <i class="bi bi-arrow-repeat me-1"></i>{{ _('Atualizar catálogo agora') }}
+          </button>
+        </form>
+      </div>
+    </div>
   </div>
 </div>
 

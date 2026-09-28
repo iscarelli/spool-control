@@ -107,6 +107,11 @@
     var colorNameEl = document.querySelector('input[name="color_name"]');
     if (colorNameEl && !colorNameEl.value.trim() && e.color) colorNameEl.value = e.color;
 
+    // Transparente/translúcido do catálogo → checkbox (sempre reflete a entrada
+    // escolhida, mesmo desmarcando um valor marcado manualmente antes).
+    var translucentEl = document.getElementById("translucentCheck");
+    if (translucentEl) translucentEl.checked = !!e.translucent;
+
     var modalEl = document.getElementById("catalogModal");
     if (modalEl && window.bootstrap) {
       var m = window.bootstrap.Modal.getInstance(modalEl) || window.bootstrap.Modal.getOrCreateInstance(modalEl);

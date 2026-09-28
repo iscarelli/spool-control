@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Spools') }} — Spool Control{% endblock %}
-{% from "spools/_macros.html" import donut %}
+{% from "_swatch.html" import donut, swatch %}
 {% block content %}
 
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
@@ -68,12 +68,12 @@
             data-fill="{{ fill | hexcolor('#6c757d') }}"
             data-weigh-url="{{ url_for('spools_weigh', spool_id=s.id) }}">
           <td class="text-center align-middle sc-stack-head" style="width:44px;padding:4px">
-            {{ donut(pct, fill, spool_id=s.id, tip=pct|int|string + _('% disponível')) }}
+            {{ donut(pct, fill, translucent=s.translucent, spool_id=s.id, tip=pct|int|string + _('% disponível')) }}
           </td>
           <td class="fw-bold sc-stack-head">SP-{{ '%04d'|format(s.id) }}</td>
           <td data-label="{{ _('Material') }}"><span class="badge bg-secondary">{{ s.material }}</span></td>
           <td data-label="{{ _('Cor') }}">
-            <span class="d-inline-block rounded me-1" style="width:12px;height:12px;background:{{ s.color_hex | hexcolor('#e0e0e0') }};border:1px solid #ccc;vertical-align:middle"></span>{{ s.color_display or '—' }}
+            {{ swatch(s.color_hex, translucent=s.translucent) }}{{ s.color_display or '—' }}
           </td>
           <td data-label="{{ _('Marca / Família') }}">{{ s.brand }} / {{ s.family }}</td>
           <td data-label="{{ _('Local') }}">{{ s.location or '—' }}</td>
@@ -275,9 +275,12 @@ document.getElementById('weighSubmit').addEventListener('click', async () => {
 
     if (data.ok) {
       _weighRow.querySelector('.weight-cell').textContent = data.net_g + 'g';
-      const arc  = _weighRow.querySelector('.donut-arc');
-      const wrap = _weighRow.querySelector('.donut-wrap');
-      if (arc)  arc.setAttribute('stroke-dasharray', `${data.pct} ${100 - data.pct}`);
+      const arc     = _weighRow.querySelector('.donut-arc');
+      const checker = _weighRow.querySelector('.donut-checker');
+      const wrap    = _weighRow.querySelector('.donut-wrap');
+      const dash = `${data.pct} ${100 - data.pct}`;
+      if (arc)     arc.setAttribute('stroke-dasharray', dash);
+      if (checker) checker.setAttribute('stroke-dasharray', dash);
       if (wrap) {
         wrap.setAttribute('title', `${Math.round(data.pct)}% disponível`);
         const tip = bootstrap.Tooltip.getInstance(wrap);

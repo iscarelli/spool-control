@@ -1077,9 +1077,21 @@ def public_base_url():
     return url or "http://localhost:5000"
 
 
+
+# Palavras (case-insensitive) que já dizem "translúcido/transparente" no nome da
+# cor — nesse caso a etiqueta não repete o marcador (ver _label_spool abaixo).
+_TRANSLUCENT_MARKER_SYNONYMS = (
+    "transparent", "transparente", "clear", "translúcido", "translucido", "translucent",
+)
+
+
 def _label_spool(spool):
     """Dict do spool enriquecido p/ a etiqueta: caminho do logo em disco + nome da cor.
-    Usa color_name do filamento se preenchido; senão classifica pelo hex."""
+    Usa color_name do filamento se preenchido; senão classifica pelo hex.
+
+    Também resolve o marcador de translucidez (`translucent_marker`, já traduzido
+    no idioma da sessão) — labels.py só desenha o texto, não decide idioma nem
+    redundância; ver docs/spoolmandb.md e a seção "Impressão" de CLAUDE.md."""
     d = dict(spool)
     rel = d.get("brand_logo")
     p = os.path.join(app.static_folder, rel) if rel else None
@@ -1090,6 +1102,13 @@ def _label_spool(spool):
     else:
         cn = db.classify_color(d.get("color_hex"))
         d["color_name"] = t(cn) if cn else ""
+    d["translucent"] = bool(d.get("translucent"))
+    if d["translucent"] and not any(
+        w in d["color_name"].lower() for w in _TRANSLUCENT_MARKER_SYNONYMS
+    ):
+        d["translucent_marker"] = t("Translúcido")
+    else:
+        d["translucent_marker"] = ""
     return d
 
 

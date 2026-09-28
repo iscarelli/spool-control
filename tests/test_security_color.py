@@ -25,5 +25,22 @@ def test_malicious_color_not_rendered_in_lists(auth_client, db):
                     purchase_price=None, notes="")
     for path in ("/spools", "/filaments"):
         html = auth_client.get(path).get_data(as_text=True)
-        assert "url(https://evil" not in html, path       # injeção neutralizada
-        assert "background:#e0e0e0" in html, path          # amostra usa o neutro
+        assert "url(https://evil" not in html, path        # injeção neutralizada
+        # amostra (--sw-color, ver templates/_swatch.html) usa o neutro
+        assert "--sw-color:#e0e0e0" in html, path
+
+
+def test_malicious_color_not_rendered_when_translucent(auth_client, db):
+    """Mesma sanitização vale com translucent=1 — o macro de swatch aplica
+    `hexcolor` antes de montar `--sw-color`, então o caminho translúcido (que
+    também desenha o xadrez global) não abre uma segunda porta pro payload."""
+    fid = db.create_filament(brand="Acme2", material="PLA", family="PLA",
+                             color_hex=_PAYLOAD, color_name="X", translucent=True)
+    db.create_spool(filament_id=fid, spool_model_id=None, custom_tare_g=200.0,
+                    nominal_weight_g=1000.0, location="", purchase_date="",
+                    purchase_price=None, notes="")
+    for path in ("/spools", "/filaments"):
+        html = auth_client.get(path).get_data(as_text=True)
+        assert "url(https://evil" not in html, path
+        assert "--sw-color:#e0e0e0" in html, path
+        assert "sc-swatch-translucent" in html, path        # ainda marcado como translúcido

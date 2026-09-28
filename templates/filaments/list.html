@@ -1,18 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Filamentos') }} — Spool Control{% endblock %}
+{% from "_swatch.html" import donut, swatch %}
 {% block content %}
-
-{% macro donut(pct, fill, size=34, tip='') %}
-<span {% if tip %}data-bs-toggle="tooltip" title="{{ tip }}"{% endif %}>
-  <svg width="{{ size }}" height="{{ size }}" viewBox="0 0 50 50">
-    <circle cx="25" cy="25" r="15.9155" fill="none" class="donut-track" stroke-width="15"/>
-    <circle cx="25" cy="25" r="15.9155" fill="none"
-            stroke="{{ fill | hexcolor('#6c757d') }}" stroke-width="15"
-            stroke-dasharray="{{ pct }} {{ 100 - pct }}"
-            transform="rotate(-90 25 25)"/>
-  </svg>
-</span>
-{% endmacro %}
 
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
   <h4 class="mb-0 fw-bold">{{ _('Filamentos') }}</h4>
@@ -56,7 +45,7 @@
             data-href="{{ url_for('filaments_detail', filament_id=f.id) }}">
           <td class="text-center align-middle sc-stack-head" style="width:44px;padding:4px">
             {% if f.active_count > 0 %}
-              {{ donut(pct, fill, tip=pct|int|string + _('% disponível')) }}
+              {{ donut(pct, fill, translucent=f.translucent, tip=pct|int|string + _('% disponível')) }}
             {% else %}
               {{ donut(0, '#6c757d') }}
             {% endif %}
@@ -67,7 +56,7 @@
                onclick="event.stopPropagation()">{{ f.material }}</a>
           </td>
           <td data-label="{{ _('Cor') }}">
-            <span class="d-inline-block rounded me-1" style="width:12px;height:12px;background:{{ f.color_hex | hexcolor('#e0e0e0') }};border:1px solid #ccc;vertical-align:middle"></span>{{ f.color_display or '—' }}
+            {{ swatch(f.color_hex, translucent=f.translucent) }}{{ f.color_display or '—' }}
           </td>
           <td data-label="{{ _('Marca') }}">
             {% if f.brand_logo %}

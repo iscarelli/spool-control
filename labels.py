@@ -126,11 +126,24 @@ def _draw_label(c, spool: dict, base_url: str, page_w: float, page_h: float):
         cy -= f_family + g_mat_fam
         c.drawString(left, cy, _fit_pdf(c, family, "Helvetica", f_family, text_w))
 
-    # Cor (média)
+    # Cor (média) — NUNCA encolhe por causa do marcador abaixo.
     if color_nm:
         c.setFont("Helvetica-Bold", f_color)
         cy -= f_color + g_fam_cor
         c.drawString(left, cy, _fit_pdf(c, color_nm, "Helvetica-Bold", f_color, text_w))
+
+    # Marcador "Translúcido"/"Transparent" — linha PRÓPRIA, na fonte pequena já
+    # usada em Família/Local (nunca na fonte da Cor). Prioridade baixa: some
+    # primeiro se não houver espaço, e nunca invade o bloco de Local no rodapé.
+    marker = str(spool.get("translucent_marker", "") or "")
+    if marker:
+        g_cor_marker = 2.0 * scale
+        marker_baseline = cy - (f_family + g_cor_marker)
+        loc_floor = (margin + f_loc + 1.5 * scale + f_cap + 2.0 * scale) if location else margin
+        if marker_baseline >= loc_floor:
+            c.setFont("Helvetica", f_family)
+            cy = marker_baseline
+            c.drawString(left, cy, _fit_pdf(c, marker, "Helvetica", f_family, text_w))
 
     # Localização: "Local:" + valor ancorados no rodapé (se cadastrada)
     if location:
@@ -299,11 +312,31 @@ def generate_label_png(spool: dict, base_url: str,
         draw.text((tx, cy), fam, font=f_family, fill=0)
         cy += _text_h(draw, fam, f_family)
 
-    # Cor (média)
+    # Cor (média) — NUNCA encolhe por causa do marcador abaixo.
     if color_nm:
         cy += g_fam_cor
         cnm = _fit_png(draw, color_nm, f_color, tw)
         draw.text((tx, cy), cnm, font=f_color, fill=0)
+
+    # Marcador "Translúcido"/"Transparent" — linha PRÓPRIA, na fonte pequena já
+    # usada em Família (nunca na fonte da Cor). Prioridade baixa: some primeiro
+    # se não houver espaço, e nunca invade o bloco de Local no rodapé.
+    marker = str(spool.get("translucent_marker", "") or "")
+    if marker:
+        if color_nm:
+            cy += _text_h(draw, cnm, f_color)
+        g_cor_marker = max(2, round(h_px * 0.02))
+        marker_t = _fit_png(draw, marker, f_family, tw)
+        marker_h = _text_h(draw, marker_t, f_family)
+        if location:
+            loc_h_probe = _text_h(draw, _fit_png(draw, location, f_loc, tw), f_loc)
+            cap_h_probe = _text_h(draw, "Local:", f_cap)
+            loc_top = (h_px - margin) - loc_h_probe - cap_h_probe - max(2, round(h_px * 0.01))
+        else:
+            loc_top = h_px - margin
+        if cy + g_cor_marker + marker_h <= loc_top:
+            cy += g_cor_marker
+            draw.text((tx, cy), marker_t, font=f_family, fill=0)
 
     # Localização: "Local:" + valor ancorados no rodapé (se cadastrada)
     if location:
