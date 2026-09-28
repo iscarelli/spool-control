@@ -1012,11 +1012,17 @@ _EN["Versão demonstrativa"] = "Demo version"
 _EN["Os dados são reiniciados diariamente. Senha e criação de usuários não estão disponíveis."] = \
     "Data is reset daily. Password changes and user creation are not available."
 _EN["Função desabilitada na versão demonstrativa."] = "This feature is disabled in the demo version."
+_EN["Configurações bloqueadas na versão demonstrativa."] = "Settings are locked in the demo version."
+_EN["Bloqueado na versão demonstrativa."] = "Locked in the demo version."
+_EN["(logo não baixado na versão demonstrativa)"] = "(logo not downloaded in the demo version)"
 
 _ES["Versão demonstrativa"] = "Versión de demostración"
 _ES["Os dados são reiniciados diariamente. Senha e criação de usuários não estão disponíveis."] = \
     "Los datos se reinician diariamente. El cambio de contraseña y la creación de usuarios no están disponibles."
 _ES["Função desabilitada na versão demonstrativa."] = "Esta función está deshabilitada en la versión de demostración."
+_ES["Configurações bloqueadas na versão demonstrativa."] = "La configuración está bloqueada en la versión de demostración."
+_ES["Bloqueado na versão demonstrativa."] = "Bloqueado en la versión de demostración."
+_ES["(logo não baixado na versão demonstrativa)"] = "(logo no descargado en la versión de demostración)"
 
 # ── Troca de senha (self-service / obrigatória no 1º login) ──────────────────
 _EN["Trocar senha"] = "Change password"

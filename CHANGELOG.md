@@ -10,6 +10,21 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.39.4] — 2026-09-28
+
+### Fixed
+- **The public demo now also blocks brand logo upload/fetch, manual system update
+  and manual catalog refresh** — closing the gap where a visitor could write files
+  that survived the daily reset, trigger a fetch from a domain of their choosing,
+  or kick off a real update/catalog refresh. The daily automatic catalog refresh
+  is unaffected. Creating a new brand with a domain also skipped the logo fetch in
+  demo now (only the DB row is written, same as before); adding/deleting a brand
+  without a logo fetch stays unchanged.
+- **Disabled controls now show as disabled, with a short note, instead of only
+  failing after Save/click.** Applies to Settings, brand logo upload/fetch, the
+  system-update and catalog-refresh buttons, backup config/restore and
+  integration regenerate/toggle.
+
 ## [1.39.3] — 2026-09-28
 
 ### Fixed

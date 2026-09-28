@@ -56,7 +56,10 @@
           </div>
         </div>
         {% endif %}
-        <button class="btn btn-primary w-100" id="btnUpdate">
+        {% if demo_mode %}
+        <p class="text-muted small mb-2"><i class="bi bi-flask me-1"></i>{{ _('Bloqueado na versão demonstrativa.') }}</p>
+        {% endif %}
+        <button class="btn btn-primary w-100" id="btnUpdate" {% if demo_mode %}disabled{% endif %}>
           <i class="bi bi-arrow-up-circle me-1"></i>{{ _('Atualizar agora') }}
         </button>
         {% else %}
@@ -133,8 +136,11 @@
         <p class="text-muted mb-3" style="font-size:.85rem">
           {{ _('O catálogo (marcas, materiais e cores para o botão "Importar do catálogo") é atualizado automaticamente todo dia a partir do SpoolmanDB (fonte aberta, MIT). Você também pode forçar uma atualização agora.') }}
         </p>
+        {% if demo_mode %}
+        <p class="text-muted small mb-2"><i class="bi bi-flask me-1"></i>{{ _('Bloqueado na versão demonstrativa.') }}</p>
+        {% endif %}
         <form method="post" action="{{ url_for('admin_catalog_refresh') }}">
-          <button type="submit" class="btn btn-outline-secondary w-100">
+          <button type="submit" class="btn btn-outline-secondary w-100" {% if demo_mode %}disabled{% endif %}>
             <i class="bi bi-arrow-repeat me-1"></i>{{ _('Atualizar catálogo agora') }}
           </button>
         </form>

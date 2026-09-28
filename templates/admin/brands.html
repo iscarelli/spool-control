@@ -12,6 +12,11 @@
   Google Favicon
   {{ _('e salvar localmente. Ou faça upload manual de um arquivo PNG/JPG/WEBP.') }}
 </p>
+{% if demo_mode %}
+<div class="alert alert-warning py-2 mb-4" style="font-size:.85rem">
+  <i class="bi bi-flask me-1"></i>{{ _('Bloqueado na versão demonstrativa.') }}
+</div>
+{% endif %}
 
 <div class="row g-3">
   {% for b in brands %}
@@ -44,6 +49,7 @@
         </div>
 
         <form method="post" action="{{ url_for('admin_brand_fetch') }}" class="mb-2">
+          <fieldset {% if demo_mode %}disabled{% endif %}>
           <input type="hidden" name="brand_name" value="{{ b.name }}">
           <div class="input-group input-group-sm">
             <input type="text" name="domain" class="form-control"
@@ -52,10 +58,12 @@
               <i class="bi bi-cloud-download me-1"></i>{{ _('Buscar logo') }}
             </button>
           </div>
+          </fieldset>
         </form>
 
         <form method="post" action="{{ url_for('admin_brand_upload') }}"
               enctype="multipart/form-data">
+          <fieldset {% if demo_mode %}disabled{% endif %}>
           <input type="hidden" name="brand_name" value="{{ b.name }}">
           <div class="input-group input-group-sm">
             <input type="file" name="logo" class="form-control" accept=".png,.jpg,.jpeg,.webp">
@@ -63,6 +71,7 @@
               <i class="bi bi-upload me-1"></i>{{ _('Upload') }}
             </button>
           </div>
+          </fieldset>
         </form>
       </div>
     </div>

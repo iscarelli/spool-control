@@ -6,7 +6,13 @@
     <h4 class="fw-bold mb-4">{{ _('Configurações do Sistema') }}</h4>
     <div class="card">
       <div class="card-body">
+        {% if demo_mode %}
+        <div class="alert alert-warning py-2 mb-3" style="font-size:.85rem">
+          <i class="bi bi-flask me-1"></i>{{ _('Configurações bloqueadas na versão demonstrativa.') }}
+        </div>
+        {% endif %}
         <form method="post">
+        <fieldset {% if demo_mode %}disabled{% endif %}>
 
           <h6 class="text-muted text-uppercase fw-semibold mb-3" style="font-size:.75rem">{{ _('Geral') }}</h6>
           <div class="mb-4">
@@ -107,6 +113,7 @@
           </div>
 
           <button type="submit" class="btn btn-dark">{{ _('Salvar Configurações') }}</button>
+        </fieldset>
         </form>
       </div>
     </div>

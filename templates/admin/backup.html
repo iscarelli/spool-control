@@ -60,7 +60,7 @@
                     <form method="post" action="{{ url_for('admin_backup_restore_local') }}" class="d-inline"
                           data-sc-confirm="{{ _('Tem certeza? Todos os dados atuais serão substituídos.') }}">
                       <input type="hidden" name="slot" value="{{ b.slot }}">
-                      <button class="btn btn-sm btn-outline-danger">{{ _('Restaurar') }}</button>
+                      <button class="btn btn-sm btn-outline-danger" {% if demo_mode %}disabled{% endif %}>{{ _('Restaurar') }}</button>
                     </form>
                   </div>
                 </td>
@@ -74,7 +74,11 @@
         </div>
 
         <hr class="my-3">
+        {% if demo_mode %}
+        <p class="text-muted small mb-2"><i class="bi bi-flask me-1"></i>{{ _('Bloqueado na versão demonstrativa.') }}</p>
+        {% endif %}
         <form method="post" action="{{ url_for('admin_backup_config') }}">
+        <fieldset {% if demo_mode %}disabled{% endif %}>
           <label class="form-label fw-semibold" for="backup_hour">{{ _('Horário do backup automático') }}</label>
           <select name="backup_hour" id="backup_hour" class="form-select" style="max-width:160px">
             {% for h in range(24) %}
@@ -90,6 +94,7 @@
             <button type="submit" class="btn btn-outline-secondary">{{ _('Salvar') }}</button>
           </div>
           <div class="form-text">{{ _('Caminho no servidor (ex.: disco/rede montado). O backup diário sempre grava localmente; se esta pasta estiver definida, uma cópia também é gravada aqui. Se não for possível gravar, um alerta aparece nesta página.') }}</div>
+        </fieldset>
         </form>
       </div>
     </div>
@@ -101,8 +106,12 @@
           <i class="bi bi-exclamation-triangle-fill mt-1"></i>
           <div>{{ _('A restauração substitui TODOS os dados atuais (incluindo usuários e senhas) pelos do arquivo. Não há como desfazer.') }}</div>
         </div>
+        {% if demo_mode %}
+        <p class="text-muted small mb-2"><i class="bi bi-flask me-1"></i>{{ _('Bloqueado na versão demonstrativa.') }}</p>
+        {% endif %}
         <form method="post" action="{{ url_for('admin_backup_restore') }}" enctype="multipart/form-data"
               data-sc-confirm="{{ _('Tem certeza? Todos os dados atuais serão substituídos.') }}">
+        <fieldset {% if demo_mode %}disabled{% endif %}>
           <div class="mb-3">
             <input type="file" name="backup" accept=".zip" class="form-control" required>
             <div class="form-text">{{ _('Selecione um arquivo .zip gerado por este sistema.') }}</div>
@@ -110,6 +119,7 @@
           <button type="submit" class="btn btn-outline-danger w-100">
             <i class="bi bi-upload me-1"></i>{{ _('Restaurar backup') }}
           </button>
+        </fieldset>
         </form>
       </div>
     </div>
