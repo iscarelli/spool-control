@@ -2,3 +2,4 @@
 # Uso: pip install -r requirements.txt -r requirements-dev.txt
 -r requirements.txt
 pytest>=9.1.1
+pypdf>=6.19.0   # só p/ os testes de etiqueta extraírem texto do PDF gerado (labels.py)

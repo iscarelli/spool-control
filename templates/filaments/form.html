@@ -50,6 +50,11 @@
                        value="{{ filament.color_hex if filament and filament.color_hex else '#cccccc' }}"
                        placeholder="#cccccc" maxlength="7">
               </div>
+              <div class="form-check mt-2">
+                <input type="checkbox" class="form-check-input" name="translucent" value="1"
+                       id="translucentCheck" {% if filament and filament.translucent %}checked{% endif %}>
+                <label class="form-check-label" for="translucentCheck">{{ _('Transparente / translúcido') }}</label>
+              </div>
             </div>
             <div class="col-6">
               <label class="form-label fw-semibold">{{ _('Nome da Cor') }} <span class="text-muted small fw-normal">({{ _('opcional') }})</span></label>

@@ -1,18 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ filament.brand }} {{ filament.material }} — Spool Control{% endblock %}
+{% from "_swatch.html" import donut %}
 {% block content %}
-
-{% macro donut(pct, fill, size=34, tip='') %}
-<span {% if tip %}data-bs-toggle="tooltip" title="{{ tip }}"{% endif %}>
-  <svg width="{{ size }}" height="{{ size }}" viewBox="0 0 50 50">
-    <circle cx="25" cy="25" r="15.9155" fill="none" class="donut-track" stroke-width="15"/>
-    <circle cx="25" cy="25" r="15.9155" fill="none"
-            stroke="{{ fill | hexcolor('#6c757d') }}" stroke-width="15"
-            stroke-dasharray="{{ pct }} {{ 100 - pct }}"
-            transform="rotate(-90 25 25)"/>
-  </svg>
-</span>
-{% endmacro %}
 
 {# Aggregate stock for active spools of this filament #}
 {% set ns = namespace(nom=0, net=0) %}
@@ -42,7 +31,7 @@
        height="28" style="object-fit:contain;max-width:64px" alt="{{ filament.brand }}">
   {% endif %}
   {% if ns.nom > 0 %}
-    {{ donut(total_pct, fill, size=44, tip=total_pct|int|string + _('% de estoque disponível')) }}
+    {{ donut(total_pct, fill, translucent=filament.translucent, size=44, tip=total_pct|int|string + _('% de estoque disponível')) }}
   {% endif %}
   <h4 class="mb-0 fw-bold">
     {{ filament.brand }} {{ filament.material }}
@@ -105,7 +94,7 @@
             style="cursor:pointer"
             data-href="{{ url_for('spools_detail', spool_id=s.id) }}">
           <td class="text-center align-middle sc-stack-head" style="width:44px;padding:4px">
-            {{ donut(pct, fill, tip=pct|int|string + _('% disponível')) }}
+            {{ donut(pct, fill, translucent=filament.translucent, tip=pct|int|string + _('% disponível')) }}
           </td>
           <td class="fw-bold sc-stack-head">SP-{{ '%04d'|format(s.id) }}</td>
           <td data-label="{{ _('Carretel Vazio') }}">{{ s.model_name or '—' }}</td>

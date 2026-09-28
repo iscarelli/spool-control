@@ -11,6 +11,8 @@ from werkzeug.security import generate_password_hash
 import database as db
 import backup
 import niimbot_registry as reg
+import filament_catalog as catalog
+import spoolmandb_refresh
 import logger as log_cfg
 from app import (
     app, admin_required, demo_blocked, t, MIN_PASSWORD_LEN, DEMO_MODE,
@@ -245,7 +247,36 @@ def admin_update():
         release_notes=release_notes,
         notes_incomplete=notes_incomplete,
         current_notes=current_notes,
+        catalog_info=catalog.info(),
+        catalog_refresh_last_run=db.get_setting("catalog_refresh_last_run", ""),
+        catalog_refresh_result=db.get_setting("catalog_refresh_result", ""),
+        catalog_refresh_error=db.get_setting("catalog_refresh_error", ""),
     )
+
+
+@app.route("/admin/catalog/refresh", methods=["POST"])
+@admin_required
+def admin_catalog_refresh():
+    """Botão manual "Atualizar catálogo" em /admin/update — roda o MESMO fetch do
+    refresh diário (spoolmandb_refresh.fetch_and_write), síncrono (~30s de teto).
+    Fail-safe: falha de rede/parse não toca no catálogo em uso — só flasha o erro."""
+    now = db.now_iso()
+    try:
+        result = spoolmandb_refresh.fetch_and_write(catalog.runtime_path(), timeout=30, vendored=False)
+    except Exception as e:
+        db.set_setting("catalog_refresh_last_run", now)
+        db.set_setting("catalog_refresh_result", "error")
+        db.set_setting("catalog_refresh_error", str(e))
+        log.error("admin.catalog_refresh_failed", exc_info=True)
+        flash(t("Erro ao atualizar o catálogo: {e}").format(e=str(e)), "danger")
+        return redirect(url_for("admin_update"))
+    db.set_setting("catalog_refresh_last_run", now)
+    db.set_setting("catalog_refresh_result", "ok")
+    db.set_setting("catalog_refresh_error", "")
+    log.info("admin.catalog_refresh_ok", **result)
+    flash(t("Catálogo atualizado: {n} filamentos, {b} marcas (SpoolmanDB de {fetched})").format(
+        n=result["filaments"], b=result["brands"], fetched=result["fetched"]), "success")
+    return redirect(url_for("admin_update"))
 
 
 @app.route("/admin/update/run", methods=["POST"])

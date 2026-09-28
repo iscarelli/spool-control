@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Inventário') }} — Spool Control{% endblock %}
+{% from "_swatch.html" import donut %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h4 class="mb-0 fw-bold">{{ _('Inventário') }} <span class="text-muted fs-6">({{ items | length }})</span></h4>
@@ -24,6 +25,7 @@
        data-family="{{ s.family }}"
        data-hex="{{ s.color_hex }}"
        data-fill="{{ fill | hexcolor('#6c757d') }}"
+       data-translucent="{{ '1' if s.translucent else '0' }}"
        data-pct="{{ pct }}"
        data-remaining="{% if s.current_net_g is not none %}{{ s.current_net_g|int }} g / {{ s.nominal_weight_g|int }} g ({{ pct|int }}%){% else %}{{ s.nominal_weight_g|int }} g · {{ _('não pesado') }}{% endif %}"
        data-diameter="{{ s.diameter_mm }} mm"
@@ -32,11 +34,9 @@
        data-logo="{% if s.brand_logo %}{{ url_for('static', filename=s.brand_logo) }}{% endif %}"
        data-qr="{{ url_for('spool_qr_png', spool_id=s.id) }}"
        data-link="{{ url_for('spools_detail', spool_id=s.id) }}">
-    <svg width="46" height="46" viewBox="0 0 50 50" class="d-block mx-auto">
-      <circle cx="25" cy="25" r="15.9155" fill="none" class="donut-track" stroke-width="15"/>
-      <circle cx="25" cy="25" r="15.9155" fill="none" stroke="{{ fill | hexcolor('#6c757d') }}" stroke-width="15"
-              stroke-dasharray="{{ pct }} {{ 100 - pct }}" transform="rotate(-90 25 25)" class="donut-arc"/>
-    </svg>
+    <div class="d-block mx-auto" style="width:46px">
+      {{ donut(pct, fill, translucent=s.translucent, size=46) }}
+    </div>
     <div class="small fw-semibold text-truncate sc-inv-name">{{ s.brand }}</div>
     <div class="text-muted text-truncate sc-inv-sub">{{ s.material }}</div>
     <div class="text-muted text-truncate sc-inv-sub">{{ s.family }}</div>
@@ -64,7 +64,7 @@
             <div class="mb-1"><span class="badge bg-secondary" id="invMaterial"></span>
               <span id="invFamily" class="text-muted ms-1"></span></div>
             <div class="small mb-2" id="invHexWrap">
-              <span id="invDot" class="d-inline-block rounded me-1" style="width:12px;height:12px;border:1px solid #ccc;vertical-align:middle"></span>
+              <span id="invDot" class="sc-swatch d-inline-block rounded me-1" style="width:12px;height:12px;vertical-align:middle"></span>
               <span id="invHex" class="font-monospace text-uppercase"></span>
             </div>
             <div><span class="text-muted small">{{ _('Restante') }}:</span> <strong id="invRemaining"></strong></div>
@@ -75,6 +75,8 @@
           <div class="text-center">
             <svg width="64" height="64" viewBox="0 0 50 50" class="d-block mx-auto">
               <circle cx="25" cy="25" r="15.9155" fill="none" class="donut-track" stroke-width="15"/>
+              <circle id="invArcChecker" cx="25" cy="25" r="15.9155" fill="none" stroke-width="15"
+                      stroke="none" transform="rotate(-90 25 25)" class="donut-checker"/>
               <circle id="invArc" cx="25" cy="25" r="15.9155" fill="none" stroke-width="15"
                       transform="rotate(-90 25 25)" class="donut-arc"/>
             </svg>
@@ -115,9 +117,12 @@ function openInv(t) {
   document.getElementById('invLink').href            = d.link;
 
   const hexWrap = document.getElementById('invHexWrap');
+  const isTranslucent = d.translucent === '1';
   if (d.hex) {
     hexWrap.style.display = '';
-    document.getElementById('invDot').style.background = d.hex;
+    const dot = document.getElementById('invDot');
+    dot.style.setProperty('--sw-color', d.hex);
+    dot.classList.toggle('sc-swatch-translucent', isTranslucent);
     document.getElementById('invHex').textContent = d.hex;
   } else { hexWrap.style.display = 'none'; }
 
@@ -131,8 +136,13 @@ function openInv(t) {
   if (d.logo) { logo.src = d.logo; logo.style.display = ''; } else { logo.style.display = 'none'; }
 
   const arc = document.getElementById('invArc');
+  const checker = document.getElementById('invArcChecker');
+  const dash = `${d.pct} ${100 - d.pct}`;
   arc.setAttribute('stroke', d.fill);
-  arc.setAttribute('stroke-dasharray', `${d.pct} ${100 - d.pct}`);
+  arc.setAttribute('stroke-dasharray', dash);
+  arc.classList.toggle('donut-arc-translucent', isTranslucent);
+  checker.setAttribute('stroke', isTranslucent ? 'url(#sc-checker)' : 'none');
+  checker.setAttribute('stroke-dasharray', dash);
 
   document.getElementById('invQr').src = d.qr;
   invModal.show();

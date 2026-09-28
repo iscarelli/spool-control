@@ -10,6 +10,27 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.39.2] — 2026-09-27
+
+### Added
+- **The filament catalog (SpoolmanDB) now refreshes itself.** The vendored snapshot
+  behind "Import from catalog" was fetched in June and had fallen behind — it's
+  refreshed now (67 brands, up from 53) — and the server keeps it current going
+  forward: a daily automatic refresh (piggybacking on the existing backup schedule)
+  and a manual "Refresh catalog now" button on the Admin → Update page. If a refresh
+  ever fails (no network, upstream down), the app quietly keeps using the last good
+  snapshot — the catalog never goes empty because of a failed update.
+- **Clear and translucent filaments are no longer shown as plain white.** A new
+  "Transparent / translucent" checkbox on the filament form (also pre-filled when
+  importing from the SpoolmanDB catalog) marks a filament as see-through; every
+  color swatch and stock ring across the app then shows it with a transparency
+  (checkerboard) pattern instead of a solid color, so a clear PETG no longer looks
+  identical to White.
+- **Printed labels (PDF and Niimbot) now say when a spool is translucent.** A small
+  "Translucent" line appears under the color name — or on its own if the filament
+  has no color name — without shrinking the color name itself. Nothing prints if
+  the color name already says it (e.g. "Transparent Blue").
+
 ## [1.39.1] — 2026-08-07
 
 ### Fixed

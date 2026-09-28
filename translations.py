@@ -67,6 +67,23 @@ _EN = {
         "Could not load the full history; showing only the latest version's notes.",
     "Ver tudo no GitHub":   "See everything on GitHub",
 
+    # ── Catalog refresh (SpoolmanDB) ────────────────────────────────────────
+    "Catálogo de filamentos (SpoolmanDB)": "Filament catalog (SpoolmanDB)",
+    "Snapshot atual":       "Current snapshot",
+    "no servidor":          "on the server",
+    "vendorado no repositório": "vendored in the repository",
+    "indisponível":         "unavailable",
+    "Última atualização automática": "Last automatic refresh",
+    "nunca":                "never",
+    "A última tentativa de atualizar o catálogo falhou.":
+        "The last attempt to refresh the catalog failed.",
+    "O catálogo (marcas, materiais e cores para o botão \"Importar do catálogo\") é atualizado automaticamente todo dia a partir do SpoolmanDB (fonte aberta, MIT). Você também pode forçar uma atualização agora.":
+        "The catalog (brands, materials and colors for the \"Import from catalog\" button) refreshes automatically every day from SpoolmanDB (open source, MIT). You can also force a refresh now.",
+    "Atualizar catálogo agora": "Refresh catalog now",
+    "Erro ao atualizar o catálogo: {e}": "Error refreshing the catalog: {e}",
+    "Catálogo atualizado: {n} filamentos, {b} marcas (SpoolmanDB de {fetched})":
+        "Catalog updated: {n} filaments, {b} brands (SpoolmanDB from {fetched})",
+
     # ── Backup / restore ─────────────────────────────────────────────────────
     "Backup":               "Backup",
     "Backup e restauração": "Backup & restore",
@@ -135,6 +152,8 @@ _EN = {
     "ex: Galaxy Black, Azul Cobalto, Silk Silver": "e.g.: Galaxy Black, Cobalt Blue, Silk Silver",
     "Nome do fabricante ou como você identifica esta cor. Usado na etiqueta impressa.":
         "Manufacturer name or how you identify this color. Used on the printed label.",
+    "Transparente / translúcido":    "Transparent / translucent",
+    "Translúcido":                   "Translucent",
     "Diâmetro (mm)":                 "Diameter (mm)",
     "Pesquise ou digite...":         "Search or type...",
     "Remover este filamento?":       "Remove this filament?",
@@ -539,6 +558,23 @@ _ES = {
         "No se pudo cargar el historial completo; mostrando solo las notas de la última versión.",
     "Ver tudo no GitHub":   "Ver todo en GitHub",
 
+    # ── Catalog refresh (SpoolmanDB) ────────────────────────────────────────
+    "Catálogo de filamentos (SpoolmanDB)": "Catálogo de filamentos (SpoolmanDB)",
+    "Snapshot atual":       "Snapshot actual",
+    "no servidor":          "en el servidor",
+    "vendorado no repositório": "vendorado en el repositorio",
+    "indisponível":         "no disponible",
+    "Última atualização automática": "Última actualización automática",
+    "nunca":                "nunca",
+    "A última tentativa de atualizar o catálogo falhou.":
+        "El último intento de actualizar el catálogo falló.",
+    "O catálogo (marcas, materiais e cores para o botão \"Importar do catálogo\") é atualizado automaticamente todo dia a partir do SpoolmanDB (fonte aberta, MIT). Você também pode forçar uma atualização agora.":
+        "El catálogo (marcas, materiales y colores para el botón \"Importar del catálogo\") se actualiza automáticamente cada día desde SpoolmanDB (fuente abierta, MIT). También puedes forzar una actualización ahora.",
+    "Atualizar catálogo agora": "Actualizar catálogo ahora",
+    "Erro ao atualizar o catálogo: {e}": "Error al actualizar el catálogo: {e}",
+    "Catálogo atualizado: {n} filamentos, {b} marcas (SpoolmanDB de {fetched})":
+        "Catálogo actualizado: {n} filamentos, {b} marcas (SpoolmanDB de {fetched})",
+
     # ── Backup / restore ─────────────────────────────────────────────────────
     "Backup":               "Copia de seguridad",
     "Backup e restauração": "Copia y restauración",
@@ -607,6 +643,8 @@ _ES = {
     "ex: Galaxy Black, Azul Cobalto, Silk Silver": "ej.: Galaxy Black, Azul Cobalto, Silk Silver",
     "Nome do fabricante ou como você identifica esta cor. Usado na etiqueta impressa.":
         "Nombre del fabricante o cómo identificas este color. Se usa en la etiqueta impresa.",
+    "Transparente / translúcido":    "Transparente / translúcido",
+    "Translúcido":                   "Translúcido",
     "Diâmetro (mm)":                 "Diámetro (mm)",
     "Pesquise ou digite...":         "Busca o escribe...",
     "Remover este filamento?":       "¿Eliminar este filamento?",

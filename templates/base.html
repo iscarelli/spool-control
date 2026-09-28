@@ -24,6 +24,21 @@
 </head>
 <body>
 
+{# Padrão global de xadrez (checkerboard) p/ amostras de cor translúcidas —
+   definido UMA vez, referenciado por `stroke="url(#sc-checker)"` em qualquer
+   SVG da página (ver templates/_swatch.html e reports/inventory.html). As
+   duas cores vêm de classes (não de atributo `fill` cru) para funcionar nos
+   dois temas via as variáveis de static/spool.css. #}
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <pattern id="sc-checker" width="8" height="8" patternUnits="userSpaceOnUse">
+      <rect width="8" height="8" class="sc-checker-a"/>
+      <rect width="4" height="4" class="sc-checker-b"/>
+      <rect x="4" y="4" width="4" height="4" class="sc-checker-b"/>
+    </pattern>
+  </defs>
+</svg>
+
 {% if session.user_id %}
 {% set ep = request.endpoint %}
 <nav class="navbar navbar-expand-lg">

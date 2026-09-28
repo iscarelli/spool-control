@@ -13,6 +13,12 @@
   --sc-accent:       #22C55E;
   --sc-accent-hover: #16A34A;
   --sc-accent-glow:  rgba(34,197,94,0.15);
+  /* Xadrez de translucidez (ver .sc-swatch-translucent / #sc-checker) — em dark,
+     --sc-surface/--sc-border ficam próximos demais (contraste ~1.3:1, o quadrado
+     quase some) — usamos --sc-text-muted/--sc-bg de propósito: mesmo par de
+     tokens já existente, mas ~6.5:1 de contraste. */
+  --sc-checker-a:    var(--sc-text-muted);
+  --sc-checker-b:    var(--sc-bg);
 
   /* Bootstrap 5.3 dark-theme overrides */
   --bs-body-font-family:       'Inter', system-ui, -apple-system, sans-serif;
@@ -45,6 +51,11 @@
   --sc-accent:       #16A34A;
   --sc-accent-hover: #15803D;
   --sc-accent-glow:  rgba(22,163,74,0.12);
+  /* Light já tinha contraste suficiente (confirmado no navegador) — mesmo par
+     de sempre, só com nome próprio, para não depender de --sc-surface/
+     --sc-border mudarem por outro motivo no futuro. */
+  --sc-checker-a:    var(--sc-surface);
+  --sc-checker-b:    var(--sc-border);
 
   --bs-body-bg:                var(--sc-bg);
   --bs-body-color:             var(--sc-text);
@@ -408,6 +419,45 @@ h1, h2, h3, h4, h5, h6 { letter-spacing: -0.02em; }
 
 /* ── Donuts ─────────────────────────────────────────────────────────────── */
 .donut-track { stroke: var(--sc-border); }
+
+/* Filamento translúcido/transparente: a cor entra em opacidade parcial por
+   cima do xadrez global (#sc-checker, definido em base.html), em vez do
+   traço sólido normal — "Transparent" para de parecer Branco.
+   .4 (não .55): num translúcido BRANCO, uma sobreposição branca mais forte
+   lava o xadrez contra o fundo escuro do tema dark — .4 deixa o quadriculado
+   visível sem perder o tom em cores (ex.: Azul continua lendo como azul). */
+.donut-arc-translucent { stroke-opacity: .4; }
+
+/* ── Amostras de cor (quadradinhos — ver templates/_swatch.html) ─────────── */
+.sc-swatch {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--sc-border);
+  background-color: var(--sw-color, transparent);
+}
+.sc-swatch.sc-swatch-translucent {
+  background-color: var(--sc-checker-b);
+  background-image:
+    linear-gradient(45deg, var(--sc-checker-a) 25%, transparent 25%, transparent 75%, var(--sc-checker-a) 75%),
+    linear-gradient(45deg, var(--sc-checker-a) 25%, transparent 25%, transparent 75%, var(--sc-checker-a) 75%);
+  background-size: 6px 6px;
+  background-position: 0 0, 3px 3px;
+}
+.sc-swatch.sc-swatch-translucent::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: var(--sw-color, transparent);
+  opacity: .4;
+}
+
+/* Xadrez global (padrão SVG #sc-checker, ver base.html) — mesmos tokens do
+   swatch acima, então os dois modos (CSS puro e SVG <pattern>) combinam.
+   --sc-checker-a/-b (não --sc-surface/--sc-border direto): em dark os dois
+   últimos ficam próximos demais (~1.3:1) e o quadriculado quase some — ver os
+   tokens declarados no topo do arquivo, por tema. */
+.sc-checker-a { fill: var(--sc-checker-a); }
+.sc-checker-b { fill: var(--sc-checker-b); }
 
 /* ── Bandeiras do seletor de idioma (SVG — emoji não renderiza no Windows) ── */
 .sc-flag {

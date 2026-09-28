@@ -1,0 +1,35 @@
+{# ── Amostras de cor (swatch + donut) — ÚNICA fonte para todo o app ──────────
+   `swatch()`: quadradinho de 12px usado nas listas/busca/fila de etiquetas.
+   `donut()`: anel SVG de % restante (spools/filamentos, big + pequeno).
+   Os dois recebem o hex CRU e aplicam `hexcolor` internamente — quem chama
+   nunca sanitiza na mão. `translucent=true` desenha um xadrez (checkerboard,
+   padrão global `#sc-checker` definido em base.html) sob a cor em opacidade
+   parcial, em vez de uma cor sólida — um "Transparent" (#FFFFFF) some de
+   Branco e ganha um padrão de transparência, com o tom (se houver) ainda
+   visível por cima. Nenhum recurso externo; funciona nos dois temas via
+   tokens de `static/spool.css` (--sc-surface/--sc-border). #}
+
+{% macro swatch(hex, translucent=false, size=12) %}
+<span class="sc-swatch{% if translucent %} sc-swatch-translucent{% endif %} d-inline-block rounded me-1"
+      style="width:{{ size }}px;height:{{ size }}px;--sw-color:{{ hex | hexcolor('#e0e0e0') }};vertical-align:middle"></span>
+{% endmacro %}
+
+{% macro donut(pct, fill, translucent=false, spool_id='', size=34, tip='') %}
+<span class="donut-wrap" {% if tip %}data-bs-toggle="tooltip" title="{{ tip }}"{% endif %}
+      {% if spool_id %}data-donut-id="{{ spool_id }}"{% endif %}>
+  <svg width="{{ size }}" height="{{ size }}" viewBox="0 0 50 50">
+    <circle cx="25" cy="25" r="15.9155" fill="none" class="donut-track" stroke-width="15"/>
+    {% if translucent %}
+    <circle cx="25" cy="25" r="15.9155" fill="none" class="donut-checker"
+            stroke="url(#sc-checker)" stroke-width="15"
+            stroke-dasharray="{{ pct }} {{ 100 - pct }}"
+            transform="rotate(-90 25 25)"/>
+    {% endif %}
+    <circle cx="25" cy="25" r="15.9155" fill="none"
+            stroke="{{ fill | hexcolor('#6c757d') }}" stroke-width="15"
+            stroke-dasharray="{{ pct }} {{ 100 - pct }}"
+            transform="rotate(-90 25 25)"
+            class="donut-arc{% if translucent %} donut-arc-translucent{% endif %}"/>
+  </svg>
+</span>
+{% endmacro %}

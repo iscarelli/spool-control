@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Fila de Etiquetas') }} — Spool Control{% endblock %}
+{% from "_swatch.html" import swatch %}
 {% block content %}
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
   <h4 class="mb-0 fw-bold"><i class="bi bi-printer me-2"></i>{{ _('Fila de Etiquetas') }}</h4>
@@ -36,7 +37,7 @@
           <td data-label="{{ _('Material') }}"><span class="badge bg-secondary">{{ s.material }}</span></td>
           <td data-label="{{ _('Marca / Família') }}">
             {% if s.color_hex %}
-            <span class="d-inline-block rounded me-1" style="width:12px;height:12px;background:{{ s.color_hex | hexcolor('#e0e0e0') }};border:1px solid #ccc;vertical-align:middle"></span>
+            {{ swatch(s.color_hex, translucent=s.translucent) }}
             {% endif %}
             {{ s.brand }} / {{ s.family }}
           </td>
