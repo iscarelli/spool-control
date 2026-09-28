@@ -313,6 +313,7 @@ def test_admin_catalog_refresh_success_flashes_counts_and_saves_settings(auth_cl
     assert db.get_setting("catalog_refresh_result") == "ok"
     assert db.get_setting("catalog_refresh_error", "") == ""
     assert db.get_setting("catalog_refresh_last_run", "")
+    assert db.get_setting("catalog_refresh_source") == "manual"
 
 
 def test_admin_catalog_refresh_failure_flashes_error_and_saves_settings(auth_client, db, monkeypatch):
@@ -325,6 +326,7 @@ def test_admin_catalog_refresh_failure_flashes_error_and_saves_settings(auth_cli
     assert resp.status_code == 302
     assert db.get_setting("catalog_refresh_result") == "error"
     assert "rede indisponível" in db.get_setting("catalog_refresh_error")
+    assert db.get_setting("catalog_refresh_source") == "manual"
 
 
 def test_admin_catalog_refresh_forbidden_for_viewer(viewer_client):
@@ -343,6 +345,52 @@ def test_admin_update_page_shows_catalog_section(auth_client):
     assert b"catalog/refresh" in resp.data
 
 
+# ── Rótulo "Última atualização" (auto) x manual, sem sufixo (v1.39.3) ───────
+
+def test_update_page_shows_auto_suffix_after_scheduled_refresh(auth_client, db, monkeypatch):
+    import spoolmandb_refresh as r
+    fil = [{"manufacturer": "Acme", "material": "PLA", "name": "Red", "color_hex": "ff0000", "diameter": 1.75}]
+    monkeypatch.setattr(r, "_download_json", _fake_download(fil, []))
+    assert r.run_scheduled_refresh(force=True) is not None
+    assert db.get_setting("catalog_refresh_source") == "auto"
+
+    resp = auth_client.get("/admin/update")
+    assert resp.status_code == 200
+    assert "Última atualização".encode("utf-8") in resp.data
+    assert b"(auto)" in resp.data
+    assert "Última atualização automática".encode("utf-8") not in resp.data
+
+
+def test_update_page_shows_no_auto_suffix_after_manual_refresh(auth_client, db, monkeypatch):
+    import routes.admin as admin_mod
+    monkeypatch.setattr(
+        admin_mod.spoolmandb_refresh, "fetch_and_write",
+        lambda dest, timeout=30, vendored=False: {
+            "fetched": "2026-09-27", "brands": 1, "materials": 1, "filaments": 1,
+        },
+    )
+    resp = auth_client.post("/admin/catalog/refresh")
+    assert resp.status_code == 302
+    assert db.get_setting("catalog_refresh_source") == "manual"
+
+    resp = auth_client.get("/admin/update")
+    assert resp.status_code == 200
+    assert b"(auto)" not in resp.data
+
+
+def test_update_page_still_shows_error_after_manual_failure(auth_client, db, monkeypatch):
+    import routes.admin as admin_mod
+
+    def boom(dest, timeout=30, vendored=False):
+        raise OSError("rede indisponível")
+    monkeypatch.setattr(admin_mod.spoolmandb_refresh, "fetch_and_write", boom)
+    auth_client.post("/admin/catalog/refresh")
+
+    resp = auth_client.get("/admin/update")
+    assert resp.status_code == 200
+    assert "rede indisponível".encode("utf-8") in resp.data
+
+
 # ── Caminho do cron: run_scheduled_refresh NUNCA levanta ────────────────────
 
 def test_run_scheduled_refresh_failure_does_not_raise(app_module, db, monkeypatch):
@@ -355,6 +403,7 @@ def test_run_scheduled_refresh_failure_does_not_raise(app_module, db, monkeypatc
     assert result is None
     assert db.get_setting("catalog_refresh_result") == "error"
     assert "rede fora do ar" in db.get_setting("catalog_refresh_error")
+    assert db.get_setting("catalog_refresh_source") == "auto"
 
 
 def test_run_scheduled_refresh_success_writes_settings_and_file(app_module, db, monkeypatch):
@@ -380,4 +429,24 @@ def test_run_scheduled_refresh_skips_when_already_ok_today(app_module, db, monke
         return fil if "filaments" in url else []
     monkeypatch.setattr(r, "_download_json", counting)
     assert r.run_scheduled_refresh() is None   # já ok hoje, sem force → no-op
+    assert calls["n"] == 0
+
+
+def test_run_scheduled_refresh_skips_when_manual_refresh_already_ok_today(app_module, db, monkeypatch):
+    """Decisão deliberada: o gate diário é agnóstico à origem — um refresh MANUAL
+    bem-sucedido hoje também evita que o cron bata no upstream de novo hoje."""
+    import spoolmandb_refresh as r
+    db.set_setting("catalog_refresh_last_run", db.now_iso())
+    db.set_setting("catalog_refresh_result", "ok")
+    db.set_setting("catalog_refresh_source", "manual")
+
+    calls = {"n": 0}
+
+    def counting(url, timeout):
+        calls["n"] += 1
+        return [] if "materials" in url else [
+            {"manufacturer": "Acme", "material": "PLA", "name": "Red", "color_hex": "ff0000", "diameter": 1.75}
+        ]
+    monkeypatch.setattr(r, "_download_json", counting)
+    assert r.run_scheduled_refresh() is None
     assert calls["n"] == 0

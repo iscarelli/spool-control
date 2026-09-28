@@ -251,6 +251,7 @@ def admin_update():
         catalog_refresh_last_run=db.get_setting("catalog_refresh_last_run", ""),
         catalog_refresh_result=db.get_setting("catalog_refresh_result", ""),
         catalog_refresh_error=db.get_setting("catalog_refresh_error", ""),
+        catalog_refresh_source=db.get_setting("catalog_refresh_source", ""),
     )
 
 
@@ -267,12 +268,14 @@ def admin_catalog_refresh():
         db.set_setting("catalog_refresh_last_run", now)
         db.set_setting("catalog_refresh_result", "error")
         db.set_setting("catalog_refresh_error", str(e))
+        db.set_setting("catalog_refresh_source", "manual")
         log.error("admin.catalog_refresh_failed", exc_info=True)
         flash(t("Erro ao atualizar o catálogo: {e}").format(e=str(e)), "danger")
         return redirect(url_for("admin_update"))
     db.set_setting("catalog_refresh_last_run", now)
     db.set_setting("catalog_refresh_result", "ok")
     db.set_setting("catalog_refresh_error", "")
+    db.set_setting("catalog_refresh_source", "manual")
     log.info("admin.catalog_refresh_ok", **result)
     flash(t("Catálogo atualizado: {n} filamentos, {b} marcas (SpoolmanDB de {fetched})").format(
         n=result["filaments"], b=result["brands"], fetched=result["fetched"]), "success")
