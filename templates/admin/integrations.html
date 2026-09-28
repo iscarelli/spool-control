@@ -4,6 +4,11 @@
 <div class="row justify-content-center">
   <div class="col-lg-8">
     <h4 class="fw-bold mb-4">{{ _('Integrações') }}</h4>
+    {% if demo_mode %}
+    <div class="alert alert-warning py-2 mb-3" style="font-size:.85rem">
+      <i class="bi bi-flask me-1"></i>{{ _('Bloqueado na versão demonstrativa.') }}
+    </div>
+    {% endif %}
 
     {% for it in items %}
     <div class="card mb-3">
@@ -21,7 +26,7 @@
             {% endif %}
           </div>
           <form method="post" action="{{ url_for('admin_integration_toggle', integration=it.slug) }}">
-            <button class="btn btn-sm btn-outline-secondary">
+            <button class="btn btn-sm btn-outline-secondary" {% if demo_mode %}disabled{% endif %}>
               {% if it.enabled %}{{ _('Desabilitar') }}{% else %}{{ _('Habilitar') }}{% endif %}
             </button>
           </form>
@@ -40,7 +45,7 @@
           </small>
           <form method="post" action="{{ url_for('admin_integration_regenerate', integration=it.slug) }}"
                 data-sc-confirm="{{ _('Gerar uma nova chave invalida a atual desta integração. Continuar?') }}">
-            <button class="btn btn-sm btn-outline-danger">{{ _('Gerar nova chave') }}</button>
+            <button class="btn btn-sm btn-outline-danger" {% if demo_mode %}disabled{% endif %}>{{ _('Gerar nova chave') }}</button>
           </form>
         </div>
 

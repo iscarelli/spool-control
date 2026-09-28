@@ -101,6 +101,7 @@ def admin_brands():
 
 @app.route("/admin/brands/fetch", methods=["POST"])
 @admin_required
+@demo_blocked
 def admin_brand_fetch():
     brand_name = request.form.get("brand_name", "").strip()
     domain = request.form.get("domain", "").strip()
@@ -117,6 +118,7 @@ def admin_brand_fetch():
 
 @app.route("/admin/brands/upload", methods=["POST"])
 @admin_required
+@demo_blocked
 def admin_brand_upload():
     brand_name = request.form.get("brand_name", "").strip()
     if not brand_name or "logo" not in request.files:
@@ -150,7 +152,13 @@ def admin_brand_new():
         return redirect(url_for("admin_brands"))
     domain = _clean_domain(request.form.get("domain", "").strip())
     db.create_brand(name, domain)
-    if domain:
+    # A marca (linha do banco) é criada normalmente em demo — é resetada todo dia.
+    # O LOGO não: _fetch_brand_logo grava um arquivo em static/brands/, que sobrevive
+    # ao reset diário (só o banco é limpo) — mesmo motivo de admin_brand_fetch/upload.
+    if domain and DEMO_MODE:
+        flash(t("Marca '{brand}' adicionada").format(brand=name) + " " +
+              t("(logo não baixado na versão demonstrativa)"), "success")
+    elif domain:
         if _fetch_brand_logo(name, domain):
             flash(t("Marca '{brand}' adicionada com logo").format(brand=name), "success")
         else:
@@ -257,6 +265,7 @@ def admin_update():
 
 @app.route("/admin/catalog/refresh", methods=["POST"])
 @admin_required
+@demo_blocked
 def admin_catalog_refresh():
     """Botão manual "Atualizar catálogo" em /admin/update — roda o MESMO fetch do
     refresh diário (spoolmandb_refresh.fetch_and_write), síncrono (~30s de teto).
@@ -285,6 +294,13 @@ def admin_catalog_refresh():
 @app.route("/admin/update/run", methods=["POST"])
 @admin_required
 def admin_update_run():
+    # demo_blocked não serve aqui: ele redireciona com flash, e o JS desta página
+    # lê a resposta como JSON (fetch()) — um redirect viraria um "falha ao iniciar"
+    # sem mensagem legível. Em vez disso, devolve o mesmo aviso como JSON/403, que
+    # o btnUpdate já sabe mostrar (ver "Falha ao iniciar a atualização" em
+    # templates/admin/update.html).
+    if DEMO_MODE:
+        return jsonify(ok=False, error=t("Função desabilitada na versão demonstrativa.")), 403
     # Mecanismo SEM privilégio: o app (não-root) apenas ESCREVE um flag em data/.
     # Um systemd .path unit (root) detecta o arquivo via inotify e dispara o oneshot
     # de update — instantâneo, sem o app ter qualquer poder de root.

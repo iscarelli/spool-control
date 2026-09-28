@@ -287,6 +287,9 @@ DEMO_MODE=0          # set to 1 to enable demo mode (see below)
 Restricts the instance for public demonstration:
 
 - Password changes, user creation/deletion, settings changes and backup restore are disabled
+- Brand logo upload/fetch, integration key regenerate/toggle, manual system update and manual
+  catalog refresh are disabled too — the daily automatic catalog refresh still runs
+- Disabled controls show as disabled (with a short note) instead of failing only after a click
 - An informative banner is shown on every page
 - Run `deploy/seed-demo-data.py` to populate the database with sample data
 - Use `deploy/reset-demo.sh` + `spool-demo-reset.timer` for automatic daily resets (pulls latest release, then reseeds)
