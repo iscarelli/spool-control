@@ -10,6 +10,17 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.40.0] — 2026-09-28
+
+### Added
+- **"Add more like this" for spools.** After buying more of a filament you already
+  have, a new button on the spool page (and a small copy icon on each row of the spool
+  list) opens the New Spool form pre-filled with that spool's filament, empty-spool
+  model or custom tare, nominal weight, location and price. Notes, weigh-ins and the
+  status are not copied and the purchase date stays today. Type how many you bought in
+  Quantity; after saving, the app still asks whether to add the new spools to the
+  label print queue.
+
 ## [1.39.4] — 2026-09-28
 
 ### Fixed
