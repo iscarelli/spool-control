@@ -4,8 +4,37 @@ com a rede sempre mockada), precedência das duas cópias e reload por mtime
 (filament_catalog), a rota manual /admin/catalog/refresh e a resiliência do
 caminho do cron (run_scheduled_refresh nunca levanta). Nenhum teste toca a rede."""
 import json
+import re
+import time
 
 import pytest
+
+
+def _stub_release_check(app_module, monkeypatch, changelog=""):
+    """Impede os testes que fazem GET /admin/update de tocar a rede do GitHub.
+
+    A página busca a tag mais recente (_latest_release_tag_via_web) e, se já
+    estiver atualizada, as notas do CHANGELOG da própria versão instalada
+    (current_release_notes -> _changelog_md) — ambas requests reais em
+    produção. Fixar o cache de release como "já verificado, já atualizado"
+    evita a primeira; stubar _changelog_md evita a segunda. Ver
+    docs/ARMADILHAS.md: sem isto, o teste passa isolado mas fica dependente
+    de rede/estado do GitHub (foi o que quebrou o CI na main quando a tag da
+    versão instalada passou a existir e seu CHANGELOG real continha "(auto)")."""
+    cur = app_module.current_version()
+    app_module._release_cache.update(tag=cur, ts=time.time(), ok=True)
+    app_module._current_notes_cache.update(version=None, notes="")
+    monkeypatch.setattr(app_module, "_changelog_md", lambda tag: changelog)
+
+
+def _catalog_last_update_row(html):
+    """Isola a linha "Última atualização" do card do catálogo em /admin/update,
+    para que um assert de "(auto)" não varra a página inteira — que também
+    renderiza notas de release (current_release_notes/cumulative_release_notes),
+    onde o texto pode aparecer por coincidência."""
+    m = re.search(r"Última atualização.*?</div>", html, re.S)
+    assert m, 'linha "Última atualização" não encontrada em /admin/update'
+    return m.group(0)
 
 
 # ── Transformação pura (build_snapshot) ─────────────────────────────────────
@@ -339,7 +368,8 @@ def test_admin_catalog_refresh_requires_login(client):
     assert resp.status_code in (302, 401, 403)
 
 
-def test_admin_update_page_shows_catalog_section(auth_client):
+def test_admin_update_page_shows_catalog_section(app_module, auth_client, monkeypatch):
+    _stub_release_check(app_module, monkeypatch)
     resp = auth_client.get("/admin/update")
     assert resp.status_code == 200
     assert b"catalog/refresh" in resp.data
@@ -347,21 +377,23 @@ def test_admin_update_page_shows_catalog_section(auth_client):
 
 # ── Rótulo "Última atualização" (auto) x manual, sem sufixo (v1.39.3) ───────
 
-def test_update_page_shows_auto_suffix_after_scheduled_refresh(auth_client, db, monkeypatch):
+def test_update_page_shows_auto_suffix_after_scheduled_refresh(app_module, auth_client, db, monkeypatch):
     import spoolmandb_refresh as r
     fil = [{"manufacturer": "Acme", "material": "PLA", "name": "Red", "color_hex": "ff0000", "diameter": 1.75}]
     monkeypatch.setattr(r, "_download_json", _fake_download(fil, []))
     assert r.run_scheduled_refresh(force=True) is not None
     assert db.get_setting("catalog_refresh_source") == "auto"
 
+    _stub_release_check(app_module, monkeypatch)
     resp = auth_client.get("/admin/update")
     assert resp.status_code == 200
-    assert "Última atualização".encode("utf-8") in resp.data
-    assert b"(auto)" in resp.data
-    assert "Última atualização automática".encode("utf-8") not in resp.data
+    html = resp.get_data(as_text=True)
+    row = _catalog_last_update_row(html)
+    assert "(auto)" in row
+    assert "Última atualização automática" not in row
 
 
-def test_update_page_shows_no_auto_suffix_after_manual_refresh(auth_client, db, monkeypatch):
+def test_update_page_shows_no_auto_suffix_after_manual_refresh(app_module, auth_client, db, monkeypatch):
     import routes.admin as admin_mod
     monkeypatch.setattr(
         admin_mod.spoolmandb_refresh, "fetch_and_write",
@@ -373,12 +405,48 @@ def test_update_page_shows_no_auto_suffix_after_manual_refresh(auth_client, db, 
     assert resp.status_code == 302
     assert db.get_setting("catalog_refresh_source") == "manual"
 
+    _stub_release_check(app_module, monkeypatch)
     resp = auth_client.get("/admin/update")
     assert resp.status_code == 200
-    assert b"(auto)" not in resp.data
+    html = resp.get_data(as_text=True)
+    row = _catalog_last_update_row(html)
+    assert "(auto)" not in row
 
 
-def test_update_page_still_shows_error_after_manual_failure(auth_client, db, monkeypatch):
+def test_update_page_no_auto_suffix_survives_real_release_notes_containing_auto(
+        app_module, auth_client, db, monkeypatch):
+    """Regressão do CI: current_release_notes() busca o CHANGELOG real da versão
+    instalada e essas notas podem legitimamente conter a palavra "(auto)" em
+    prosa (ex.: a própria entrada que introduziu este recurso). Sem escopar a
+    linha do catálogo, um assert `"(auto)" not in resp.data` pega esse falso
+    positivo assim que a tag existir — foi exatamente o que aconteceu na main."""
+    import routes.admin as admin_mod
+    monkeypatch.setattr(
+        admin_mod.spoolmandb_refresh, "fetch_and_write",
+        lambda dest, timeout=30, vendored=False: {
+            "fetched": "2026-09-27", "brands": 1, "materials": 1, "filaments": 1,
+        },
+    )
+    resp = auth_client.post("/admin/catalog/refresh")
+    assert resp.status_code == 302
+    assert db.get_setting("catalog_refresh_source") == "manual"
+
+    # Notas de release "reais" que citam "(auto)" fora da linha do catálogo.
+    cur = app_module.current_version()
+    _stub_release_check(
+        app_module, monkeypatch,
+        changelog=f"## [{cur}] — 2026-09-27\n### Added\n"
+                  "- catalog panel now marks the last update as (auto) when scheduled\n",
+    )
+    resp = auth_client.get("/admin/update")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "(auto)" in html                       # está na página (nas notas)...
+    row = _catalog_last_update_row(html)
+    assert "(auto)" not in row                     # ...mas não na linha do catálogo
+
+
+def test_update_page_still_shows_error_after_manual_failure(app_module, auth_client, db, monkeypatch):
     import routes.admin as admin_mod
 
     def boom(dest, timeout=30, vendored=False):
@@ -386,6 +454,7 @@ def test_update_page_still_shows_error_after_manual_failure(auth_client, db, mon
     monkeypatch.setattr(admin_mod.spoolmandb_refresh, "fetch_and_write", boom)
     auth_client.post("/admin/catalog/refresh")
 
+    _stub_release_check(app_module, monkeypatch)
     resp = auth_client.get("/admin/update")
     assert resp.status_code == 200
     assert "rede indisponível".encode("utf-8") in resp.data
