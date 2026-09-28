@@ -113,9 +113,9 @@
           </span>
         </div>
         <div class="d-flex justify-content-between align-items-center mb-3">
-          <span class="text-muted">{{ _('Última atualização automática') }}</span>
+          <span class="text-muted">{{ _('Última atualização') }}</span>
           <span class="fw-semibold">
-            {% if catalog_refresh_last_run %}{{ catalog_refresh_last_run | localdt }}
+            {% if catalog_refresh_last_run %}{{ catalog_refresh_last_run | localdt }}{% if catalog_refresh_source == 'auto' %} <span class="text-muted fw-normal">(auto)</span>{% endif %}
             {% else %}<span class="text-muted">{{ _('nunca') }}</span>{% endif %}
           </span>
         </div>

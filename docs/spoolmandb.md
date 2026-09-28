@@ -49,9 +49,10 @@ snapshot (dev script, cron diário, botão manual) — uma só fonte da lógica.
 `deploy/backup-cron.py` (rodado de hora em hora pelo `spool-backup.timer`, ver
 `docs/atualizacao.md`/`backup.py`) chama, depois do backup, `spoolmandb_refresh.
 run_scheduled_refresh()` — mesmo padrão do backup: no-op se já houve um refresh
-bem-sucedido HOJE (data local), tenta de novo na hora seguinte se a última tentativa
-falhou. Grava o resultado em `settings`: `catalog_refresh_last_run`,
-`catalog_refresh_result` (`ok`/`error`), `catalog_refresh_error`. Uma falha no
+bem-sucedido HOJE (data local, **qualquer origem** — ver abaixo), tenta de novo na
+hora seguinte se a última tentativa falhou. Grava o resultado em `settings`:
+`catalog_refresh_last_run`, `catalog_refresh_result` (`ok`/`error`),
+`catalog_refresh_error`, `catalog_refresh_source` (`auto`/`manual`). Uma falha no
 catálogo NUNCA afeta o backup e vice-versa (cada um roda no seu próprio try/except,
 redundante de propósito — ver comentário no topo de `deploy/backup-cron.py`).
 
@@ -60,9 +61,19 @@ redundante de propósito — ver comentário no topo de `deploy/backup-cron.py`)
 - **Botão "Atualizar catálogo agora"** em `/admin/update` (só admin) → POST
   `/admin/catalog/refresh` (`routes/admin.py`) → roda o MESMO `fetch_and_write`
   síncrono (teto de ~30s), grava em `data/spoolman_catalog.json` e nos mesmos campos
-  de `settings` do refresh automático. Sucesso ou falha vira flash na página, que
-  também mostra a data do snapshot em uso, a fonte (servidor/vendorado) e o
-  resultado/erro da última tentativa automática.
+  de `settings` do refresh automático, com `catalog_refresh_source = "manual"`.
+  Sucesso ou falha vira flash na página, que também mostra a data do snapshot em
+  uso, a fonte (servidor/vendorado) e o resultado/erro da última tentativa de
+  refresh (automática ou manual).
+- **A linha "Última atualização" na página é a do último refresh bem-sucedido, seja
+  ele qual for** — leva o sufixo `(auto)` só quando `catalog_refresh_source ==
+  "auto"`; um refresh manual não mostra sufixo. Antes da v1.39.3 o rótulo dizia
+  "Última atualização automática" mas também mudava com o botão manual — rótulo
+  enganoso, corrigido junto com a introdução de `catalog_refresh_source`.
+- **O gate diário (`already_refreshed_today`) é agnóstico à origem, de propósito:**
+  um refresh manual bem-sucedido também impede o cron de rodar de novo no mesmo
+  dia — o objetivo do gate é não bater no upstream mais de uma vez por dia,
+  independente de quem disparou o último refresh.
 - **Script de dev** (snapshot VENDORADO, committado):
   ```bash
   deploy/vendor-spoolmandb.sh      # baixa, transforma e regrava spoolman_catalog.json

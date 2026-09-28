@@ -73,7 +73,7 @@ _EN = {
     "no servidor":          "on the server",
     "vendorado no repositório": "vendored in the repository",
     "indisponível":         "unavailable",
-    "Última atualização automática": "Last automatic refresh",
+    "Última atualização":   "Last update",
     "nunca":                "never",
     "A última tentativa de atualizar o catálogo falhou.":
         "The last attempt to refresh the catalog failed.",
@@ -564,7 +564,7 @@ _ES = {
     "no servidor":          "en el servidor",
     "vendorado no repositório": "vendorado en el repositorio",
     "indisponível":         "no disponible",
-    "Última atualização automática": "Última actualización automática",
+    "Última atualização":   "Última actualización",
     "nunca":                "nunca",
     "A última tentativa de atualizar o catálogo falhou.":
         "El último intento de actualizar el catálogo falló.",

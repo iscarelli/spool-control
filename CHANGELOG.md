@@ -10,6 +10,16 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.39.3] — 2026-09-28
+
+### Fixed
+- **The catalog panel on Admin → Update now shows the last refresh, marked (auto)
+  when it was the daily automatic one.** The row used to read "Last automatic
+  refresh" but also changed after pressing the manual "Refresh catalog now"
+  button, which made the label misleading. It's now "Last update", with an
+  "(auto)" suffix only when the daily job produced it; a manual refresh shows
+  the plain timestamp.
+
 ## [1.39.2] — 2026-09-27
 
 ### Added

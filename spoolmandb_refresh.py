@@ -205,7 +205,12 @@ def _settings_module():
 
 def already_refreshed_today():
     """True se já houve um refresh BEM-SUCEDIDO hoje (data LOCAL) — mesmo padrão
-    de `backup._ran_ok_today()`, chave própria (`catalog_refresh_*`)."""
+    de `backup._ran_ok_today()`, chave própria (`catalog_refresh_*`).
+
+    Deliberadamente AGNÓSTICO à origem (`catalog_refresh_source`): um refresh
+    manual bem-sucedido também conta para o gate diário, porque o objetivo do
+    gate é não bater no upstream do SpoolmanDB mais de uma vez por dia — não
+    importa se foi o cron ou o botão do admin que já buscou os dados de hoje."""
     db = _settings_module()
     if db.get_setting("catalog_refresh_result", "") != "ok":
         return False
@@ -243,11 +248,13 @@ def run_scheduled_refresh(force=False, timeout=30):
         db.set_setting("catalog_refresh_last_run", now)
         db.set_setting("catalog_refresh_result", "error")
         db.set_setting("catalog_refresh_error", str(e))
+        db.set_setting("catalog_refresh_source", "auto")
         log.error("catalog_refresh.failed", exc_info=True)
         return None
 
     db.set_setting("catalog_refresh_last_run", now)
     db.set_setting("catalog_refresh_result", "ok")
     db.set_setting("catalog_refresh_error", "")
+    db.set_setting("catalog_refresh_source", "auto")
     log.info("catalog_refresh.ok", file=str(dest), **result)
     return result
