@@ -10,7 +10,7 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
-## [1.40.0] — 2026-09-28
+## [1.39.5] — 2026-09-28
 
 ### Added
 - **"Add more like this" for spools.** After buying more of a filament you already
