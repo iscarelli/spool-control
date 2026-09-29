@@ -147,3 +147,65 @@ def test_sorts(auth_client, db):
     assert m("sort=count_desc")[0] == "Preto"
     assert m("sort=newest") == ["Azul", "Preto", "Vermelho"]
     assert m("sort=color") == ["Azul", "Preto", "Vermelho"]
+
+
+# ── Resumo do estoque (rodapé) ───────────────────────────────────────────────
+import re
+
+
+def _summary(html):
+    m = re.search(r'id="invSummary".*?</table>', html, re.S)
+    assert m, "summary missing"
+    return m.group(0)
+
+
+def _kg_col(sm):
+    return [float(x) for x in re.findall(r'data-label="kg">([\d.]+)<', sm)]
+
+
+def test_sort_labels_renamed(auth_client, db):
+    _seed(db)
+    html = auth_client.get("/reports/inventory").get_data(as_text=True)
+    assert "Ordenar: menor estoque primeiro" in html
+    assert "Ordenar: maior estoque primeiro" in html
+    assert "menos restante" not in html and "mais restante" not in html
+    assert 'value="remaining_asc"' in html and 'value="remaining_desc"' in html
+
+
+def test_summary_per_spool_by_material(auth_client, db):
+    _seed(db)                                  # PLA: 500 + 250 + 1000 + 1000 (unweighed = nominal)
+    _spool(db, "#00ff00", material="PETG", nominal=1000.0)
+    sm = _summary(auth_client.get("/reports/inventory").get_data(as_text=True))
+    assert "<strong>3.8 kg</strong>" in sm
+    assert "5 rolos" in sm
+    assert sm.index("PLA") < sm.index("PETG")   # kg desc
+    assert _kg_col(sm) == [2.8, 1.0]
+
+
+def test_summary_grouped(auth_client, db):
+    _seed(db)
+    sm = _summary(auth_client.get("/reports/inventory?view=grouped").get_data(as_text=True))
+    assert _kg_col(sm) == [1.8, 1.0]
+    assert sm.index("Preta") < sm.index("Outra")
+    assert "Basic" in sm
+
+
+def test_summary_material_view(auth_client, db):
+    _seed(db)
+    _spool(db, "#000000", brand="Terceira")
+    sm = _summary(auth_client.get("/reports/inventory?view=material").get_data(as_text=True))
+    assert _kg_col(sm) == [2.8, 1.0]
+    assert "Preta, Terceira" in sm
+
+
+def test_summary_follows_query(auth_client, db):
+    _seed(db)
+    html = auth_client.get("/reports/inventory?q=Outra").get_data(as_text=True)
+    sm = _summary(html)
+    assert _kg_col(sm) == [1.0]
+    assert "1.0 kg" in html
+
+
+def test_summary_absent_when_empty(auth_client, db):
+    html = auth_client.get("/reports/inventory").get_data(as_text=True)
+    assert 'id="invSummary"' not in html

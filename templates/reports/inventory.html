@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Inventário') }} — Spool Control{% endblock %}
-{% from "_swatch.html" import donut %}
+{% from "_swatch.html" import donut, swatch %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h4 class="mb-0 fw-bold">{{ _('Inventário') }}
@@ -20,8 +20,8 @@
           aria-label="{{ _('Ordenar por') }}">
     <option value="name" {% if sort == 'name' %}selected{% endif %}>{{ _('Ordenar: material e marca') }}</option>
     <option value="color" {% if sort == 'color' %}selected{% endif %}>{{ _('Ordenar: cor') }}</option>
-    <option value="remaining_asc" {% if sort == 'remaining_asc' %}selected{% endif %}>{{ _('Ordenar: menos restante primeiro') }}</option>
-    <option value="remaining_desc" {% if sort == 'remaining_desc' %}selected{% endif %}>{{ _('Ordenar: mais restante primeiro') }}</option>
+    <option value="remaining_asc" {% if sort == 'remaining_asc' %}selected{% endif %}>{{ _('Ordenar: menor estoque primeiro') }}</option>
+    <option value="remaining_desc" {% if sort == 'remaining_desc' %}selected{% endif %}>{{ _('Ordenar: maior estoque primeiro') }}</option>
     {% if grouped %}<option value="count_desc" {% if sort == 'count_desc' %}selected{% endif %}>{{ _('Ordenar: mais rolos primeiro') }}</option>{% endif %}
     <option value="newest" {% if sort == 'newest' %}selected{% endif %}>{{ _('Ordenar: mais recentes primeiro') }}</option>
   </select>
@@ -107,6 +107,48 @@
   {% endfor %}
   {% endif %}
 </div>
+
+{# Resumo do estoque (servidor; reflete visão e busca, não o filtro instantâneo) #}
+{% if summary.total_count %}
+<div class="mt-4" id="invSummary">
+  <h5 class="fw-bold mb-2">{{ _('Resumo do estoque') }}</h5>
+  <p class="mb-2"><strong>{{ '%.1f'|format(summary.total_kg) }} kg</strong>
+    <span class="text-muted">· {{ _('{n} rolos').format(n=summary.total_count) }}</span></p>
+    <table class="table table-sm sc-stack" style="max-width:820px">
+    <thead><tr>
+      {% if view == 'grouped' %}
+      <th>{{ _('Marca') }}</th><th>{{ _('Material') }}</th><th>{{ _('Família') }}</th><th>{{ _('Cor') }}</th>
+      {% elif view == 'material' %}
+      <th>{{ _('Material') }}</th><th>{{ _('Cor') }}</th><th>{{ _('Marcas') }}</th>
+      {% else %}
+      <th>{{ _('Material') }}</th>
+      {% endif %}
+      <th class="text-end">{{ _('Rolos') }}</th><th class="text-end">kg</th><th class="text-end">%</th>
+    </tr></thead>
+    <tbody>
+    {% for r in summary.rows %}
+    <tr>
+      {% if view == 'grouped' %}
+      <td data-label="{{ _('Marca') }}">{{ r.brand }}</td>
+      <td data-label="{{ _('Material') }}">{{ r.material }}</td>
+      <td data-label="{{ _('Família') }}">{{ r.family }}</td>
+      <td data-label="{{ _('Cor') }}">{{ swatch(r.color_hex, r.translucent, hex2=r.color_hex2) }}{{ r.color_label }}</td>
+      {% elif view == 'material' %}
+      <td data-label="{{ _('Material') }}">{{ r.material }}</td>
+      <td data-label="{{ _('Cor') }}">{{ swatch(r.color_hex, r.translucent, hex2=r.color_hex2) }}{{ r.color_label }}</td>
+      <td data-label="{{ _('Marcas') }}">{{ r.brands_txt }}</td>
+      {% else %}
+      <td data-label="{{ _('Material') }}">{{ r.material }}</td>
+      {% endif %}
+      <td class="text-end" data-label="{{ _('Rolos') }}">{{ r.count }}</td>
+      <td class="text-end" data-label="kg">{{ '%.1f'|format(r.kg) }}</td>
+      <td class="text-end" data-label="%">{{ '%.0f'|format(r.share) }}%</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
 
 {# Modal do grupo #}
 <div class="modal fade" id="invGroupModal" tabindex="-1" aria-hidden="true">

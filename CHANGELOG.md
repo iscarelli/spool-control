@@ -10,6 +10,10 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.39.9] — 2026-09-28
+
+- The inventory report now ends with a stock summary: the total filament in stock (kg) and the number of spools, plus a table breaking it down by material (per-roll view) or by the groups of the current view (brand, material, family and color; or material and color across brands), biggest stock first, with each row's share of the total. It follows the current view and search, and unweighed rolls count at their nominal weight. The two stock sort options are now called "Sort: lowest stock first" and "Sort: highest stock first".
+
 ## [1.39.8] — 2026-09-28
 
 - The inventory report now shows each roll's color name on every tile (the name you gave the filament, or the basic color family when there is none), in the search text and in the detail dialogs. There is a new view, "Group by material and color", that merges the same material and color across brands into one tile (for example all black PETG), listing the brands and the total remaining. A new sort selector orders the inventory by material and brand, color, least or most remaining, number of rolls (grouped views) or newest first; the choice is kept together with the view and the search.

@@ -46,14 +46,41 @@ def report_inventory():
     if view:
         groups = _sort_inventory(_group_inventory(items, view), sort, True)
         return render_template("reports/inventory.html", groups=groups, items=items,
-                               q=q, grouped=True, view=view, sort=sort)
+                               q=q, grouped=True, view=view, sort=sort,
+                               summary=_inventory_summary(items, groups, view))
     # count_desc nao faz sentido por rolo (todo rolo conta 1): cai em "name" e a
     # opcao nem aparece no seletor.
     if sort == "count_desc":
         sort = "name"
     items = _sort_inventory(items, sort, False)
     return render_template("reports/inventory.html", items=items, q=q, grouped=False,
-                           view="", sort=sort)
+                           view="", sort=sort,
+                           summary=_inventory_summary(items, None, ""))
+
+
+def _inventory_summary(items, groups, view):
+    """Resumo do estoque no rodape: total (kg, rolos) + linhas por material (visao
+    por rolo) ou pelos grupos da visao atual, ordenadas por kg decrescente.
+    Rolo nao pesado conta como nominal (`remaining_g`)."""
+    total_g = sum(s["remaining_g"] for s in items)
+    if view:
+        rows = [{"brand": g["brand"], "material": g["material"], "family": g["family"],
+                 "color_label": g["color_label"], "brands_txt": g["brands_txt"],
+                 "color_hex": g["color_hex"], "color_hex2": g["color_hex2"],
+                 "translucent": g["translucent"], "count": g["count"],
+                 "grams": g["remaining_g"]} for g in groups]
+    else:
+        by_mat = {}
+        for s in items:
+            r = by_mat.setdefault(s["material"], {"material": s["material"], "count": 0, "grams": 0.0})
+            r["count"] += 1
+            r["grams"] += s["remaining_g"]
+        rows = list(by_mat.values())
+    for r in rows:
+        r["kg"] = r["grams"] / 1000
+        r["share"] = r["grams"] / total_g * 100 if total_g > 0 else 0
+    rows.sort(key=lambda r: -r["grams"])
+    return {"total_kg": total_g / 1000, "total_count": len(items), "rows": rows}
 
 
 def _sort_inventory(rows, sort, grouped):
