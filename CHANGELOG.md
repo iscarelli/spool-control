@@ -10,6 +10,12 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.39.11] — 2026-09-28
+
+### Fixed
+
+- Color squares (lists, search, label queue, inventory, spool form) now have an outline that contrasts with the background in both themes, so a black filament no longer disappears on the dark theme.
+
 ## [1.39.10] — 2026-09-28
 
 ### Fixed

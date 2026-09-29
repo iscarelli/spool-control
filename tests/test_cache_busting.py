@@ -125,3 +125,11 @@ def test_no_store_endpoint_stays_no_store(auth_client):
     resp = auth_client.get("/admin/integrations/homeassistant/key")
     assert resp.status_code == 200
     assert resp.headers.get("Cache-Control") == "no-store"
+
+
+def test_swatch_border_uses_contrast_token():
+    import re
+    from pathlib import Path
+    css = (Path(__file__).resolve().parent.parent / "static" / "spool.css").read_text(encoding="utf-8")
+    rule = re.search(r"\n\.sc-swatch \{(.*?)\}", css, re.S).group(1)
+    assert "border: 1px solid var(--sc-donut-outline)" in rule
