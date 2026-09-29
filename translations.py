@@ -1310,3 +1310,13 @@ def get_translator(lang: str):
         return table.get(s, s)
 
     return _
+
+# Inventário agrupado
+_EN["Visualização"] = "View"
+_EN["Cada rolo"] = "Each spool"
+_EN["Agrupar por marca, material e cor"] = "Group by brand, material and color"
+_EN["{g} grupos · {n} rolos"] = "{g} groups · {n} spools"
+_ES["Visualização"] = "Vista"
+_ES["Cada rolo"] = "Cada bobina"
+_ES["Agrupar por marca, material e cor"] = "Agrupar por marca, material y color"
+_ES["{g} grupos · {n} rolos"] = "{g} grupos · {n} bobinas"

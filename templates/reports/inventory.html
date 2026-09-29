@@ -3,13 +3,52 @@
 {% from "_swatch.html" import donut %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <h4 class="mb-0 fw-bold">{{ _('Inventário') }} <span class="text-muted fs-6">({{ items | length }})</span></h4>
+  <h4 class="mb-0 fw-bold">{{ _('Inventário') }}
+    <span class="text-muted fs-6">({% if grouped %}{{ _('{g} grupos · {n} rolos').format(g=groups | length, n=items | length) }}{% else %}{{ items | length }}{% endif %})</span></h4>
 </div>
 
-<input class="form-control form-control-sm mb-3" type="search" id="invFilter"
-       placeholder="{{ _('Buscar...') }}" autocomplete="off" style="max-width:340px">
+<form method="get" class="d-flex flex-wrap gap-2 mb-3" id="invForm">
+  <input class="form-control form-control-sm" type="search" id="invFilter" name="q" value="{{ q }}"
+         placeholder="{{ _('Buscar...') }}" autocomplete="off" style="max-width:340px">
+  <select class="form-select form-select-sm" id="invView" name="view" style="max-width:300px"
+          aria-label="{{ _('Visualização') }}">
+    <option value="" {% if not grouped %}selected{% endif %}>{{ _('Cada rolo') }}</option>
+    <option value="grouped" {% if grouped %}selected{% endif %}>{{ _('Agrupar por marca, material e cor') }}</option>
+  </select>
+</form>
 
 <div class="d-flex flex-wrap gap-2" id="invGrid">
+  {% if grouped %}
+  {% for g in groups %}
+  {% set fill = g.color_hex if g.color_hex else '#6c757d' %}
+  {% if g.remaining_g >= 1000 %}
+    {% set rem_txt = ('%.1f'|format(g.remaining_g / 1000)) ~ ' kg' %}
+  {% else %}
+    {% set rem_txt = (g.remaining_g|int|string) ~ ' g' %}
+  {% endif %}
+  <div class="sc-inv-tile sc-inv-group text-center position-relative" role="button" tabindex="0"
+       data-name="{{ g.brand }} {{ g.material }} {{ g.family }} {{ g.locations }}"
+       data-brand="{{ g.brand }}" data-material="{{ g.material }}" data-family="{{ g.family }}">
+    <span class="badge bg-dark position-absolute top-0 end-0 sc-inv-count">{{ g.count }}×</span>
+    <div class="d-block mx-auto" style="width:46px">
+      {{ donut(g.pct, fill, translucent=g.translucent, size=46) }}
+    </div>
+    <div class="small fw-semibold text-truncate sc-inv-name">{{ g.brand }}</div>
+    <div class="text-muted text-truncate sc-inv-sub">{{ g.material }}</div>
+    <div class="text-muted text-truncate sc-inv-sub">{{ g.family }}</div>
+    <div class="text-muted text-truncate sc-inv-sub sc-inv-total">{{ rem_txt }}</div>
+    <ul class="d-none sc-inv-members">
+      {% for s in g.spools %}
+      <li><a href="{{ url_for('spools_detail', spool_id=s.id) }}">SP-{{ '%04d'|format(s.id) }}</a>
+        <span class="text-muted ms-2">{% if s.current_net_g is not none %}{{ s.current_net_g|int }} g / {{ s.nominal_weight_g|int }} g{% else %}{{ s.nominal_weight_g|int }} g · {{ _('não pesado') }}{% endif %}</span>
+        <span class="text-muted ms-2">{{ s.location or '—' }}</span></li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% else %}
+  <div class="text-muted py-4">{{ _('Nenhum spool encontrado') }}</div>
+  {% endfor %}
+  {% else %}
   {% for s in items %}
   {% if s.current_net_g is not none and s.nominal_weight_g > 0 %}
     {% set pct = [(s.current_net_g / s.nominal_weight_g * 100) | round(1), 100] | min %}
@@ -44,6 +83,23 @@
   {% else %}
   <div class="text-muted py-4">{{ _('Nenhum spool encontrado') }}</div>
   {% endfor %}
+  {% endif %}
+</div>
+
+{# Modal do grupo #}
+<div class="modal fade" id="invGroupModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="invGroupTitle"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-muted small mb-2" id="invGroupSub"></div>
+        <ul class="list-unstyled mb-0" id="invGroupList"></ul>
+      </div>
+    </div>
+  </div>
 </div>
 
 {# Modal de detalhe do rolo #}
@@ -79,6 +135,8 @@
                       stroke="none" transform="rotate(-90 25 25)" class="donut-checker"/>
               <circle id="invArc" cx="25" cy="25" r="15.9155" fill="none" stroke-width="15"
                       transform="rotate(-90 25 25)" class="donut-arc"/>
+              <circle cx="25" cy="25" r="23.42" fill="none" class="donut-outline" stroke-width="0.8"/>
+              <circle cx="25" cy="25" r="8.42" fill="none" class="donut-outline" stroke-width="0.8"/>
             </svg>
             <img id="invQr" alt="QR" class="mt-2 bg-white p-1 rounded" style="width:96px;height:96px">
           </div>
@@ -96,12 +154,36 @@
 {% block scripts %}
 <script nonce="{{ nonce }}">
 /* ── Filtro instantâneo dos tiles ──────────────────────────────────────────── */
-document.getElementById('invFilter').addEventListener('input', function () {
-  const q = this.value.toLowerCase();
+function applyInvFilter() {
+  const q = document.getElementById('invFilter').value.toLowerCase();
   document.querySelectorAll('#invGrid .sc-inv-tile').forEach(t => {
     t.style.display = t.dataset.name.toLowerCase().includes(q) ? '' : 'none';
   });
+}
+document.getElementById('invFilter').addEventListener('input', applyInvFilter);
+document.getElementById('invForm').addEventListener('submit', e => e.preventDefault());
+/* Troca de visão recarrega no servidor, preservando a busca */
+document.getElementById('invView').addEventListener('change', function () {
+  const u = new URL(window.location.href);
+  const q = document.getElementById('invFilter').value.trim();
+  u.search = '';
+  if (q) u.searchParams.set('q', q);
+  if (this.value) u.searchParams.set('view', this.value);
+  window.location.href = u.toString();
 });
+applyInvFilter();
+
+/* ── Modal do grupo (visão agrupada) ───────────────────────────────────────── */
+const invGroupModal = new bootstrap.Modal(document.getElementById('invGroupModal'));
+function openGroup(t) {
+  const d = t.dataset;
+  document.getElementById('invGroupTitle').textContent = d.brand;
+  document.getElementById('invGroupSub').textContent = d.material + ' · ' + d.family;
+  const list = document.getElementById('invGroupList');
+  list.replaceChildren();
+  t.querySelectorAll('.sc-inv-members li').forEach(li => list.appendChild(li.cloneNode(true)));
+  invGroupModal.show();
+}
 
 /* ── Modal de detalhe ──────────────────────────────────────────────────────── */
 const invModal = new bootstrap.Modal(document.getElementById('invModal'));
@@ -148,8 +230,9 @@ function openInv(t) {
   invModal.show();
 }
 document.querySelectorAll('#invGrid .sc-inv-tile').forEach(t => {
-  t.addEventListener('click', () => openInv(t));
-  t.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openInv(t); } });
+  const open = t.classList.contains('sc-inv-group') ? openGroup : openInv;
+  t.addEventListener('click', e => { if (!e.target.closest('a')) open(t); });
+  t.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(t); } });
 });
 </script>
 {% endblock %}

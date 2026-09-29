@@ -7,7 +7,9 @@
    parcial, em vez de uma cor sólida — um "Transparent" (#FFFFFF) some de
    Branco e ganha um padrão de transparência, com o tom (se houver) ainda
    visível por cima. Nenhum recurso externo; funciona nos dois temas via
-   tokens de `static/spool.css` (--sc-surface/--sc-border). #}
+   tokens de `static/spool.css` (--sc-surface/--sc-border).
+   Contorno fino nas bordas do anel (`.donut-outline`, preto no claro/branco no
+   escuro) para o rolo preto não sumir no tema escuro. #}
 
 {% macro swatch(hex, translucent=false, size=12) %}
 <span class="sc-swatch{% if translucent %} sc-swatch-translucent{% endif %} d-inline-block rounded me-1"
@@ -30,6 +32,8 @@
             stroke-dasharray="{{ pct }} {{ 100 - pct }}"
             transform="rotate(-90 25 25)"
             class="donut-arc{% if translucent %} donut-arc-translucent{% endif %}"/>
+    <circle cx="25" cy="25" r="23.42" fill="none" class="donut-outline" stroke-width="0.8"/>
+    <circle cx="25" cy="25" r="8.42" fill="none" class="donut-outline" stroke-width="0.8"/>
   </svg>
 </span>
 {% endmacro %}
