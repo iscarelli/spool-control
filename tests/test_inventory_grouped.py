@@ -175,7 +175,7 @@ def test_sort_labels_renamed(auth_client, db):
 def test_summary_per_spool_by_material(auth_client, db):
     _seed(db)                                  # PLA: 500 + 250 + 1000 + 1000 (unweighed = nominal)
     _spool(db, "#00ff00", material="PETG", nominal=1000.0)
-    sm = _summary(auth_client.get("/reports/inventory").get_data(as_text=True))
+    sm = _summary(auth_client.get("/reports/inventory?sort=remaining_desc").get_data(as_text=True))
     assert "<strong>3.8 kg</strong>" in sm
     assert "5 rolos" in sm
     assert sm.index("PLA") < sm.index("PETG")   # kg desc
@@ -184,7 +184,7 @@ def test_summary_per_spool_by_material(auth_client, db):
 
 def test_summary_grouped(auth_client, db):
     _seed(db)
-    sm = _summary(auth_client.get("/reports/inventory?view=grouped").get_data(as_text=True))
+    sm = _summary(auth_client.get("/reports/inventory?view=grouped&sort=remaining_desc").get_data(as_text=True))
     assert _kg_col(sm) == [1.8, 1.0]
     assert sm.index("Preta") < sm.index("Outra")
     assert "Basic" in sm
@@ -193,7 +193,7 @@ def test_summary_grouped(auth_client, db):
 def test_summary_material_view(auth_client, db):
     _seed(db)
     _spool(db, "#000000", brand="Terceira")
-    sm = _summary(auth_client.get("/reports/inventory?view=material").get_data(as_text=True))
+    sm = _summary(auth_client.get("/reports/inventory?view=material&sort=remaining_desc").get_data(as_text=True))
     assert _kg_col(sm) == [2.8, 1.0]
     assert "Preta, Terceira" in sm
 
@@ -209,3 +209,39 @@ def test_summary_follows_query(auth_client, db):
 def test_summary_absent_when_empty(auth_client, db):
     html = auth_client.get("/reports/inventory").get_data(as_text=True)
     assert 'id="invSummary"' not in html
+
+
+# ── Resumo segue a ordenacao escolhida ───────────────────────────────────────
+def _sum_order(client, qs, col="Material"):
+    sm = _summary(client.get("/reports/inventory?" + qs).get_data(as_text=True))
+    return re.findall(r'data-label="%s">([^<]*)<' % col, sm)
+
+
+def _seed_sort(db):
+    _mk(db, "Zeta", "ABS", "#ff0000", n=1, nominal=500.0)     # 0.5 kg, 1 rolo, id 1
+    _mk(db, "Alfa", "PLA", "#000000", n=3, nominal=1000.0)    # 3.0 kg, 3 rolos, ids 2-4
+    _mk(db, "Meio", "PETG", "#0000ff", n=2, nominal=1000.0)   # 2.0 kg, 2 rolos, ids 5-6
+    _mk(db, "Zeta", "TPU", "#00ff00", n=1, nominal=1000.0)    # 1.0 kg, 1 rolo, id 7
+
+
+def test_summary_per_spool_follows_sort(auth_client, db):
+    _seed_sort(db)
+    c = auth_client
+    assert _sum_order(c, "sort=name") == ["ABS", "PETG", "PLA", "TPU"]
+    assert _sum_order(c, "sort=color") == ["ABS", "PETG", "PLA", "TPU"]   # cai em name
+    assert _sum_order(c, "sort=remaining_asc") == ["ABS", "TPU", "PETG", "PLA"]
+    assert _sum_order(c, "sort=remaining_desc") == ["PLA", "PETG", "TPU", "ABS"]
+    assert _sum_order(c, "sort=newest") == ["TPU", "PETG", "PLA", "ABS"]
+    assert _sum_order(c, "sort=count_desc") == ["ABS", "PETG", "PLA", "TPU"]   # cai em name como os tiles
+
+
+def test_summary_grouped_follows_sort(auth_client, db):
+    _seed_sort(db)
+    c = auth_client
+    q = "view=grouped&"
+    assert _sum_order(c, q + "sort=name") == ["ABS", "PETG", "PLA", "TPU"]
+    assert _sum_order(c, q + "sort=color") == ["PETG", "PLA", "TPU", "ABS"]  # baldes: azul, preto, verde, vermelho
+    assert _sum_order(c, q + "sort=remaining_asc") == ["ABS", "TPU", "PETG", "PLA"]
+    assert _sum_order(c, q + "sort=remaining_desc") == ["PLA", "PETG", "TPU", "ABS"]
+    assert _sum_order(c, q + "sort=count_desc") == ["PLA", "PETG", "ABS", "TPU"]
+    assert _sum_order(c, q + "sort=newest") == ["TPU", "PETG", "PLA", "ABS"]

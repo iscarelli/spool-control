@@ -10,6 +10,12 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.39.10] — 2026-09-28
+
+### Fixed
+
+- The stock summary at the end of the inventory report now follows the selected sort, like the tiles above it, instead of always listing the biggest stock first. In the per-roll view, which summarizes by material only, sorting by color falls back to material order.
+
 ## [1.39.9] — 2026-09-28
 
 - The inventory report now ends with a stock summary: the total filament in stock (kg) and the number of spools, plus a table breaking it down by material (per-roll view) or by the groups of the current view (brand, material, family and color; or material and color across brands), biggest stock first, with each row's share of the total. It follows the current view and search, and unweighed rolls count at their nominal weight. The two stock sort options are now called "Sort: lowest stock first" and "Sort: highest stock first".
