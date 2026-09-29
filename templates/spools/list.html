@@ -2,63 +2,15 @@
 {% block title %}{{ _('Spools') }} — Spool Control{% endblock %}
 {% from "_swatch.html" import donut, swatch %}
 {% block content %}
-
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-  <h4 class="mb-0 fw-bold">
-    {{ _('Spools') }}
-    {% if not active_only %}<span class="badge bg-secondary fs-6 ms-1">{{ _('todos') }}</span>{% endif %}
-    {% if color is defined and color %}<span class="badge bg-secondary fs-6 ms-1">{{ _(color) }}</span>{% endif %}
-  </h4>
-  <div class="d-flex flex-wrap gap-2 align-items-center">
-    <input class="form-control form-control-sm" type="search" id="filterInput"
-           data-filter-for="#spoolTable"
-           placeholder="{{ _('Filtrar...') }}" value="{{ q or '' }}" style="min-width:160px;height:2rem" autocomplete="off">
-    {% if active_only %}
-    <a href="{{ url_for('spools_list') }}?all=1" class="btn btn-sm btn-outline-secondary text-nowrap d-inline-flex align-items-center" style="height:2rem">{{ _('Ver finalizados') }}</a>
-    {% else %}
-    <a href="{{ url_for('spools_list') }}" class="btn btn-sm btn-outline-secondary text-nowrap d-inline-flex align-items-center" style="height:2rem">{{ _('Só ativos') }}</a>
-    {% endif %}
-    <button class="btn btn-sm btn-outline-warning text-nowrap d-inline-flex align-items-center" id="markAllBtn" style="height:2rem">
-      <i class="bi bi-printer-fill me-1"></i>{{ _('Todos') }}
-    </button>
-    {% if label_queue_count > 0 %}
-    <a href="{{ url_for('label_queue') }}" class="btn btn-sm btn-primary text-nowrap d-inline-flex align-items-center" style="height:2rem"
-       title="{{ _('Fila de Etiquetas') }}">
-      <i class="bi bi-printer me-1"></i>{{ _('Imprimir') }} ({{ label_queue_count }})
-    </a>
-    {% endif %}
-    {% if can_write %}
-    <a href="{{ url_for('spools_new') }}" class="btn btn-primary btn-sm rounded-pill px-3 d-inline-flex flex-column align-items-center justify-content-center" style="height:2rem;padding-top:0;padding-bottom:0;gap:1px">
-      <i class="bi bi-plus-circle-fill" style="font-size:.75rem;line-height:1"></i>
-      <span style="font-size:.75rem;font-weight:600;letter-spacing:.02em;line-height:1">{{ _('Spool') }}</span>
-    </a>
-    {% endif %}
-  </div>
-</div>
-<div class="card">
-  <div class="table-responsive">
-    <table class="table table-hover mb-0 sc-stack" id="spoolTable" data-sortable>
-      <thead class="table-dark">
-        <tr>
-          <th style="width:44px"></th>
-          <th data-sort="num">ID</th>
-          <th data-sort="text">{{ _('Material') }}</th>
-          <th data-sort="text">{{ _('Cor') }}</th>
-          <th data-sort="text">{{ _('Marca / Família') }}</th>
-          <th data-sort="text">{{ _('Local') }}</th>
-          <th data-sort="num">{{ _('Peso Atual') }}</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for s in spools %}
+{% macro spool_row(s, child=False) %}
         {% if s.current_net_g is not none and s.nominal_weight_g > 0 %}
           {% set pct = [(s.current_net_g / s.nominal_weight_g * 100)|round(1), 100]|min %}
         {% else %}
           {% set pct = 100 %}
         {% endif %}
         {% set fill = s.color_hex if s.color_hex else '#6c757d' %}
-        <tr class="spool-row {% if not s.active %}table-secondary{% endif %}"
+        <tr class="spool-row {% if child %}sc-group-child d-none {% endif %}{% if not s.active %}table-secondary{% endif %}"
+            {% if child %}data-group-child="1"{% endif %}
             style="cursor:pointer"
             data-href="{{ url_for('spools_detail', spool_id=s.id) }}"
             data-spool-id="{{ s.id }}"
@@ -118,10 +70,101 @@
             {% endif %}
           </td>
         </tr>
+{% endmacro %}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <h4 class="mb-0 fw-bold">
+    {{ _('Spools') }}
+    {% if not active_only %}<span class="badge bg-secondary fs-6 ms-1">{{ _('todos') }}</span>{% endif %}
+    {% if color is defined and color %}<span class="badge bg-secondary fs-6 ms-1">{{ _(color) }}</span>{% endif %}
+    <small class="text-muted fw-normal fs-6 ms-1">{{ _('{n} rolos').format(n=spools|length) }}</small>
+  </h4>
+  <div class="d-flex flex-wrap gap-2 align-items-center">
+    <input class="form-control form-control-sm" type="search" id="filterInput"
+           data-filter-for="#spoolTable"
+           placeholder="{{ _('Filtrar...') }}" value="{{ q or '' }}" style="min-width:160px;height:2rem" autocomplete="off">
+    <a href="{{ group_toggle_url }}" class="btn btn-sm text-nowrap d-inline-flex align-items-center {{ 'btn-secondary' if grouped else 'btn-outline-secondary' }}" style="height:2rem"
+       aria-pressed="{{ 'true' if grouped else 'false' }}" id="groupToggle"><i class="bi bi-collection me-1"></i>{{ _('Agrupar') }}</a>
+    {% if active_only %}
+    <a href="{{ url_for('spools_list') }}?all=1" class="btn btn-sm btn-outline-secondary text-nowrap d-inline-flex align-items-center" style="height:2rem">{{ _('Ver finalizados') }}</a>
+    {% else %}
+    <a href="{{ url_for('spools_list') }}" class="btn btn-sm btn-outline-secondary text-nowrap d-inline-flex align-items-center" style="height:2rem">{{ _('Só ativos') }}</a>
+    {% endif %}
+    <button class="btn btn-sm btn-outline-warning text-nowrap d-inline-flex align-items-center" id="markAllBtn" style="height:2rem">
+      <i class="bi bi-printer-fill me-1"></i>{{ _('Todos') }}
+    </button>
+    {% if label_queue_count > 0 %}
+    <a href="{{ url_for('label_queue') }}" class="btn btn-sm btn-primary text-nowrap d-inline-flex align-items-center" style="height:2rem"
+       title="{{ _('Fila de Etiquetas') }}">
+      <i class="bi bi-printer me-1"></i>{{ _('Imprimir') }} ({{ label_queue_count }})
+    </a>
+    {% endif %}
+    {% if can_write %}
+    <a href="{{ url_for('spools_new') }}" class="btn btn-primary btn-sm rounded-pill px-3 d-inline-flex flex-column align-items-center justify-content-center" style="height:2rem;padding-top:0;padding-bottom:0;gap:1px">
+      <i class="bi bi-plus-circle-fill" style="font-size:.75rem;line-height:1"></i>
+      <span style="font-size:.75rem;font-weight:600;letter-spacing:.02em;line-height:1">{{ _('Spool') }}</span>
+    </a>
+    {% endif %}
+  </div>
+</div>
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0 sc-stack" id="spoolTable" data-sortable{% if grouped %} data-grouped{% endif %}>
+      <thead class="table-dark">
+        <tr>
+          <th style="width:44px"></th>
+          <th data-sort="num">ID</th>
+          <th data-sort="text">{{ _('Material') }}</th>
+          <th data-sort="text">{{ _('Cor') }}</th>
+          <th data-sort="text">{{ _('Marca / Família') }}</th>
+          <th data-sort="text">{{ _('Local') }}</th>
+          <th data-sort="num">{{ _('Peso Atual') }}</th>
+          <th></th>
+        </tr>
+      </thead>
+      {% if grouped %}
+        {% for g in groups %}
+        <tbody class="sc-group">
+        {% if g.spools|length > 1 %}
+        {% set s0 = g.spools[0] %}
+        {% set fill = s0.color_hex if s0.color_hex else '#6c757d' %}
+        {% set locs = g.spools|map(attribute='location')|unique|list %}
+        <tr class="sc-group-row" role="button" tabindex="0" aria-expanded="false"
+            style="cursor:pointer"
+            aria-label="{{ _('Mostrar rolos do grupo') }}">
+          <td class="text-center align-middle sc-stack-head" style="width:44px;padding:4px">
+            {{ donut(100, fill, fill2=s0.color_hex2, translucent=s0.translucent, spool_id=s0.id) }}
+          </td>
+          <td class="fw-bold sc-stack-head text-nowrap">
+            <i class="bi bi-chevron-right sc-group-chevron me-1"></i><span class="badge sc-group-count">{{ g.spools|length }}×</span>
+          </td>
+          <td data-label="{{ _('Material') }}"><span class="badge bg-secondary">{{ s0.material }}</span></td>
+          <td data-label="{{ _('Cor') }}">
+            {{ swatch(s0.color_hex, translucent=s0.translucent, hex2=s0.color_hex2) }}{{ s0.color_display or '—' }}
+          </td>
+          <td data-label="{{ _('Marca / Família') }}">{{ s0.brand }} / {{ s0.family }}</td>
+          <td data-label="{{ _('Local') }}">{% if locs|length == 1 and locs[0] %}{{ locs[0] }}{% else %}—{% endif %}</td>
+          <td class="weight-cell" data-label="{{ _('Peso Atual') }}"><span class="text-muted">{{ s0.nominal_weight_g|int }}g</span></td>
+          <td class="sc-stack-actions"></td>
+        </tr>
+        {% for s in g.spools %}{{ spool_row(s, child=True) }}{% endfor %}
+        {% else %}
+        {{ spool_row(g.spools[0]) }}
+        {% endif %}
+        </tbody>
+        {% endfor %}
+        {% if not groups %}
+        <tbody><tr data-no-result><td colspan="8" class="text-center text-muted py-4">{{ _('Nenhum spool encontrado') }}</td></tr></tbody>
+        {% endif %}
+      {% else %}
+      <tbody>
+        {% for s in spools %}
+        {{ spool_row(s) }}
         {% else %}
         <tr data-no-result><td colspan="8" class="text-center text-muted py-4">{{ _('Nenhum spool encontrado') }}</td></tr>
         {% endfor %}
       </tbody>
+      {% endif %}
     </table>
   </div>
 </div>
@@ -194,7 +237,7 @@ const _markBtn  = document.getElementById('markAllBtn');
 function _visibleSpoolIds() {
   const ids = [];
   document.querySelectorAll('#spoolTable tbody tr[data-spool-id]').forEach(row => {
-    if (row.style.display === 'none') return;
+    if (row.style.display === 'none' || row.closest('tbody').style.display === 'none') return;
     ids.push(parseInt(row.dataset.spoolId));
   });
   return ids;

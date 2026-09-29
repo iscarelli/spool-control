@@ -504,6 +504,9 @@ h1, h2, h3, h4, h5, h6 { letter-spacing: -0.02em; }
 }
 .sc-inv-tile:hover { background: var(--sc-accent-glow); transform: translateY(-1px); }
 .sc-inv-name { max-width: 80px; margin: 4px auto 0; font-size: .72rem; line-height: 1.1; }
+.sc-group-count { font-size: .75rem; background: var(--sc-accent) !important; color: #000; }
+.sc-group-chevron { transition: transform 150ms; }
+.sc-group-row[aria-expanded="true"] .sc-group-chevron { transform: rotate(90deg); }
 .sc-inv-count { font-size: .68rem; margin: 3px; background: var(--sc-accent) !important; color: #000; }
 .sc-inv-total { font-weight: 600; }
 .sc-inv-sub  { max-width: 80px; margin: 0 auto; font-size: .66rem; line-height: 1.15; }

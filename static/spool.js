@@ -39,6 +39,16 @@ document.querySelectorAll('[data-filter-for]').forEach(input => {
   input.addEventListener('input', () => {
     const q = input.value.toLowerCase();
     let visible = 0;
+    if (table.hasAttribute('data-grouped')) {
+      // Modo agrupado: cada <tbody> é uma unidade (grupo + filhos); casa se qualquer linha casar.
+      table.querySelectorAll('tbody.sc-group').forEach(tb => {
+        const match = tb.textContent.toLowerCase().includes(q);
+        tb.style.display = match ? '' : 'none';
+        if (match) visible++;
+      });
+      if (noResult) noResult.closest('tbody').style.display = visible === 0 ? '' : 'none';
+      return;
+    }
     table.querySelectorAll('tbody tr:not([data-no-result])').forEach(row => {
       const match = row.textContent.toLowerCase().includes(q);
       row.style.display = match ? '' : 'none';
@@ -72,6 +82,21 @@ document.querySelectorAll('table[data-sortable]').forEach(table => {
       const colIndex = th.cellIndex;
       const type = th.dataset.sort; // "text" | "num" | "pct"
       const tbody = table.querySelector('tbody');
+      if (table.hasAttribute('data-grouped')) {
+        // Modo agrupado: ordena os <tbody> pela primeira linha; filhos acompanham o grupo.
+        const units = Array.from(table.querySelectorAll('tbody.sc-group'));
+        const key = tb => (tb.rows[0].cells[colIndex]?.textContent || '').trim();
+        units.sort((a, b) => {
+          const av = key(a), bv = key(b);
+          const cmp = (type === 'num' || type === 'pct')
+            ? (parseFloat(av) || 0) - (parseFloat(bv) || 0)
+            : av.localeCompare(bv, 'pt-BR', { sensitivity: 'base' });
+          return asc ? cmp : -cmp;
+        });
+        const anchor = table.querySelector('tbody:not(.sc-group)');
+        units.forEach(u => table.insertBefore(u, anchor));
+        return;
+      }
       const rows = Array.from(tbody.querySelectorAll('tr')).filter(r => r.cells.length > 1);
 
       rows.sort((a, b) => {
@@ -87,5 +112,20 @@ document.querySelectorAll('table[data-sortable]').forEach(table => {
       });
       rows.forEach(r => tbody.appendChild(r));
     });
+  });
+});
+
+/* ── Grupo expansível na lista de rolos (Agrupar) ─────────────────────── */
+document.querySelectorAll('tr.sc-group-row').forEach(head => {
+  const toggle = () => {
+    const open = head.getAttribute('aria-expanded') !== 'true';
+    head.setAttribute('aria-expanded', open ? 'true' : 'false');
+    head.closest('tbody').querySelectorAll('tr[data-group-child]').forEach(r => {
+      r.classList.toggle('d-none', !open);
+    });
+  };
+  head.addEventListener('click', toggle);
+  head.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
   });
 });
