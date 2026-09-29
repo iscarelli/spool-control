@@ -2,7 +2,7 @@
 estoque, histórico de pesagens e histórico de consumo)."""
 from flask import render_template, request
 import database as db
-from app import app, login_required
+from app import app, login_required, t
 
 
 @app.route("/reports/stats")
@@ -11,44 +11,110 @@ def report_stats():
     return render_template("reports/stats.html", stats=db.stats_counts())
 
 
+INV_VIEWS = ("", "grouped", "material")
+INV_SORTS = ("name", "color", "remaining_asc", "remaining_desc", "count_desc", "newest")
+
+
+def _enrich_inventory(items):
+    """Dicts com nome de cor (color_name ou balde do hexa, como em routes/spools.py),
+    baldes das duas cores e gramas restantes (não pesado = nominal)."""
+    out = []
+    for r in items:
+        d = dict(r)
+        d["bucket"] = db.classify_color(d.get("color_hex")) or ""
+        d["bucket2"] = db.classify_color(d.get("color_hex2")) or ""
+        name = (d.get("color_name") or "").strip()
+        d["color_label"] = name or " / ".join(t(b) for b in (d["bucket"], d["bucket2"]) if b)
+        nominal = d["nominal_weight_g"] or 0
+        net = d["current_net_g"]
+        d["remaining_g"] = net if net is not None else nominal
+        out.append(d)
+    return out
+
+
 @app.route("/reports/inventory")
 @login_required
 def report_inventory():
     q = request.args.get("q", "").strip()
-    items = db.list_inventory(q or None)
-    if request.args.get("view") == "grouped":
-        groups = _group_inventory(items)
+    view = request.args.get("view", "")
+    if view not in INV_VIEWS:
+        view = ""
+    sort = request.args.get("sort", "name")
+    if sort not in INV_SORTS:
+        sort = "name"
+    items = _enrich_inventory(db.list_inventory(q or None))
+    if view:
+        groups = _sort_inventory(_group_inventory(items, view), sort, True)
         return render_template("reports/inventory.html", groups=groups, items=items,
-                               q=q, grouped=True)
-    return render_template("reports/inventory.html", items=items, q=q, grouped=False)
+                               q=q, grouped=True, view=view, sort=sort)
+    # count_desc nao faz sentido por rolo (todo rolo conta 1): cai em "name" e a
+    # opcao nem aparece no seletor.
+    if sort == "count_desc":
+        sort = "name"
+    items = _sort_inventory(items, sort, False)
+    return render_template("reports/inventory.html", items=items, q=q, grouped=False,
+                           view="", sort=sort)
 
 
-def _group_inventory(items):
-    """Agrupa os spools ativos por (marca, material, família, cor, translúcido).
+def _sort_inventory(rows, sort, grouped):
+    """Ordena spools (grouped=False) ou grupos (True). `rows` ja vem na ordem
+    material, marca, familia, id, e sorted() e estavel — o desempate e o "name"."""
+    if sort == "color":
+        rows = sorted(rows, key=lambda r: ((r["bucket"] or "￿"), r["bucket2"], r["material"].lower(),
+                                           r["brand"].lower()))
+    elif sort == "remaining_asc":
+        rows = sorted(rows, key=lambda r: r["remaining_g"])
+    elif sort == "remaining_desc":
+        rows = sorted(rows, key=lambda r: -r["remaining_g"])
+    elif sort == "count_desc" and grouped:
+        rows = sorted(rows, key=lambda r: -r["count"])
+    elif sort == "newest":
+        rows = sorted(rows, key=(lambda r: -r["max_id"]) if grouped else (lambda r: -r["id"]))
+    return rows
 
-    Regra do app: rolo não pesado conta como CHEIO (= nominal). Mantém a ordem de
-    `list_inventory` (material, marca, família). Devolve dicts prontos p/ o template."""
+
+def _group_inventory(items, view="grouped"):
+    """Agrupa os spools ativos. view="grouped": (marca, material, familia, cor,
+    translucido). view="material": junta marcas — (material, balde da cor 1, balde
+    da cor 2, translucido).
+
+    Regra do app: rolo nao pesado conta como CHEIO (= nominal). Mantem a ordem de
+    `list_inventory` (material, marca, familia). Aceita Rows ou dicts de
+    `_enrich_inventory`. Devolve dicts prontos p/ o template."""
+    if items and "bucket" not in items[0].keys():
+        items = _enrich_inventory(items)
+    by_material = view == "material"
     groups = {}
     for s in items:
-        key = (s["brand"], s["material"], s["family"], s["color_hex"], s["color_hex2"], bool(s["translucent"]))
+        tr = bool(s["translucent"])
+        if by_material:
+            key = (s["material"], s["bucket"], s["bucket2"], tr)
+        else:
+            key = (s["brand"], s["material"], s["family"], s["color_hex"], s["color_hex2"], tr)
         g = groups.get(key)
         if g is None:
             g = groups[key] = {
                 "brand": s["brand"], "material": s["material"], "family": s["family"],
-                "color_hex": s["color_hex"], "color_hex2": s["color_hex2"], "translucent": bool(s["translucent"]),
-                "spools": [], "remaining_g": 0.0, "nominal_g": 0.0,
+                "color_hex": s["color_hex"], "color_hex2": s["color_hex2"], "translucent": tr,
+                "color_label": s["color_label"], "bucket": s["bucket"], "bucket2": s["bucket2"],
+                "spools": [], "brands": [], "remaining_g": 0.0, "nominal_g": 0.0, "max_id": 0,
             }
         nominal = s["nominal_weight_g"] or 0
-        net = s["current_net_g"]
-        g["remaining_g"] += net if net is not None else nominal
+        g["remaining_g"] += s["remaining_g"]
         g["nominal_g"] += nominal
         g["spools"].append(s)
+        g["max_id"] = max(g["max_id"], s["id"])
+        if s["brand"] not in g["brands"]:
+            g["brands"].append(s["brand"])
     out = list(groups.values())
     for g in out:
         g["count"] = len(g["spools"])
         g["pct"] = (min(round(g["remaining_g"] / g["nominal_g"] * 100, 1), 100)
                     if g["nominal_g"] > 0 else 100)
         g["locations"] = " ".join(s["location"] or "" for s in g["spools"])
+        g["brands_txt"] = ", ".join(g["brands"])
+        if by_material:
+            g["color_label"] = " / ".join(t(b) for b in (g["bucket"], g["bucket2"]) if b)
     return out
 
 

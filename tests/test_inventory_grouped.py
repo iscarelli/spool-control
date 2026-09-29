@@ -53,3 +53,97 @@ def test_donut_outline(auth_client, db):
         html = auth_client.get(url).get_data(as_text=True)
         assert "donut-outline" in html
     assert "--sc-donut-outline" in auth_client.get("/static/spool.css").get_data(as_text=True)
+
+
+# ── v1.39.8: nome da cor, visao por material, ordenacao ───────────────────────
+import re
+
+
+def _mk(db, brand, material, hex_, name="", hex2="", family="Basic", nominal=1000.0, n=1):
+    fid = db.create_filament(brand, material, family, hex_, color_name=name, color_hex2=hex2)
+    return [db.create_spool(filament_id=fid, spool_model_id=None, custom_tare_g=200.0,
+                            nominal_weight_g=nominal, location="L", purchase_date="",
+                            purchase_price=None, notes="") for _ in range(n)]
+
+
+def _tiles(html):
+    """Textos de nome (marca ou material) de cada tile, na ordem da pagina."""
+    return re.findall(r'sc-inv-name">([^<]*)<', html)
+
+
+def test_color_name_on_spool_tiles(auth_client, db):
+    _mk(db, "Elegoo", "PLA", "#112233", name="Meu Azul Noite")
+    _mk(db, "Creality", "PLA", "#ff0000")  # sem nome: balde
+    html = auth_client.get("/reports/inventory").get_data(as_text=True)
+    assert "Meu Azul Noite" in html
+    assert 'sc-inv-sub">Vermelho<' in html
+    html = auth_client.get("/reports/inventory?view=grouped").get_data(as_text=True)
+    assert 'sc-inv-sub">Meu Azul Noite<' in html and 'sc-inv-sub">Vermelho<' in html
+    assert "Meu Azul Noite" in auth_client.get("/reports/inventory?q=Noite").get_data(as_text=True)
+
+
+def test_material_view_merges_brands(auth_client, db):
+    _mk(db, "Elegoo", "PETG", "#000000", n=1)
+    _mk(db, "Creality", "PETG", "#0a0a0a", n=1)
+    _mk(db, "Elegoo", "PETG", "#ff0000")
+    _mk(db, "Elegoo", "PETG", "#000000", hex2="#00aa00")  # dual: outro grupo
+    html = auth_client.get("/reports/inventory?view=material").get_data(as_text=True)
+    assert html.count("sc-inv-group text-center") == 3
+    assert "2×" in html
+    assert "Creality, Elegoo" in html
+    assert "Preto / Verde" in html
+    assert "4 rolos" in html and "3 grupos" in html
+    # modal lista marca + familia de cada rolo
+    assert "Creality · Basic" in html
+
+
+def test_material_view_q_and_translation(auth_client, db):
+    _mk(db, "Elegoo", "PETG", "#000000")
+    _mk(db, "Creality", "PLA", "#000000")
+    html = auth_client.get("/reports/inventory?view=material&q=PETG").get_data(as_text=True)
+    assert html.count("sc-inv-group text-center") == 1
+    auth_client.get("/lang/en")
+    html = auth_client.get("/reports/inventory?view=material").get_data(as_text=True)
+    assert 'sc-inv-sub">Black<' in html
+
+
+def test_sorts(auth_client, db):
+    a = _mk(db, "Aaa", "ABS", "#ff0000", n=1)[0]          # remaining 1000 (unweighed)
+    b = _mk(db, "Bbb", "PLA", "#000000", n=3)              # 3 spools
+    c = _mk(db, "Ccc", "PLA", "#0000ff", n=1)[0]
+    db.add_weight_reading(b[0], gross_weight_g=400, tare_weight_g=200)   # 200 g
+    db.add_weight_reading(c, gross_weight_g=700, tare_weight_g=200)      # 500 g
+
+    def names(qs):
+        return _tiles(auth_client.get("/reports/inventory?" + qs).get_data(as_text=True))
+
+    assert names("") == ["Aaa", "Bbb", "Bbb", "Bbb", "Ccc"]
+    assert names("sort=bogus") == names("")
+    assert names("view=bogus") == names("")
+    assert names("sort=color") == ["Ccc", "Bbb", "Bbb", "Bbb", "Aaa"]            # Azul, Preto, Vermelho
+    assert names("sort=remaining_asc") == ["Bbb", "Ccc", "Aaa", "Bbb", "Bbb"]    # 200, 500, 1000...
+    assert names("sort=remaining_desc") == ["Aaa", "Bbb", "Bbb", "Ccc", "Bbb"]
+    assert names("sort=newest") == ["Ccc", "Bbb", "Bbb", "Bbb", "Aaa"]
+    # count_desc nao existe por rolo: cai em "name" e a opcao some do seletor
+    assert names("sort=count_desc") == names("")
+    assert 'value="count_desc"' not in auth_client.get("/reports/inventory").get_data(as_text=True)
+
+    g = lambda qs: names("view=grouped&" + qs)   # Aaa 1000 g, Bbb 2200 g (3x), Ccc 500 g
+    assert g("sort=name") == ["Aaa", "Bbb", "Ccc"]
+    assert g("sort=count_desc")[0] == "Bbb"
+    assert g("sort=remaining_asc") == ["Ccc", "Aaa", "Bbb"]
+    assert g("sort=remaining_desc") == ["Bbb", "Aaa", "Ccc"]
+    assert g("sort=newest") == ["Ccc", "Bbb", "Aaa"]
+    assert g("sort=color") == ["Ccc", "Bbb", "Aaa"]
+    assert 'value="count_desc"' in auth_client.get("/reports/inventory?view=grouped").get_data(as_text=True)
+
+    # material: ABS vermelho 1000 g, PLA preto 2200 g, PLA azul 500 g
+    def m(qs):
+        h = auth_client.get("/reports/inventory?view=material&" + qs).get_data(as_text=True)
+        return re.findall(r'sc-inv-sub">(Vermelho|Preto|Azul)<', h)
+    assert m("sort=name") == ["Vermelho", "Preto", "Azul"]
+    assert m("sort=remaining_asc") == ["Azul", "Vermelho", "Preto"]
+    assert m("sort=remaining_desc") == ["Preto", "Vermelho", "Azul"]
+    assert m("sort=count_desc")[0] == "Preto"
+    assert m("sort=newest") == ["Azul", "Preto", "Vermelho"]
+    assert m("sort=color") == ["Azul", "Preto", "Vermelho"]
