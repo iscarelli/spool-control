@@ -10,6 +10,12 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.39.12] — 2026-09-28
+
+### Added
+
+- Spool list: an "Group" toggle collapses never-weighed spools of the same filament into one row with an "N×" count; click (or Enter/Space) expands it to the individual spools. Weighed spools stay one row each. The choice is remembered per session.
+
 ## [1.39.11] — 2026-09-28
 
 ### Fixed

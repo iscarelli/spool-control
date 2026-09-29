@@ -37,6 +37,23 @@ def _spools_with_color_display(spools):
     return out
 
 
+def _group_spools(spools):
+    """Agrupa rolos NUNCA pesados do mesmo filamento (e mesmo estado ativo) em um grupo;
+    rolo já pesado fica sozinho. Mantém a ordem da lista (primeira aparição do grupo)."""
+    groups, index = [], {}
+    for s in spools:
+        if s["last_weighed_at"] is None:
+            key = (s["filament_id"], s["active"])
+            if key in index:
+                index[key]["spools"].append(s)
+                continue
+            index[key] = {"spools": [s]}
+            groups.append(index[key])
+        else:
+            groups.append({"spools": [s]})
+    return groups
+
+
 @app.route("/spools")
 @login_required
 def spools_list():
@@ -55,7 +72,18 @@ def spools_list():
         spools = db.list_spools(active_only=active_only)
     # IDs recém-cadastrados em lote (?created=1,2,3) — a lista oferece a fila p/ todos.
     created_ids = [int(x) for x in request.args.get("created", "").split(",") if x.isdigit()]
-    return render_template("spools/list.html", spools=_spools_with_color_display(spools),
+    # "Agrupar": ?group=1/0 grava na sessão; sem parâmetro vale o valor da sessão (padrão desligado).
+    g_arg = request.args.get("group")
+    if g_arg in ("0", "1"):
+        session["spools_grouped"] = g_arg == "1"
+    grouped = bool(session.get("spools_grouped", False))
+    spools = _spools_with_color_display(spools)
+    groups = _group_spools(spools) if grouped else []
+    keep = {k: v for k, v in (("all", request.args.get("all")), ("q", q), ("color", color),
+                              ("created", request.args.get("created"))) if v}
+    group_toggle_url = url_for("spools_list", group="0" if grouped else "1", **keep)
+    return render_template("spools/list.html", spools=spools,
+                           grouped=grouped, groups=groups, group_toggle_url=group_toggle_url,
                            active_only=active_only, q=q, color=color,
                            queue_ids=db.queue_ids(), created_ids=created_ids)
 
