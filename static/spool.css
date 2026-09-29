@@ -279,6 +279,8 @@ h1, h2, h3, h4, h5, h6 { letter-spacing: -0.02em; }
   }
   /* barra de ações: botões à esquerda, com folga acima */
   table.sc-stack td.sc-stack-actions { margin-top: .35rem; }
+  /* célula de quantidade vazia (rolo filho de um grupo) some no cartão */
+  table.sc-stack td.sc-qty-empty { display: none; }
   /* linha "nenhum resultado" (colspan) volta a ser texto simples centralizado */
   table.sc-stack td[colspan] { display: block; text-align: center; }
 }
@@ -532,8 +534,8 @@ h1, h2, h3, h4, h5, h6 { letter-spacing: -0.02em; }
   width: 1em;
   height: 1em;
   background: currentColor;
-  -webkit-mask: url('/static/icon-scale.svg') center/contain no-repeat;
-  mask: url('/static/icon-scale.svg') center/contain no-repeat;
+  -webkit-mask: url('/static/icon-scale.svg?v=2') center/contain no-repeat;
+  mask: url('/static/icon-scale.svg?v=2') center/contain no-repeat;
   vertical-align: -0.125em;
 }
 

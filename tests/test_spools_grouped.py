@@ -144,3 +144,39 @@ def test_deactivate_bulk_requires_write(viewer_client, db):
     r = viewer_client.post("/spools/deactivate-bulk", data={"ids": [str(a[0])]})
     assert r.status_code == 403
     assert db.get_spool(a[0])["active"]
+
+
+def test_scale_icon_has_dial():
+    from pathlib import Path
+    svg = (Path(__file__).resolve().parent.parent / "static" / "icon-scale.svg").read_text(encoding="utf-8")
+    assert '<circle cx="12" cy="14.9" r="3.9"/>' in svg
+    css = (Path(__file__).resolve().parent.parent / "static" / "spool.css").read_text(encoding="utf-8")
+    assert "icon-scale.svg?v=" in css   # URL fixa no CSS: o ?v= derruba o cache do SVG antigo
+
+
+def test_view_is_eye_icon_with_label(auth_client, db):
+    _seed(db)
+    for url in ("/spools", "/spools?group=1"):
+        html = auth_client.get(url).get_data(as_text=True)
+        assert 'bi bi-eye' in html
+        assert 'aria-label="Ver"' in html or 'aria-label="View"' in html
+        assert not re.search(r'btn-outline-secondary"[^>]*>\s*(Ver|View)\s*</a>', html)
+
+
+def test_grouped_qty_column_and_id_sort_value(auth_client, db):
+    a, b = _seed(db)
+    html = auth_client.get("/spools?group=1").get_data(as_text=True)
+    assert '<th data-sort="num">Qtd</th>' in html or '<th data-sort="num">Qty</th>' in html
+    assert 'data-label="Qtd" data-sort-value="3">3<' in html   # grupo de 3
+    assert html.count('data-label="Qtd" data-sort-value="1">1<') == 2   # pesado + B
+    # ID da linha de grupo carrega o id do primeiro rolo, não o badge
+    grp = html.split('<tr class="sc-group-row"')[1]
+    first_id = min(i for i in a if i != a[3])
+    assert f'data-sort-value="{first_id}"' in grp.split("</tr>")[0]
+
+
+def test_ungrouped_has_no_qty_column(auth_client, db):
+    _seed(db)
+    html = auth_client.get("/spools?group=0").get_data(as_text=True)
+    assert "Qtd" not in html and ">Qty<" not in html
+    assert "sc-qty-empty" not in html.replace(".sc-qty-empty", "")

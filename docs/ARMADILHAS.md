@@ -130,3 +130,11 @@ mordeu.
   página inteira. Padrão de stub já usado em `tests/test_update_check.py` e
   `tests/test_ui_v138.py` — mantenha-o ao adicionar novo teste que renderize
   `/admin/update`.
+
+- **Asset referenciado de dentro do CSS não recebe o `?v=<hash>` automático.** O
+  carimbo de cache do `app.py` só vale para `url_for('static', ...)`; o
+  `url('/static/icon-scale.svg?v=2')` em `static/spool.css:537-538` é fixo, e com o
+  `?v=` o arquivo passa a sair com cache imutável de um ano. Mudou o SVG (ou qualquer
+  asset chamado por `url()` no CSS)? **Suba o `?v=` na mão**, senão o navegador segue
+  mostrando o desenho antigo. `tests/test_spools_grouped.py` só garante que o `?v=`
+  existe, não que foi incrementado.

@@ -59,6 +59,8 @@ document.querySelectorAll('[data-filter-for]').forEach(input => {
 });
 
 /* ── Sortable table columns ───────────────────────────────────────────── */
+// Valor de ordenação de uma célula: data-sort-value quando existe, senão o texto.
+const cellKey = c => (c?.dataset.sortValue ?? c?.textContent ?? '').trim();
 document.querySelectorAll('table[data-sortable]').forEach(table => {
   let currentTh = null, asc = true;
 
@@ -85,7 +87,7 @@ document.querySelectorAll('table[data-sortable]').forEach(table => {
       if (table.hasAttribute('data-grouped')) {
         // Modo agrupado: ordena os <tbody> pela primeira linha; filhos acompanham o grupo.
         const units = Array.from(table.querySelectorAll('tbody.sc-group'));
-        const key = tb => (tb.rows[0].cells[colIndex]?.textContent || '').trim();
+        const key = tb => cellKey(tb.rows[0].cells[colIndex]);
         units.sort((a, b) => {
           const av = key(a), bv = key(b);
           const cmp = (type === 'num' || type === 'pct')
@@ -100,8 +102,8 @@ document.querySelectorAll('table[data-sortable]').forEach(table => {
       const rows = Array.from(tbody.querySelectorAll('tr')).filter(r => r.cells.length > 1);
 
       rows.sort((a, b) => {
-        const av = (a.cells[colIndex]?.textContent || '').trim();
-        const bv = (b.cells[colIndex]?.textContent || '').trim();
+        const av = cellKey(a.cells[colIndex]);
+        const bv = cellKey(b.cells[colIndex]);
         let cmp;
         if (type === 'num' || type === 'pct') {
           cmp = (parseFloat(av) || 0) - (parseFloat(bv) || 0);

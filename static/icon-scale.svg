@@ -1,15 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
      stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-  <!-- platform/tray -->
-  <path d="M3 7 Q3 5 5 5 L19 5 Q21 5 21 7 L20 9 Q20 10 19 10 L5 10 Q4 10 4 9 Z"/>
+  <!-- plate -->
+  <path d="M3 6.2h18"/>
+  <!-- stem -->
+  <path d="M10.8 6.4h2.4v2.4h-2.4z"/>
   <!-- body -->
-  <rect x="5" y="10" width="14" height="9" rx="2"/>
-  <!-- display -->
-  <rect x="7.5" y="12" width="9" height="4" rx="1"/>
-  <!-- display line (reading) -->
-  <line x1="9" y1="14" x2="15" y2="14"/>
-  <!-- base feet -->
-  <line x1="8" y1="19" x2="8" y2="21"/>
-  <line x1="16" y1="19" x2="16" y2="21"/>
-  <line x1="6" y1="21" x2="18" y2="21"/>
+  <rect x="4" y="8.8" width="16" height="12.2" rx="3.2"/>
+  <!-- dial -->
+  <circle cx="12" cy="14.9" r="3.9"/>
+  <!-- needle -->
+  <path d="M12 14.9l2.2-2"/>
+  <!-- ticks -->
+  <path d="M12 11.4v.8M8.9 14.9h.8M15.1 14.9h-.8" stroke-width="1.2"/>
 </svg>

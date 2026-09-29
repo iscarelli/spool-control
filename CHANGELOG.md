@@ -10,6 +10,14 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.39.14] — 2026-09-28
+
+### Changed
+
+- New scale icon (a kitchen scale with a dial) everywhere the weigh button appears.
+- Spool list: the "View" text buttons are now an eye icon, on both single rows and group rows.
+- Spool list, grouped mode: a sortable "Qty" column shows how many spools each row stands for (N for a group, 1 for a single spool). Sorting by ID now uses each group's first spool instead of putting all groups first.
+
 ## [1.39.13] — 2026-09-28
 
 ### Changed
