@@ -10,7 +10,7 @@ import database as db
 import labels as lbl
 import niimbot_registry as reg
 import logger as log_cfg
-from app import (app, login_required, write_required, admin_required, t, _parse_price,
+from app import (app, _safe_next, login_required, write_required, admin_required, t, _parse_price,
                  public_base_url, _label_spool, _currency_meta)
 
 log = log_cfg.get_logger()
@@ -236,6 +236,22 @@ def spools_deactivate(spool_id):
     db.deactivate_spool(spool_id)
     flash(t("Rolo marcado como finalizado"), "success")
     return redirect(url_for("spools_list"))
+
+
+@app.route("/spools/deactivate-bulk", methods=["POST"])
+@write_required
+def spools_deactivate_bulk():
+    """Finaliza vários rolos de uma vez (linha de grupo). Ignora ids inexistentes/já finalizados."""
+    done = 0
+    for raw in request.form.getlist("ids"):
+        if not raw.isdigit():
+            continue
+        spool = db.get_spool(int(raw))
+        if spool and spool["active"]:
+            db.deactivate_spool(spool["id"])
+            done += 1
+    flash(t("{n} rolos finalizados").format(n=done), "success")
+    return redirect(_safe_next(request.form.get("next"), url_for("spools_list")))
 
 
 @app.route("/spools/<int:spool_id>/delete", methods=["POST"])

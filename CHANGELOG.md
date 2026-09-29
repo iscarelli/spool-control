@@ -10,6 +10,12 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.39.13] — 2026-09-28
+
+### Changed
+
+- Spool list, grouped mode: a group row now has the same action buttons as a normal row, so the columns line up. View opens the filament, the queue button adds or removes every spool in the group, Add more of the same copies from the group's first spool, and Finish (with confirmation) finishes all of them. Weigh, Edit and Delete are disabled with a hint to expand the group. Clicking a button no longer expands or collapses the group.
+
 ## [1.39.12] — 2026-09-28
 
 ### Added
