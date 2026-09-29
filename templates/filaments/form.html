@@ -51,6 +51,19 @@
                        placeholder="#cccccc" maxlength="7">
               </div>
               <div class="form-check mt-2">
+                <input type="checkbox" class="form-check-input" name="dual_color" value="1"
+                       id="dualColorCheck" {% if filament and filament.color_hex2 %}checked{% endif %}>
+                <label class="form-check-label" for="dualColorCheck">{{ _('Duas cores') }}</label>
+              </div>
+              <div class="input-group mt-2" id="color2Group" {% if not (filament and filament.color_hex2) %}style="display:none"{% endif %}>
+                <span class="input-group-text p-1">
+                  <input type="color" id="colorPicker2" value="{{ filament.color_hex2 if filament and filament.color_hex2 else '#cccccc' }}" style="width:32px;height:32px;border:none;cursor:pointer" aria-label="{{ _('Segunda cor') }}">
+                </span>
+                <input type="text" name="color_hex2" id="colorHex2" class="form-control font-monospace"
+                       value="{{ filament.color_hex2 if filament and filament.color_hex2 else '#cccccc' }}"
+                       placeholder="#cccccc" maxlength="7" aria-label="{{ _('Segunda cor (hex)') }}">
+              </div>
+              <div class="form-check mt-2">
                 <input type="checkbox" class="form-check-input" name="translucent" value="1"
                        id="translucentCheck" {% if filament and filament.translucent %}checked{% endif %}>
                 <label class="form-check-label" for="translucentCheck">{{ _('Transparente / translúcido') }}</label>
@@ -125,6 +138,13 @@ const picker = document.getElementById('colorPicker');
 const hex = document.getElementById('colorHex');
 picker.addEventListener('input', () => hex.value = picker.value);
 hex.addEventListener('input', () => { if(/^#[0-9a-fA-F]{6}$/.test(hex.value)) picker.value = hex.value; });
+const picker2 = document.getElementById('colorPicker2');
+const hex2 = document.getElementById('colorHex2');
+picker2.addEventListener('input', () => hex2.value = picker2.value);
+hex2.addEventListener('input', () => { if(/^#[0-9a-fA-F]{6}$/.test(hex2.value)) picker2.value = hex2.value; });
+document.getElementById('dualColorCheck').addEventListener('change', function () {
+  document.getElementById('color2Group').style.display = this.checked ? '' : 'none';
+});
 </script>
 {% if catalog_available %}<script nonce="{{ nonce }}" src="{{ url_for('static', filename='filament-catalog.js') }}"></script>{% endif %}
 {% endblock %}

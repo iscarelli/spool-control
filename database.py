@@ -1,3 +1,4 @@
+import re
 import sqlite3
 import os
 import secrets
@@ -98,6 +99,7 @@ def init_db():
                 family       TEXT    NOT NULL,
                 color_hex    TEXT    NOT NULL DEFAULT '',
                 translucent  INTEGER NOT NULL DEFAULT 0,
+                color_hex2   TEXT    NOT NULL DEFAULT '',
                 diameter_mm  REAL    NOT NULL DEFAULT 1.75,
                 notes        TEXT    NOT NULL DEFAULT '',
                 created_at   TEXT    NOT NULL
@@ -231,6 +233,9 @@ def init_db():
             # Sem isso um clear vira #FFFFFF e é indistinguível de Branco em toda a UI.
             # Default 0 p/ instalações existentes — nenhum filamento antigo muda de cor.
             "ALTER TABLE filaments ADD COLUMN translucent INTEGER NOT NULL DEFAULT 0",
+            # Segunda cor opcional (filamento bicolor, ex.: Silk "Black Green"). '' = uma cor só.
+            # Default '' p/ instalações existentes — nenhum filamento antigo muda de aparência.
+            "ALTER TABLE filaments ADD COLUMN color_hex2 TEXT NOT NULL DEFAULT ''",
         ]:
             try:
                 db.execute(sql)
@@ -720,12 +725,22 @@ def filament_neighbors(filament_id):
     return _neighbors(ids, filament_id)
 
 
+_HEX2_RE = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
+
+
+def clean_hex2(value):
+    """Segunda cor: só #RGB/#RRGGBB válido é gravado; qualquer outra coisa vira '' (uma cor só)."""
+    v = (value or "").strip()
+    return v if _HEX2_RE.match(v) else ""
+
+
 def create_filament(brand, material, family, color_hex="", color_name="", diameter_mm=1.75, notes="",
-                    translucent=False):
+                    translucent=False, color_hex2=""):
     with closing(get_db()) as db:
         db.execute(
-            "INSERT INTO filaments (brand, material, family, color_hex, color_name, diameter_mm, notes, translucent, created_at) VALUES (?,?,?,?,?,?,?,?,?)",
-            (brand, material, family, color_hex, color_name, diameter_mm, notes, int(bool(translucent)), now_iso()),
+            "INSERT INTO filaments (brand, material, family, color_hex, color_name, diameter_mm, notes, translucent, color_hex2, created_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
+            (brand, material, family, color_hex, color_name, diameter_mm, notes, int(bool(translucent)),
+             clean_hex2(color_hex2), now_iso()),
         )
         last = db.execute("SELECT last_insert_rowid()").fetchone()[0]
         db.execute("INSERT OR IGNORE INTO brands (name) VALUES (?)", (brand,))
@@ -734,11 +749,12 @@ def create_filament(brand, material, family, color_hex="", color_name="", diamet
 
 
 def update_filament(filament_id, brand, material, family, color_hex="", color_name="", diameter_mm=1.75, notes="",
-                    translucent=False):
+                    translucent=False, color_hex2=""):
     with closing(get_db()) as db:
         db.execute(
-            "UPDATE filaments SET brand=?, material=?, family=?, color_hex=?, color_name=?, diameter_mm=?, notes=?, translucent=? WHERE id=?",
-            (brand, material, family, color_hex, color_name, diameter_mm, notes, int(bool(translucent)), filament_id),
+            "UPDATE filaments SET brand=?, material=?, family=?, color_hex=?, color_name=?, diameter_mm=?, notes=?, translucent=?, color_hex2=? WHERE id=?",
+            (brand, material, family, color_hex, color_name, diameter_mm, notes, int(bool(translucent)),
+             clean_hex2(color_hex2), filament_id),
         )
         db.execute("INSERT OR IGNORE INTO brands (name) VALUES (?)", (brand,))
         db.commit()
@@ -760,7 +776,7 @@ def delete_filament(filament_id):
 def _spool_query_base():
     return """
         SELECT s.*,
-               f.brand, f.material, f.family, f.color_hex, f.color_name, f.translucent, f.diameter_mm,
+               f.brand, f.material, f.family, f.color_hex, f.color_hex2, f.color_name, f.translucent, f.diameter_mm,
                b.logo_path AS brand_logo,
                sm.name AS model_name,
                COALESCE(s.custom_tare_g, sm.tare_weight_g, 0) AS effective_tare_g,
@@ -1303,7 +1319,7 @@ def list_inventory(q=None):
     ('repete' filamentos). Inclui o logo da marca p/ o modal de detalhe."""
     sql = """
         SELECT s.id, s.location, s.notes, s.nominal_weight_g, s.purchase_date,
-               f.brand, f.material, f.family, f.color_hex, f.translucent, f.diameter_mm,
+               f.brand, f.material, f.family, f.color_hex, f.color_hex2, f.translucent, f.diameter_mm,
                b.logo_path AS brand_logo,
                COALESCE(s.custom_tare_g, sm.tare_weight_g, 0) AS effective_tare_g,
                sm.name AS model_name,

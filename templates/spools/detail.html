@@ -24,7 +24,7 @@
     {% endif %}
   </div>
   {% endif %}
-  {{ donut(pct, fill, translucent=spool.translucent, tip=pct|int|string + _('% disponível')) }}
+  {{ donut(pct, fill, fill2=spool.color_hex2, translucent=spool.translucent, tip=pct|int|string + _('% disponível')) }}
   <h4 class="mb-0 fw-bold ms-2">SP-{{ '%04d'|format(spool.id) }}</h4>
   {% if not spool.active %}<span class="badge bg-secondary ms-2">{{ _('Finalizado') }}</span>{% endif %}
   {% if logged_in %}
@@ -77,8 +77,8 @@
         <div class="text-muted">{{ spool.family }}</div>
         {% if spool.color_hex %}
         <div class="text-muted small">
-          {{ swatch(spool.color_hex, translucent=spool.translucent) }}
-          <span class="font-monospace text-uppercase">{{ spool.color_hex }}</span>
+          {{ swatch(spool.color_hex, translucent=spool.translucent, hex2=spool.color_hex2) }}
+          <span class="font-monospace text-uppercase">{{ spool.color_hex }}{% if spool.color_hex2 %} / {{ spool.color_hex2 }}{% endif %}</span>
         </div>
         {% endif %}
         {% if logged_in %}

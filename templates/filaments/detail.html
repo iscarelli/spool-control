@@ -11,6 +11,7 @@
 {% endfor %}
 {% set total_pct = ((ns.net / ns.nom * 100)|round(1)) if ns.nom > 0 else 0 %}
 {% set fill = filament.color_hex if filament.color_hex else '#6c757d' %}
+{% set fill2 = filament.color_hex2 %}
 
 <div class="d-flex align-items-center mb-3 gap-3">
   <div class="btn-group btn-group-sm" role="group">
@@ -31,7 +32,7 @@
        height="28" style="object-fit:contain;max-width:64px" alt="{{ filament.brand }}">
   {% endif %}
   {% if ns.nom > 0 %}
-    {{ donut(total_pct, fill, translucent=filament.translucent, size=44, tip=total_pct|int|string + _('% de estoque disponível')) }}
+    {{ donut(total_pct, fill, fill2=fill2, translucent=filament.translucent, size=44, tip=total_pct|int|string + _('% de estoque disponível')) }}
   {% endif %}
   <h4 class="mb-0 fw-bold">
     {{ filament.brand }} {{ filament.material }}
@@ -94,7 +95,7 @@
             style="cursor:pointer"
             data-href="{{ url_for('spools_detail', spool_id=s.id) }}">
           <td class="text-center align-middle sc-stack-head" style="width:44px;padding:4px">
-            {{ donut(pct, fill, translucent=filament.translucent, tip=pct|int|string + _('% disponível')) }}
+            {{ donut(pct, fill, fill2=fill2, translucent=filament.translucent, tip=pct|int|string + _('% disponível')) }}
           </td>
           <td class="fw-bold sc-stack-head">SP-{{ '%04d'|format(s.id) }}</td>
           <td data-label="{{ _('Carretel Vazio') }}">{{ s.model_name or '—' }}</td>

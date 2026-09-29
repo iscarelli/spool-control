@@ -10,6 +10,10 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.39.7] — 2026-09-28
+
+- Filaments can now have a second color (dual-color silk, e.g. "Black Green"). Tick "Two colors" on the filament form and pick the second color; the swatch shows a diagonal two-color split and the remaining-stock donut shows both colors everywhere (lists, details, search, label queue, inventory and its modal). Single-color filaments look exactly as before, and existing databases upgrade automatically. Printed labels still use the main color.
+
 ## [1.39.6] — 2026-09-28
 
 ### Added

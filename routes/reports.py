@@ -30,12 +30,12 @@ def _group_inventory(items):
     `list_inventory` (material, marca, família). Devolve dicts prontos p/ o template."""
     groups = {}
     for s in items:
-        key = (s["brand"], s["material"], s["family"], s["color_hex"], bool(s["translucent"]))
+        key = (s["brand"], s["material"], s["family"], s["color_hex"], s["color_hex2"], bool(s["translucent"]))
         g = groups.get(key)
         if g is None:
             g = groups[key] = {
                 "brand": s["brand"], "material": s["material"], "family": s["family"],
-                "color_hex": s["color_hex"], "translucent": bool(s["translucent"]),
+                "color_hex": s["color_hex"], "color_hex2": s["color_hex2"], "translucent": bool(s["translucent"]),
                 "spools": [], "remaining_g": 0.0, "nominal_g": 0.0,
             }
         nominal = s["nominal_weight_g"] or 0
