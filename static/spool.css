@@ -436,7 +436,7 @@ h1, h2, h3, h4, h5, h6 { letter-spacing: -0.02em; }
 .sc-swatch {
   position: relative;
   overflow: hidden;
-  border: 1px solid var(--sc-border);
+  border: 1px solid var(--sc-donut-outline); /* contraste com o fundo em dark: senão o preto some */
   background-color: var(--sw-color, transparent);
 }
 /* Bicolor: divisão diagonal seca (--sw-color2 vem inline, ver _swatch.html). */
