@@ -1319,7 +1319,7 @@ def list_inventory(q=None):
     ('repete' filamentos). Inclui o logo da marca p/ o modal de detalhe."""
     sql = """
         SELECT s.id, s.location, s.notes, s.nominal_weight_g, s.purchase_date,
-               f.brand, f.material, f.family, f.color_hex, f.color_hex2, f.translucent, f.diameter_mm,
+               f.brand, f.material, f.family, f.color_hex, f.color_hex2, f.color_name, f.translucent, f.diameter_mm,
                b.logo_path AS brand_logo,
                COALESCE(s.custom_tare_g, sm.tare_weight_g, 0) AS effective_tare_g,
                sm.name AS model_name,
@@ -1338,8 +1338,9 @@ def list_inventory(q=None):
     if q:
         p = f"%{q}%"
         sql += (" AND (f.brand LIKE ? OR f.material LIKE ? OR f.family LIKE ?"
-                " OR s.location LIKE ? OR printf('SP-%04d', s.id) LIKE ?)")
-        params = [p, p, p, p, p]
+                " OR s.location LIKE ? OR printf('SP-%04d', s.id) LIKE ?"
+                " OR f.color_name LIKE ?)")
+        params = [p, p, p, p, p, p]
     sql += " ORDER BY f.material, f.brand, f.family, s.id"
     with closing(get_db()) as db:
         return db.execute(sql, params).fetchall()

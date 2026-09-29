@@ -12,8 +12,18 @@
          placeholder="{{ _('Buscar...') }}" autocomplete="off" style="max-width:340px">
   <select class="form-select form-select-sm" id="invView" name="view" style="max-width:300px"
           aria-label="{{ _('Visualização') }}">
-    <option value="" {% if not grouped %}selected{% endif %}>{{ _('Cada rolo') }}</option>
-    <option value="grouped" {% if grouped %}selected{% endif %}>{{ _('Agrupar por marca, material e cor') }}</option>
+    <option value="" {% if view == '' %}selected{% endif %}>{{ _('Cada rolo') }}</option>
+    <option value="grouped" {% if view == 'grouped' %}selected{% endif %}>{{ _('Agrupar por marca, material e cor') }}</option>
+    <option value="material" {% if view == 'material' %}selected{% endif %}>{{ _('Agrupar por material e cor') }}</option>
+  </select>
+  <select class="form-select form-select-sm" id="invSort" name="sort" style="max-width:260px"
+          aria-label="{{ _('Ordenar por') }}">
+    <option value="name" {% if sort == 'name' %}selected{% endif %}>{{ _('Ordenar: material e marca') }}</option>
+    <option value="color" {% if sort == 'color' %}selected{% endif %}>{{ _('Ordenar: cor') }}</option>
+    <option value="remaining_asc" {% if sort == 'remaining_asc' %}selected{% endif %}>{{ _('Ordenar: menos restante primeiro') }}</option>
+    <option value="remaining_desc" {% if sort == 'remaining_desc' %}selected{% endif %}>{{ _('Ordenar: mais restante primeiro') }}</option>
+    {% if grouped %}<option value="count_desc" {% if sort == 'count_desc' %}selected{% endif %}>{{ _('Ordenar: mais rolos primeiro') }}</option>{% endif %}
+    <option value="newest" {% if sort == 'newest' %}selected{% endif %}>{{ _('Ordenar: mais recentes primeiro') }}</option>
   </select>
 </form>
 
@@ -27,21 +37,30 @@
     {% set rem_txt = (g.remaining_g|int|string) ~ ' g' %}
   {% endif %}
   <div class="sc-inv-tile sc-inv-group text-center position-relative" role="button" tabindex="0"
-       data-name="{{ g.brand }} {{ g.material }} {{ g.family }} {{ g.locations }}"
-       data-brand="{{ g.brand }}" data-material="{{ g.material }}" data-family="{{ g.family }}">
+       data-name="{{ g.brands_txt if view == 'material' else g.brand }} {{ g.material }} {{ g.family }} {{ g.color_label }} {{ g.locations }}"
+       data-title="{{ g.material if view == 'material' else g.brand }}"
+       data-sub="{{ g.color_label if view == 'material' else g.material ~ ' · ' ~ g.family ~ (' · ' ~ g.color_label if g.color_label else '') }}">
     <span class="badge bg-dark position-absolute top-0 end-0 sc-inv-count">{{ g.count }}×</span>
     <div class="d-block mx-auto" style="width:46px">
       {{ donut(g.pct, fill, fill2=g.color_hex2, translucent=g.translucent, size=46) }}
     </div>
+    {% if view == 'material' %}
+    <div class="small fw-semibold text-truncate sc-inv-name">{{ g.material }}</div>
+    <div class="text-muted text-truncate sc-inv-sub">{{ g.color_label }}</div>
+    <div class="text-muted text-truncate sc-inv-sub" title="{{ g.brands_txt }}">{{ g.brands_txt }}</div>
+    {% else %}
     <div class="small fw-semibold text-truncate sc-inv-name">{{ g.brand }}</div>
     <div class="text-muted text-truncate sc-inv-sub">{{ g.material }}</div>
     <div class="text-muted text-truncate sc-inv-sub">{{ g.family }}</div>
+    <div class="text-muted text-truncate sc-inv-sub">{{ g.color_label }}</div>
+    {% endif %}
     <div class="text-muted text-truncate sc-inv-sub sc-inv-total">{{ rem_txt }}</div>
     <ul class="d-none sc-inv-members">
       {% for s in g.spools %}
       <li><a href="{{ url_for('spools_detail', spool_id=s.id) }}">SP-{{ '%04d'|format(s.id) }}</a>
         <span class="text-muted ms-2">{% if s.current_net_g is not none %}{{ s.current_net_g|int }} g / {{ s.nominal_weight_g|int }} g{% else %}{{ s.nominal_weight_g|int }} g · {{ _('não pesado') }}{% endif %}</span>
-        <span class="text-muted ms-2">{{ s.location or '—' }}</span></li>
+        <span class="text-muted ms-2">{{ s.location or '—' }}</span>
+        {% if view == 'material' %}<div class="small text-muted">{{ s.brand }} · {{ s.family }}{% if s.color_label %} · {{ s.color_label }}{% endif %}</div>{% endif %}</li>
       {% endfor %}
     </ul>
   </div>
@@ -57,11 +76,12 @@
   {% endif %}
   {% set fill = s.color_hex if s.color_hex else '#6c757d' %}
   <div class="sc-inv-tile text-center" role="button" tabindex="0"
-       data-name="SP-{{ '%04d'|format(s.id) }} {{ s.brand }} {{ s.material }} {{ s.family }} {{ s.location }}"
+       data-name="SP-{{ '%04d'|format(s.id) }} {{ s.brand }} {{ s.material }} {{ s.family }} {{ s.color_label }} {{ s.location }}"
        data-id="SP-{{ '%04d'|format(s.id) }}"
        data-brand="{{ s.brand }}"
        data-material="{{ s.material }}"
        data-family="{{ s.family }}"
+       data-color="{{ s.color_label }}"
        data-hex="{{ s.color_hex }}"
        data-fill="{{ fill | hexcolor('#6c757d') }}"
        data-fill2="{{ s.color_hex2 | hexcolor('') }}"
@@ -80,6 +100,7 @@
     <div class="small fw-semibold text-truncate sc-inv-name">{{ s.brand }}</div>
     <div class="text-muted text-truncate sc-inv-sub">{{ s.material }}</div>
     <div class="text-muted text-truncate sc-inv-sub">{{ s.family }}</div>
+    <div class="text-muted text-truncate sc-inv-sub">{{ s.color_label }}</div>
   </div>
   {% else %}
   <div class="text-muted py-4">{{ _('Nenhum spool encontrado') }}</div>
@@ -122,7 +143,8 @@
               <span id="invFamily" class="text-muted ms-1"></span></div>
             <div class="small mb-2" id="invHexWrap">
               <span id="invDot" class="sc-swatch d-inline-block rounded me-1" style="width:12px;height:12px;vertical-align:middle"></span>
-              <span id="invHex" class="font-monospace text-uppercase"></span>
+              <span id="invColorName" class="me-1"></span>
+              <span id="invHex" class="font-monospace text-uppercase text-muted"></span>
             </div>
             <div><span class="text-muted small">{{ _('Restante') }}:</span> <strong id="invRemaining"></strong></div>
             <div><span class="text-muted small">{{ _('Diâmetro') }}:</span> <span id="invDiameter"></span></div>
@@ -170,22 +192,27 @@ function applyInvFilter() {
 document.getElementById('invFilter').addEventListener('input', applyInvFilter);
 document.getElementById('invForm').addEventListener('submit', e => e.preventDefault());
 /* Troca de visão recarrega no servidor, preservando a busca */
-document.getElementById('invView').addEventListener('change', function () {
+function reloadInv() {
   const u = new URL(window.location.href);
   const q = document.getElementById('invFilter').value.trim();
+  const view = document.getElementById('invView').value;
+  const sort = document.getElementById('invSort').value;
   u.search = '';
   if (q) u.searchParams.set('q', q);
-  if (this.value) u.searchParams.set('view', this.value);
+  if (view) u.searchParams.set('view', view);
+  if (sort && sort !== 'name') u.searchParams.set('sort', sort);
   window.location.href = u.toString();
-});
+}
+document.getElementById('invView').addEventListener('change', reloadInv);
+document.getElementById('invSort').addEventListener('change', reloadInv);
 applyInvFilter();
 
 /* ── Modal do grupo (visão agrupada) ───────────────────────────────────────── */
 const invGroupModal = new bootstrap.Modal(document.getElementById('invGroupModal'));
 function openGroup(t) {
   const d = t.dataset;
-  document.getElementById('invGroupTitle').textContent = d.brand;
-  document.getElementById('invGroupSub').textContent = d.material + ' · ' + d.family;
+  document.getElementById('invGroupTitle').textContent = d.title;
+  document.getElementById('invGroupSub').textContent = d.sub;
   const list = document.getElementById('invGroupList');
   list.replaceChildren();
   t.querySelectorAll('.sc-inv-members li').forEach(li => list.appendChild(li.cloneNode(true)));
@@ -215,6 +242,7 @@ function openInv(t) {
     dot.classList.toggle('sc-swatch-dual', !!d.fill2);
     dot.classList.toggle('sc-swatch-translucent', isTranslucent);
     document.getElementById('invHex').textContent = d.hex;
+    document.getElementById('invColorName').textContent = d.color || '';
   } else { hexWrap.style.display = 'none'; }
 
   const notesWrap = document.getElementById('invNotesWrap');

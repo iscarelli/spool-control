@@ -10,6 +10,10 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.39.8] — 2026-09-28
+
+- The inventory report now shows each roll's color name on every tile (the name you gave the filament, or the basic color family when there is none), in the search text and in the detail dialogs. There is a new view, "Group by material and color", that merges the same material and color across brands into one tile (for example all black PETG), listing the brands and the total remaining. A new sort selector orders the inventory by material and brand, color, least or most remaining, number of rolls (grouped views) or newest first; the choice is kept together with the view and the search.
+
 ## [1.39.7] — 2026-09-28
 
 - Filaments can now have a second color (dual-color silk, e.g. "Black Green"). Tick "Two colors" on the filament form and pick the second color; the swatch shows a diagonal two-color split and the remaining-stock donut shows both colors everywhere (lists, details, search, label queue, inventory and its modal). Single-color filaments look exactly as before, and existing databases upgrade automatically. Printed labels still use the main color.
