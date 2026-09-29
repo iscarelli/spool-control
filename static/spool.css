@@ -531,12 +531,12 @@ h1, h2, h3, h4, h5, h6 { letter-spacing: -0.02em; }
 /* ── Icon scale ─────────────────────────────────────────────────────────── */
 .icon-scale {
   display: inline-block;
-  width: 1em;
-  height: 1em;
+  width: 1.15em;
+  height: 1.15em;
   background: currentColor;
-  -webkit-mask: url('/static/icon-scale.svg?v=2') center/contain no-repeat;
-  mask: url('/static/icon-scale.svg?v=2') center/contain no-repeat;
-  vertical-align: -0.125em;
+  -webkit-mask: url('/static/icon-scale.svg?v=3') center/contain no-repeat;
+  mask: url('/static/icon-scale.svg?v=3') center/contain no-repeat;
+  vertical-align: -0.2em;
 }
 
 /* ── Misc ───────────────────────────────────────────────────────────────── */

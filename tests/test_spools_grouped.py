@@ -167,6 +167,7 @@ def test_grouped_qty_column_and_id_sort_value(auth_client, db):
     a, b = _seed(db)
     html = auth_client.get("/spools?group=1").get_data(as_text=True)
     assert '<th data-sort="num">Qtd</th>' in html or '<th data-sort="num">Qty</th>' in html
+    assert re.search(r'<th data-sort="num">ID</th>\s*<th data-sort="num">(Qtd|Qty)</th>', html)   # Qtd logo apos o ID
     assert 'data-label="Qtd" data-sort-value="3">3<' in html   # grupo de 3
     assert html.count('data-label="Qtd" data-sort-value="1">1<') == 2   # pesado + B
     # ID da linha de grupo carrega o id do primeiro rolo, não o badge
