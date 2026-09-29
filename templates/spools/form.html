@@ -20,12 +20,13 @@
               {% for f in filaments %}
               <option value="{{ f.id }}"
                       data-color="{{ f.color_hex | hexcolor('') }}"
+                      data-color2="{{ f.color_hex2 | hexcolor('') }}"
                       data-color-name="{{ f.color_display or '' }}"
                       data-edit-url="{{ url_for('filaments_edit', filament_id=f.id, next=request.url) }}"
                       {% if selected_filament_id == f.id %}selected{% endif %}>
                 {{ f.material }} — {{ f.brand }} / {{ f.family }}
                 {%- if f.color_display %} · {{ f.color_display }}{% endif %}
-                {%- if f.color_hex %} ({{ f.color_hex }}){% endif %}
+                {%- if f.color_hex %} ({{ f.color_hex }}{% if f.color_hex2 %} / {{ f.color_hex2 }}{% endif %}){% endif %}
               </option>
               {% endfor %}
             </select>
@@ -135,8 +136,10 @@ function updateFilamentPreview() {
   filMeta.style.removeProperty('display');
   const color = opt.dataset.color;
   const colorName = opt.dataset.colorName || '';
-  filSwatch.style.background = color || '#e0e0e0';
-  filLabel.textContent = colorName ? colorName + (color ? ' ' + color : '') : (color || "{{ _('(sem cor)') }}");
+  const color2 = opt.dataset.color2 || '';
+  filSwatch.style.background = (color && color2)
+    ? `linear-gradient(135deg, ${color} 50%, ${color2} 50%)` : (color || '#e0e0e0');
+  filLabel.textContent = colorName ? colorName + (color ? ' ' + color + (color2 ? ' / ' + color2 : '') : '') : (color || "{{ _('(sem cor)') }}");
   filEdit.href = opt.dataset.editUrl || '#';
 }
 filamentSel.addEventListener('change', updateFilamentPreview);

@@ -31,7 +31,7 @@
        data-brand="{{ g.brand }}" data-material="{{ g.material }}" data-family="{{ g.family }}">
     <span class="badge bg-dark position-absolute top-0 end-0 sc-inv-count">{{ g.count }}×</span>
     <div class="d-block mx-auto" style="width:46px">
-      {{ donut(g.pct, fill, translucent=g.translucent, size=46) }}
+      {{ donut(g.pct, fill, fill2=g.color_hex2, translucent=g.translucent, size=46) }}
     </div>
     <div class="small fw-semibold text-truncate sc-inv-name">{{ g.brand }}</div>
     <div class="text-muted text-truncate sc-inv-sub">{{ g.material }}</div>
@@ -64,6 +64,7 @@
        data-family="{{ s.family }}"
        data-hex="{{ s.color_hex }}"
        data-fill="{{ fill | hexcolor('#6c757d') }}"
+       data-fill2="{{ s.color_hex2 | hexcolor('') }}"
        data-translucent="{{ '1' if s.translucent else '0' }}"
        data-pct="{{ pct }}"
        data-remaining="{% if s.current_net_g is not none %}{{ s.current_net_g|int }} g / {{ s.nominal_weight_g|int }} g ({{ pct|int }}%){% else %}{{ s.nominal_weight_g|int }} g · {{ _('não pesado') }}{% endif %}"
@@ -74,7 +75,7 @@
        data-qr="{{ url_for('spool_qr_png', spool_id=s.id) }}"
        data-link="{{ url_for('spools_detail', spool_id=s.id) }}">
     <div class="d-block mx-auto" style="width:46px">
-      {{ donut(pct, fill, translucent=s.translucent, size=46) }}
+      {{ donut(pct, fill, fill2=s.color_hex2, translucent=s.translucent, size=46) }}
     </div>
     <div class="small fw-semibold text-truncate sc-inv-name">{{ s.brand }}</div>
     <div class="text-muted text-truncate sc-inv-sub">{{ s.material }}</div>
@@ -130,6 +131,12 @@
           </div>
           <div class="text-center">
             <svg width="64" height="64" viewBox="0 0 50 50" class="d-block mx-auto">
+              <defs>
+                <linearGradient id="invDualGrad" gradientUnits="userSpaceOnUse" x1="10" y1="10" x2="40" y2="40">
+                  <stop id="invDualS1a" offset="0.5" stop-color="#6c757d"/>
+                  <stop id="invDualS2a" offset="0.5" stop-color="#6c757d"/>
+                </linearGradient>
+              </defs>
               <circle cx="25" cy="25" r="15.9155" fill="none" class="donut-track" stroke-width="15"/>
               <circle id="invArcChecker" cx="25" cy="25" r="15.9155" fill="none" stroke-width="15"
                       stroke="none" transform="rotate(-90 25 25)" class="donut-checker"/>
@@ -204,6 +211,8 @@ function openInv(t) {
     hexWrap.style.display = '';
     const dot = document.getElementById('invDot');
     dot.style.setProperty('--sw-color', d.hex);
+    if (d.fill2) dot.style.setProperty('--sw-color2', d.fill2); else dot.style.removeProperty('--sw-color2');
+    dot.classList.toggle('sc-swatch-dual', !!d.fill2);
     dot.classList.toggle('sc-swatch-translucent', isTranslucent);
     document.getElementById('invHex').textContent = d.hex;
   } else { hexWrap.style.display = 'none'; }
@@ -220,7 +229,13 @@ function openInv(t) {
   const arc = document.getElementById('invArc');
   const checker = document.getElementById('invArcChecker');
   const dash = `${d.pct} ${100 - d.pct}`;
-  arc.setAttribute('stroke', d.fill);
+  if (d.fill2) {
+    document.getElementById('invDualS1a').setAttribute('stop-color', d.fill);
+    document.getElementById('invDualS2a').setAttribute('stop-color', d.fill2);
+    arc.setAttribute('stroke', 'url(#invDualGrad)');
+  } else {
+    arc.setAttribute('stroke', d.fill);
+  }
   arc.setAttribute('stroke-dasharray', dash);
   arc.classList.toggle('donut-arc-translucent', isTranslucent);
   checker.setAttribute('stroke', isTranslucent ? 'url(#sc-checker)' : 'none');

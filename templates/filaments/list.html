@@ -45,7 +45,7 @@
             data-href="{{ url_for('filaments_detail', filament_id=f.id) }}">
           <td class="text-center align-middle sc-stack-head" style="width:44px;padding:4px">
             {% if f.active_count > 0 %}
-              {{ donut(pct, fill, translucent=f.translucent, tip=pct|int|string + _('% disponível')) }}
+              {{ donut(pct, fill, fill2=f.color_hex2, translucent=f.translucent, tip=pct|int|string + _('% disponível')) }}
             {% else %}
               {{ donut(0, '#6c757d') }}
             {% endif %}
@@ -56,7 +56,7 @@
                onclick="event.stopPropagation()">{{ f.material }}</a>
           </td>
           <td data-label="{{ _('Cor') }}">
-            {{ swatch(f.color_hex, translucent=f.translucent) }}{{ f.color_display or '—' }}
+            {{ swatch(f.color_hex, translucent=f.translucent, hex2=f.color_hex2) }}{{ f.color_display or '—' }}
           </td>
           <td data-label="{{ _('Marca') }}">
             {% if f.brand_logo %}

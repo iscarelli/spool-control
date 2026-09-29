@@ -68,12 +68,12 @@
             data-fill="{{ fill | hexcolor('#6c757d') }}"
             data-weigh-url="{{ url_for('spools_weigh', spool_id=s.id) }}">
           <td class="text-center align-middle sc-stack-head" style="width:44px;padding:4px">
-            {{ donut(pct, fill, translucent=s.translucent, spool_id=s.id, tip=pct|int|string + _('% disponível')) }}
+            {{ donut(pct, fill, fill2=s.color_hex2, translucent=s.translucent, spool_id=s.id, tip=pct|int|string + _('% disponível')) }}
           </td>
           <td class="fw-bold sc-stack-head">SP-{{ '%04d'|format(s.id) }}</td>
           <td data-label="{{ _('Material') }}"><span class="badge bg-secondary">{{ s.material }}</span></td>
           <td data-label="{{ _('Cor') }}">
-            {{ swatch(s.color_hex, translucent=s.translucent) }}{{ s.color_display or '—' }}
+            {{ swatch(s.color_hex, translucent=s.translucent, hex2=s.color_hex2) }}{{ s.color_display or '—' }}
           </td>
           <td data-label="{{ _('Marca / Família') }}">{{ s.brand }} / {{ s.family }}</td>
           <td data-label="{{ _('Local') }}">{{ s.location or '—' }}</td>

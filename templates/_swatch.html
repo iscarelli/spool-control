@@ -11,15 +11,27 @@
    Contorno fino nas bordas do anel (`.donut-outline`, preto no claro/branco no
    escuro) para o rolo preto não sumir no tema escuro. #}
 
-{% macro swatch(hex, translucent=false, size=12) %}
-<span class="sc-swatch{% if translucent %} sc-swatch-translucent{% endif %} d-inline-block rounded me-1"
-      style="width:{{ size }}px;height:{{ size }}px;--sw-color:{{ hex | hexcolor('#e0e0e0') }};vertical-align:middle"></span>
+{% macro swatch(hex, translucent=false, size=12, hex2='') %}
+{% set c2 = hex2 | hexcolor('') %}
+<span class="sc-swatch{% if translucent %} sc-swatch-translucent{% endif %}{% if c2 %} sc-swatch-dual{% endif %} d-inline-block rounded me-1"
+      style="width:{{ size }}px;height:{{ size }}px;--sw-color:{{ hex | hexcolor('#e0e0e0') }};{% if c2 %}--sw-color2:{{ c2 }};{% endif %}vertical-align:middle"></span>
 {% endmacro %}
 
-{% macro donut(pct, fill, translucent=false, spool_id='', size=34, tip='') %}
+{% macro donut(pct, fill, translucent=false, spool_id='', size=34, tip='', fill2='') %}
+{% set c1 = fill | hexcolor('#6c757d') %}
+{% set c2 = fill2 | hexcolor('') %}
+{% set gid = 'sc-dual-' ~ (c1 | replace('#', '')) ~ '-' ~ (c2 | replace('#', '')) %}
 <span class="donut-wrap" {% if tip %}data-bs-toggle="tooltip" title="{{ tip }}"{% endif %}
       {% if spool_id %}data-donut-id="{{ spool_id }}"{% endif %}>
   <svg width="{{ size }}" height="{{ size }}" viewBox="0 0 50 50">
+    {% if c2 %}
+    <defs>
+      <linearGradient id="{{ gid }}" gradientUnits="userSpaceOnUse" x1="10" y1="10" x2="40" y2="40">
+        <stop offset="0.5" stop-color="{{ c1 }}"/>
+        <stop offset="0.5" stop-color="{{ c2 }}"/>
+      </linearGradient>
+    </defs>
+    {% endif %}
     <circle cx="25" cy="25" r="15.9155" fill="none" class="donut-track" stroke-width="15"/>
     {% if translucent %}
     <circle cx="25" cy="25" r="15.9155" fill="none" class="donut-checker"
@@ -28,7 +40,7 @@
             transform="rotate(-90 25 25)"/>
     {% endif %}
     <circle cx="25" cy="25" r="15.9155" fill="none"
-            stroke="{{ fill | hexcolor('#6c757d') }}" stroke-width="15"
+            stroke="{% if c2 %}url(#{{ gid }}){% else %}{{ c1 }}{% endif %}" stroke-width="15"
             stroke-dasharray="{{ pct }} {{ 100 - pct }}"
             transform="rotate(-90 25 25)"
             class="donut-arc{% if translucent %} donut-arc-translucent{% endif %}"/>

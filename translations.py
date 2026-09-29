@@ -153,6 +153,9 @@ _EN = {
     "Nome do fabricante ou como você identifica esta cor. Usado na etiqueta impressa.":
         "Manufacturer name or how you identify this color. Used on the printed label.",
     "Transparente / translúcido":    "Transparent / translucent",
+    "Duas cores":    "Two colors",
+    "Segunda cor":    "Second color",
+    "Segunda cor (hex)":    "Second color (hex)",
     "Translúcido":                   "Translucent",
     "Diâmetro (mm)":                 "Diameter (mm)",
     "Pesquise ou digite...":         "Search or type...",
@@ -644,6 +647,9 @@ _ES = {
     "Nome do fabricante ou como você identifica esta cor. Usado na etiqueta impressa.":
         "Nombre del fabricante o cómo identificas este color. Se usa en la etiqueta impresa.",
     "Transparente / translúcido":    "Transparente / translúcido",
+    "Duas cores":    "Dos colores",
+    "Segunda cor":    "Segundo color",
+    "Segunda cor (hex)":    "Segundo color (hex)",
     "Translúcido":                   "Translúcido",
     "Diâmetro (mm)":                 "Diámetro (mm)",
     "Pesquise ou digite...":         "Busca o escribe...",

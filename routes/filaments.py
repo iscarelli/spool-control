@@ -57,6 +57,14 @@ def _resolve_translucent(form) -> bool:
     return form.get("translucent", "0") not in ("", "0")
 
 
+def _resolve_color_hex2(form) -> str:
+    """Segunda cor só vale com o checkbox "Duas cores" marcado; desmarcado (ou hex
+    inválido) grava '' — o filamento volta a ter uma cor só."""
+    if form.get("dual_color", "0") in ("", "0"):
+        return ""
+    return db.clean_hex2(form.get("color_hex2", ""))
+
+
 @app.route("/filaments/new", methods=["GET", "POST"])
 @write_required
 def filaments_new():
@@ -71,6 +79,7 @@ def filaments_new():
                 diameter_mm=float(request.form.get("diameter_mm") or 1.75),
                 notes=request.form.get("notes", "").strip(),
                 translucent=_resolve_translucent(request.form),
+                color_hex2=_resolve_color_hex2(request.form),
             )
             flash(t("Filamento cadastrado com sucesso"), "success")
             # Oferece cadastrar um rolo deste filamento já no detalhe (modal).
@@ -115,6 +124,7 @@ def filaments_edit(filament_id):
                 diameter_mm=float(request.form.get("diameter_mm") or 1.75),
                 notes=request.form.get("notes", "").strip(),
                 translucent=_resolve_translucent(request.form),
+                color_hex2=_resolve_color_hex2(request.form),
             )
             flash(t("Filamento atualizado"), "success")
             return redirect(next_url or url_for("filaments_detail", filament_id=filament_id))
@@ -141,6 +151,7 @@ def filaments_duplicate(filament_id):
         diameter_mm=src["diameter_mm"],
         notes=src["notes"],
         translucent=bool(src["translucent"]),
+        color_hex2=src["color_hex2"],
     )
     flash(t("Filamento duplicado — editando cópia"), "success")
     return redirect(url_for("filaments_edit", filament_id=new_id))
