@@ -73,3 +73,74 @@ def test_viewer_children_have_no_write_buttons(auth_client, viewer_client, db):
     assert f"/spools/{a[0]}/edit" not in html
     assert f"/spools/{a[0]}/deactivate" not in html
     assert "weigh-btn" not in html
+
+
+# -- Botões da linha de grupo -------------------------------------------------
+
+def _group_row(html):
+    """HTML da <tr class="sc-group-row"> (até a primeira linha filha)."""
+    start = html.index('<tr class="sc-group-row"')
+    return html[start:html.index("data-group-child", start)]
+
+
+def test_group_row_action_slots(auth_client, db):
+    a = _seed(db)[0]
+    ids = a[:3]
+    head = _group_row(auth_client.get("/spools?group=1").get_data(as_text=True))
+    # ordem: Ver, Pesar, Fila, Editar, Duplicar, Finalizar, Excluir
+    assert head.count("btn btn-sm") == 7
+    pos = [head.index(x) for x in ("/filaments/", "weigh-btn", "/label-queue/add-all",
+                                   "bi-pencil", f"from_spool={ids[0]}",
+                                   "/spools/deactivate-bulk", "bi-trash")]
+    assert pos == sorted(pos)
+    assert head.count(" disabled") == 3            # pesar, editar, excluir
+    for i in ids:
+        assert f'name="spool_ids" value="{i}"' in head
+        assert f'name="ids" value="{i}"' in head
+    assert f'value="{a[3]}"' not in head           # o pesado fica fora do grupo
+    assert "Finalizar 3 rolos?" in head or "Finish 3 spools?" in head
+    assert head.count('data-bs-toggle="tooltip"') == 7
+    for txt in ("Abre a página do filamento", "Expanda o grupo e pese o rolo",
+                "Adiciona os 3 rolos do grupo", "Expanda o grupo para editar",
+                "Cadastra mais rolos iguais", "Finaliza os 3 rolos do grupo",
+                "Expanda o grupo para excluir"):
+        assert txt in head
+
+
+def test_group_row_queue_remove_state(auth_client, db):
+    a, _ = _seed(db)
+    for i in a[:3]:
+        db.queue_add(i)
+    head = _group_row(auth_client.get("/spools?group=1").get_data(as_text=True))
+    assert "/label-queue/remove-all" in head and "/label-queue/add-all" not in head
+    assert "Remove os 3 rolos do grupo" in head
+    db.queue_remove(a[0])
+    head = _group_row(auth_client.get("/spools?group=1").get_data(as_text=True))
+    assert "/label-queue/add-all" in head
+
+
+def test_group_row_viewer_sees_only_ver_and_queue(viewer_client, db):
+    _seed(db)
+    head = _group_row(viewer_client.get("/spools?group=1").get_data(as_text=True))
+    assert "/filaments/" in head and "/label-queue/add-all" in head
+    for gone in ("weigh-btn", "bi-pencil", "bi-copy", "deactivate-bulk", "bi-trash"):
+        assert gone not in head
+
+
+def test_deactivate_bulk(auth_client, db):
+    a, _ = _seed(db)
+    r = auth_client.post("/spools/deactivate-bulk", data={"ids": [str(a[0]), str(a[1]), "99999", "x"]})
+    assert r.status_code == 302
+    assert not db.get_spool(a[0])["active"] and not db.get_spool(a[1])["active"]
+    assert db.get_spool(a[2])["active"] and db.get_spool(a[3])["active"]
+    r = auth_client.post("/spools/deactivate-bulk", data={"ids": [str(a[0])], "next": "/spools?group=1"},
+                         follow_redirects=True)
+    body = r.get_data(as_text=True)
+    assert "0 rolos finalizados" in body or "0 spools finished" in body
+
+
+def test_deactivate_bulk_requires_write(viewer_client, db):
+    a, _ = _seed(db)
+    r = viewer_client.post("/spools/deactivate-bulk", data={"ids": [str(a[0])]})
+    assert r.status_code == 403
+    assert db.get_spool(a[0])["active"]

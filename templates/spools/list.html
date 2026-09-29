@@ -145,7 +145,49 @@
           <td data-label="{{ _('Marca / Família') }}">{{ s0.brand }} / {{ s0.family }}</td>
           <td data-label="{{ _('Local') }}">{% if locs|length == 1 and locs[0] %}{{ locs[0] }}{% else %}—{% endif %}</td>
           <td class="weight-cell" data-label="{{ _('Peso Atual') }}"><span class="text-muted">{{ s0.nominal_weight_g|int }}g</span></td>
-          <td class="sc-stack-actions"></td>
+          {% set gids = g.spools|map(attribute='id')|list %}
+          {% set all_queued = gids|select('in', queue_ids)|list|length == gids|length %}
+          {% set back = request.full_path.rstrip('?') %}
+          <td class="text-nowrap sc-stack-actions" onclick="event.stopPropagation()">
+            <a href="{{ url_for('filaments_detail', filament_id=s0.filament_id) }}" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="{{ _('Abre a página do filamento, com todos os rolos dele') }}">{{ _('Ver') }}</a>
+            {% if s0.active %}
+            {% if can_write %}
+            <span class="d-inline-block" data-bs-toggle="tooltip" title="{{ _('Expanda o grupo e pese o rolo pelo SP da etiqueta') }}">
+              <button type="button" class="btn btn-sm btn-outline-secondary weigh-btn" disabled><span class="icon-scale"></span></button>
+            </span>
+            {% endif %}
+            {% if all_queued %}
+            <form method="post" action="{{ url_for('label_queue_remove_all') }}" class="d-inline">
+              <input type="hidden" name="next" value="{{ back }}">
+              {% for i in gids %}<input type="hidden" name="spool_ids" value="{{ i }}">{% endfor %}
+              <button class="btn btn-sm btn-warning" data-bs-toggle="tooltip" title="{{ _('Remove os {n} rolos do grupo da fila de etiquetas').format(n=gids|length) }}"><i class="bi bi-printer-fill"></i></button>
+            </form>
+            {% else %}
+            <form method="post" action="{{ url_for('label_queue_add_all') }}" class="d-inline">
+              <input type="hidden" name="next" value="{{ back }}">
+              {% for i in gids %}<input type="hidden" name="spool_ids" value="{{ i }}">{% endfor %}
+              <button class="btn btn-sm btn-outline-warning" data-bs-toggle="tooltip" title="{{ _('Adiciona os {n} rolos do grupo à fila de etiquetas').format(n=gids|length) }}"><i class="bi bi-printer"></i></button>
+            </form>
+            {% endif %}
+            {% if can_write %}
+            <span class="d-inline-block" data-bs-toggle="tooltip" title="{{ _('Expanda o grupo para editar um rolo') }}">
+              <button type="button" class="btn btn-sm btn-outline-secondary" disabled><i class="bi bi-pencil"></i></button>
+            </span>
+            <a href="{{ url_for('spools_new', from_spool=gids[0]) }}" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="{{ _('Cadastra mais rolos iguais a estes (quantidade começa em 1)') }}"><i class="bi bi-copy"></i></a>
+            <form method="post" action="{{ url_for('spools_deactivate_bulk') }}" class="d-inline"
+                  data-sc-confirm="{{ _('Finalizar {n} rolos?').format(n=gids|length) }}">
+              <input type="hidden" name="next" value="{{ back }}">
+              {% for i in gids %}<input type="hidden" name="ids" value="{{ i }}">{% endfor %}
+              <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="{{ _('Finaliza os {n} rolos do grupo (pede confirmação)').format(n=gids|length) }}"><i class="bi bi-check2-circle"></i></button>
+            </form>
+            {% endif %}
+            {% endif %}
+            {% if is_admin %}
+            <span class="d-inline-block" data-bs-toggle="tooltip" title="{{ _('Expanda o grupo para excluir um rolo') }}">
+              <button type="button" class="btn btn-sm btn-outline-danger" disabled><i class="bi bi-trash"></i></button>
+            </span>
+            {% endif %}
+          </td>
         </tr>
         {% for s in g.spools %}{{ spool_row(s, child=True) }}{% endfor %}
         {% else %}

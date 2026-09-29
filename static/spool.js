@@ -124,8 +124,12 @@ document.querySelectorAll('tr.sc-group-row').forEach(head => {
       r.classList.toggle('d-none', !open);
     });
   };
-  head.addEventListener('click', toggle);
+  head.addEventListener('click', e => {
+    if (e.target.closest('.sc-stack-actions')) return;
+    toggle();
+  });
   head.addEventListener('keydown', e => {
+    if (e.target.closest('.sc-stack-actions')) return;
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
   });
 });
