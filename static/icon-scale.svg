@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-     stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="2 3.6 20 20" fill="none"
+     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
   <!-- plate -->
   <path d="M3 6.2h18"/>
   <!-- stem -->
@@ -11,5 +11,5 @@
   <!-- needle -->
   <path d="M12 14.9l2.2-2"/>
   <!-- ticks -->
-  <path d="M12 11.4v.8M8.9 14.9h.8M15.1 14.9h-.8" stroke-width="1.2"/>
+  <path d="M12 12.9v.4M9.9 14.9h.4M14.1 14.9h-.4" stroke-width="1.5"/>
 </svg>

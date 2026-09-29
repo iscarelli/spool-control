@@ -10,6 +10,14 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.39.15] — 2026-09-28
+
+### Fixed
+- The scale icon is larger and bolder, matching the other action icons (view, print, edit, copy, delete) in the spool list.
+
+### Changed
+- In the grouped spool list, the Qty column now sits right after the ID column.
+
 ## [1.39.14] — 2026-09-28
 
 ### Changed
