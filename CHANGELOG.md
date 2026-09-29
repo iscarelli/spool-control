@@ -10,6 +10,20 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.39.6] — 2026-09-28
+
+### Added
+- **Grouped inventory view.** The inventory report has a new selector next to the
+  search box: "Each spool" (unchanged, the default) or "Group by brand, material and
+  color". Grouped view shows one tile per brand/material/family/color with a count badge
+  (e.g. 5×), the combined remaining percentage and weight (unweighed spools count as
+  full), and the header shows groups and spools totals. Click a tile to list its spools
+  with links, remaining weight and location. Search works in both views.
+
+### Fixed
+- **Black spools no longer vanish on the dark theme.** Every spool donut now has a thin
+  outline on its outer and inner edges (black in the light theme, white in the dark one).
+
 ## [1.39.5] — 2026-09-28
 
 ### Added

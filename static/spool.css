@@ -17,6 +17,7 @@
      --sc-surface/--sc-border ficam próximos demais (contraste ~1.3:1, o quadrado
      quase some) — usamos --sc-text-muted/--sc-bg de propósito: mesmo par de
      tokens já existente, mas ~6.5:1 de contraste. */
+  --sc-donut-outline: #fff;
   --sc-checker-a:    var(--sc-text-muted);
   --sc-checker-b:    var(--sc-bg);
 
@@ -42,6 +43,7 @@
 
 /* ── Design tokens — light ──────────────────────────────────────────────── */
 [data-bs-theme="light"] {
+  --sc-donut-outline: #000;
   --sc-bg:           #F1F5F9;
   --sc-surface:      #FFFFFF;
   --sc-surface-2:    #F8FAFC;
@@ -419,6 +421,8 @@ h1, h2, h3, h4, h5, h6 { letter-spacing: -0.02em; }
 
 /* ── Donuts ─────────────────────────────────────────────────────────────── */
 .donut-track { stroke: var(--sc-border); }
+/* Contorno fino nas bordas externa/interna do anel (ver templates/_swatch.html) */
+.donut-outline { stroke: var(--sc-donut-outline); }
 
 /* Filamento translúcido/transparente: a cor entra em opacidade parcial por
    cima do xadrez global (#sc-checker, definido em base.html), em vez do
@@ -492,6 +496,8 @@ h1, h2, h3, h4, h5, h6 { letter-spacing: -0.02em; }
 }
 .sc-inv-tile:hover { background: var(--sc-accent-glow); transform: translateY(-1px); }
 .sc-inv-name { max-width: 80px; margin: 4px auto 0; font-size: .72rem; line-height: 1.1; }
+.sc-inv-count { font-size: .68rem; margin: 3px; background: var(--sc-accent) !important; color: #000; }
+.sc-inv-total { font-weight: 600; }
 .sc-inv-sub  { max-width: 80px; margin: 0 auto; font-size: .66rem; line-height: 1.15; }
 
 /* ── Brand logo (inline SVG, inherits theme color via currentColor) ─────── */

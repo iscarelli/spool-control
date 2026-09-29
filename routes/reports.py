@@ -16,7 +16,40 @@ def report_stats():
 def report_inventory():
     q = request.args.get("q", "").strip()
     items = db.list_inventory(q or None)
-    return render_template("reports/inventory.html", items=items, q=q)
+    if request.args.get("view") == "grouped":
+        groups = _group_inventory(items)
+        return render_template("reports/inventory.html", groups=groups, items=items,
+                               q=q, grouped=True)
+    return render_template("reports/inventory.html", items=items, q=q, grouped=False)
+
+
+def _group_inventory(items):
+    """Agrupa os spools ativos por (marca, material, família, cor, translúcido).
+
+    Regra do app: rolo não pesado conta como CHEIO (= nominal). Mantém a ordem de
+    `list_inventory` (material, marca, família). Devolve dicts prontos p/ o template."""
+    groups = {}
+    for s in items:
+        key = (s["brand"], s["material"], s["family"], s["color_hex"], bool(s["translucent"]))
+        g = groups.get(key)
+        if g is None:
+            g = groups[key] = {
+                "brand": s["brand"], "material": s["material"], "family": s["family"],
+                "color_hex": s["color_hex"], "translucent": bool(s["translucent"]),
+                "spools": [], "remaining_g": 0.0, "nominal_g": 0.0,
+            }
+        nominal = s["nominal_weight_g"] or 0
+        net = s["current_net_g"]
+        g["remaining_g"] += net if net is not None else nominal
+        g["nominal_g"] += nominal
+        g["spools"].append(s)
+    out = list(groups.values())
+    for g in out:
+        g["count"] = len(g["spools"])
+        g["pct"] = (min(round(g["remaining_g"] / g["nominal_g"] * 100, 1), 100)
+                    if g["nominal_g"] > 0 else 100)
+        g["locations"] = " ".join(s["location"] or "" for s in g["spools"])
+    return out
 
 
 @app.route("/reports/by-material")
