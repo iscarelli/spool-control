@@ -44,23 +44,26 @@ def report_inventory():
         sort = "name"
     items = _enrich_inventory(db.list_inventory(q or None))
     if view:
-        groups = _sort_inventory(_group_inventory(items, view), sort, True)
+        groups = _group_inventory(items, view)
+        summary = _inventory_summary(items, groups, view, sort)
+        groups = _sort_inventory(groups, sort, True)
         return render_template("reports/inventory.html", groups=groups, items=items,
-                               q=q, grouped=True, view=view, sort=sort,
-                               summary=_inventory_summary(items, groups, view))
+                               q=q, grouped=True, view=view, sort=sort, summary=summary)
     # count_desc nao faz sentido por rolo (todo rolo conta 1): cai em "name" e a
     # opcao nem aparece no seletor.
     if sort == "count_desc":
         sort = "name"
+    summary = _inventory_summary(items, None, "", sort)
     items = _sort_inventory(items, sort, False)
     return render_template("reports/inventory.html", items=items, q=q, grouped=False,
-                           view="", sort=sort,
-                           summary=_inventory_summary(items, None, ""))
+                           view="", sort=sort, summary=summary)
 
 
-def _inventory_summary(items, groups, view):
+def _inventory_summary(items, groups, view, sort="name"):
     """Resumo do estoque no rodape: total (kg, rolos) + linhas por material (visao
-    por rolo) ou pelos grupos da visao atual, ordenadas por kg decrescente.
+    por rolo) ou pelos grupos da visao atual, na mesma ordem `sort` dos tiles
+    (via `_sort_inventory`; `groups` e `items` chegam na ordem material/marca/familia).
+    Por rolo o resumo e so por material: "color" cai em "name".
     Rolo nao pesado conta como nominal (`remaining_g`)."""
     total_g = sum(s["remaining_g"] for s in items)
     if view:
@@ -68,18 +71,25 @@ def _inventory_summary(items, groups, view):
                  "color_label": g["color_label"], "brands_txt": g["brands_txt"],
                  "color_hex": g["color_hex"], "color_hex2": g["color_hex2"],
                  "translucent": g["translucent"], "count": g["count"],
+                 "bucket": g["bucket"], "bucket2": g["bucket2"], "max_id": g["max_id"],
                  "grams": g["remaining_g"]} for g in groups]
     else:
         by_mat = {}
         for s in items:
-            r = by_mat.setdefault(s["material"], {"material": s["material"], "count": 0, "grams": 0.0})
+            r = by_mat.setdefault(s["material"], {"material": s["material"], "count": 0, "grams": 0.0,
+                                                                 "max_id": 0})
             r["count"] += 1
             r["grams"] += s["remaining_g"]
-        rows = list(by_mat.values())
+            r["max_id"] = max(r["max_id"], s["id"])
+        rows = sorted(by_mat.values(), key=lambda r: r["material"].lower())
+        if sort == "color":
+            sort = "name"
     for r in rows:
         r["kg"] = r["grams"] / 1000
         r["share"] = r["grams"] / total_g * 100 if total_g > 0 else 0
-    rows.sort(key=lambda r: -r["grams"])
+    for r in rows:
+        r["remaining_g"] = r["grams"]
+    rows = _sort_inventory(rows, sort, True)
     return {"total_kg": total_g / 1000, "total_count": len(items), "rows": rows}
 
 
