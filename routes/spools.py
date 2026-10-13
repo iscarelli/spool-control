@@ -235,7 +235,7 @@ def spools_weigh(spool_id):
 def spools_deactivate(spool_id):
     db.deactivate_spool(spool_id)
     flash(t("Rolo marcado como finalizado"), "success")
-    return redirect(url_for("spools_list"))
+    return redirect(_safe_next(request.form.get("next"), url_for("spools_list")))
 
 
 @app.route("/spools/deactivate-bulk", methods=["POST"])
