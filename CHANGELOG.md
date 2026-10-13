@@ -15,6 +15,7 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 ### Fixed
 - The Weigh button on the spool list opens the weighing dialog again. It had stopped responding because the browser's security policy blocks inline click handlers.
 - The Print button in all six reports works again.
+- The weight field now has focus when the weighing dialog opens, so you can type right away.
 - Clicking an action button or the empty space of the actions cell in the spool and filament lists no longer also opens the row.
 
 ## [1.39.17] — 2026-10-13

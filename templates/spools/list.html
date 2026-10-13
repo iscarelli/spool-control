@@ -326,8 +326,12 @@ function openWeighModal(btn, event) {
   document.getElementById('weighPreview').textContent = '';
   document.getElementById('weighError').innerHTML = '';
   weighModal.show();
-  setTimeout(() => document.getElementById('weighGross').focus(), 350);
 }
+
+/* Focus the weight field once Bootstrap has finished its own modal focus handling. */
+document.getElementById('weighModal').addEventListener('shown.bs.modal', () => {
+  document.getElementById('weighGross').focus();
+});
 
 /* Inline onclick is blocked by the nonce CSP — bind from here. */
 document.querySelectorAll('.weigh-btn:not([disabled])').forEach(btn => {
