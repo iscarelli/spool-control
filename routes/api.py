@@ -29,6 +29,13 @@ def _spool_summary(spool):
     return f"{spool['brand']} {spool['material']} {spool['family']}".strip()
 
 
+def _filament_threshold():
+    try:
+        return int(db.get_setting("low_stock_filament_g", "1000") or 1000)
+    except (TypeError, ValueError):
+        return 1000
+
+
 def _thresholds():
     def _int(key, default):
         try:
@@ -104,6 +111,8 @@ def api_summary():
     thr_g, thr_pct = _thresholds()
     by_mat = db.report_by_material()
     low = db.report_low_stock(thr_g, thr_pct)
+    fil_thr = _filament_threshold()
+    low_fil = db.report_low_stock_by_filament(fil_thr)
     stats = db.dashboard_stats()
     net_g = round(sum(float(r["total_net_g"] or 0) for r in by_mat), 1)
     nominal_g = round(sum(float(r["total_nominal_g"] or 0) for r in by_mat), 1)
@@ -118,6 +127,15 @@ def api_summary():
             "nominal_weight_g": nominal_g,
         },
         low_stock={"count": len(low), "threshold_g": thr_g, "threshold_pct": thr_pct},
+        low_stock_filaments={
+            "count": len(low_fil), "threshold_g": fil_thr,
+            "items": [{
+                "filament_id": r["id"], "brand": r["brand"], "material": r["material"],
+                "family": r["family"], "color_name": r["color_name"],
+                "color_hex": r["color_hex"], "spool_count": r["spool_count"],
+                "net_weight_g": round(float(r["total_net_g"] or 0), 1),
+            } for r in low_fil],
+        },
         by_material=[
             {"material": r["material"], "spool_count": r["spool_count"],
              "net_weight_g": round(float(r["total_net_g"] or 0), 1)}

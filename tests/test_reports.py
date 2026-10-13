@@ -101,3 +101,70 @@ def test_empty_location_label_translated_in_en_and_es():
     for lang, table in (("en", i18n._EN), ("es", i18n._ES)):
         assert "(sem local)" in table, f"'(sem local)' sem tradução em {lang}"
         assert table["(sem local)"], f"'(sem local)' traduzido para vazio em {lang}"
+
+
+# ── Estoque Baixo por filamento × Rolos perto do fim ────────────────────────
+
+def _spool_of(db, fid, nominal=1000, tare=200):
+    return db.create_spool(
+        filament_id=fid, spool_model_id=None, custom_tare_g=tare,
+        nominal_weight_g=nominal, location="", purchase_date="",
+        purchase_price=None, notes="",
+    )
+
+
+def test_near_empty_spool_beside_full_one_is_not_low_stock(db):
+    fid = db.create_filament("MarcaTeste", "PETG", "Basic", "#000000")
+    empty = _spool_of(db, fid)
+    db.add_weight_reading(empty, gross_weight_g=250, tare_weight_g=200)  # net 50
+    _spool_of(db, fid)  # never weighed = new, full (1000)
+    assert fid not in [r["id"] for r in db.report_low_stock_by_filament(1000)]
+    assert empty in [r["id"] for r in db.report_low_stock(200, 20)]
+
+
+def test_filament_with_only_near_empty_spool_is_low_stock(db):
+    fid = db.create_filament("MarcaTeste", "PETG", "Basic", "#000000")
+    sid = _spool_of(db, fid)
+    db.add_weight_reading(sid, gross_weight_g=250, tare_weight_g=200)
+    rows = {r["id"]: r for r in db.report_low_stock_by_filament(1000)}
+    assert fid in rows
+    assert rows[fid]["total_net_g"] == 50
+    assert rows[fid]["spool_count"] == 1
+
+
+def test_unweighed_spool_counts_as_nominal_in_filament_total(db):
+    fid = db.create_filament("MarcaTeste", "PLA", "Basic", "#ff0000")
+    _spool_of(db, fid, nominal=800)
+    assert fid in [r["id"] for r in db.report_low_stock_by_filament(1000)]
+    assert fid not in [r["id"] for r in db.report_low_stock_by_filament(800)]
+
+
+def test_inactive_spools_excluded_from_filament_total(db):
+    fid = db.create_filament("MarcaTeste", "PLA", "Basic", "#ff0000")
+    sid = _spool_of(db, fid)
+    db.add_weight_reading(sid, gross_weight_g=250, tare_weight_g=200)
+    full = _spool_of(db, fid)
+    with db.closing(db.get_db()) as c:
+        c.execute("UPDATE spools SET active=0 WHERE id=?", (full,))
+        c.commit()
+    rows = {r["id"]: r for r in db.report_low_stock_by_filament(1000)}
+    assert rows[fid]["spool_count"] == 1
+    assert rows[fid]["total_net_g"] == 50
+
+
+def test_filament_with_no_active_spool_not_listed(db):
+    fid = db.create_filament("MarcaTeste", "PLA", "Basic", "#ff0000")
+    assert fid not in [r["id"] for r in db.report_low_stock_by_filament(1000)]
+
+
+def test_low_stock_pages_render(auth_client, db):
+    fid = db.create_filament("MarcaTeste", "PETG", "Basic", "#000000")
+    sid = _spool_of(db, fid)
+    db.add_weight_reading(sid, gross_weight_g=250, tare_weight_g=200)
+    for url in ("/", "/reports/low-stock", "/reports/low-stock-filaments", "/admin/settings"):
+        resp = auth_client.get(url)
+        assert resp.status_code == 200, url
+    dash = auth_client.get("/").data
+    assert dash.count(b"Rolos perto do fim") >= 2 and b"MarcaTeste" in dash
+    assert b"MarcaTeste" in auth_client.get("/reports/low-stock-filaments").data
+    assert b"low_stock_filament_g" in auth_client.get("/admin/settings").data

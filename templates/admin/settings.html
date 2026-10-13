@@ -36,6 +36,19 @@
           <hr class="my-4">
           <h6 class="text-muted text-uppercase fw-semibold mb-3" style="font-size:.75rem">{{ _('Estoque Baixo') }}</h6>
           <div class="row g-3 mb-4">
+            <div class="col-12">
+              <label class="form-label fw-semibold">{{ _('Estoque baixo por filamento (g)') }}</label>
+              <div class="input-group">
+                <input type="number" name="low_stock_filament_g" class="form-control" min="0"
+                       value="{{ settings.low_stock_filament_g or 1000 }}">
+                <span class="input-group-text">g</span>
+              </div>
+              <div class="form-text">{{ _('Sinaliza o filamento quando a soma dos rolos ativos fica abaixo disso.') }}</div>
+            </div>
+          </div>
+
+          <h6 class="text-muted text-uppercase fw-semibold mb-3" style="font-size:.75rem">{{ _('Rolos perto do fim') }}</h6>
+          <div class="row g-3 mb-4">
             <div class="col-6">
               <label class="form-label fw-semibold">{{ _('Threshold (g)') }}</label>
               <div class="input-group">

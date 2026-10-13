@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% from "_swatch.html" import swatch %}
+{% block title %}{{ _('Estoque Baixo') }} — Spool Control{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="mb-0 fw-bold">{{ _('Estoque Baixo') }}</h4>
+  <button class="btn btn-sm btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i>{{ _('Imprimir') }}</button>
+</div>
+<div class="alert alert-secondary small">
+  {{ _('Critério: soma dos rolos ativos do filamento') }} &lt; <strong>{{ threshold_g }}g</strong>.
+  <a href="{{ url_for('admin_settings') }}" class="ms-2">{{ _('Ajustar threshold') }}</a>
+</div>
+{% if rows %}
+<div class="card">
+  <div class="table-responsive">
+    <table class="table mb-0 sc-stack">
+      <thead class="table-dark">
+        <tr><th>{{ _('Cor') }}</th><th>{{ _('Material') }}</th><th>{{ _('Marca / Família') }}</th><th>{{ _('Rolos') }}</th><th>{{ _('Total') }}</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for f in rows %}
+        <tr>
+          <td class="fw-bold sc-stack-head">{{ swatch(f.color_hex, f.translucent, hex2=f.color_hex2) }}{{ f.color_name or '—' }}</td>
+          <td data-label="{{ _('Material') }}"><span class="badge bg-secondary">{{ f.material }}</span></td>
+          <td data-label="{{ _('Marca / Família') }}">{{ f.brand }} / {{ f.family }}</td>
+          <td data-label="{{ _('Rolos') }}">{{ f.spool_count }}</td>
+          <td class="fw-semibold text-danger" data-label="{{ _('Total') }}">{{ f.total_net_g|int }}g</td>
+          <td class="sc-stack-actions">
+            <a href="{{ url_for('filaments_detail', filament_id=f.id) }}" class="btn btn-sm btn-outline-secondary">{{ _('Ver') }}</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="text-center text-muted py-5">
+  <i class="bi bi-check-circle fs-1 d-block mb-2 text-success"></i>
+  {{ _('Nenhum filamento abaixo do threshold configurado.') }}
+</div>
+{% endif %}
+{% endblock %}
