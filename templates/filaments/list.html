@@ -53,7 +53,7 @@
           <td class="sc-stack-head">
             <a href="{{ url_for('spools_list') }}?q={{ f.material }}"
                class="badge bg-secondary text-decoration-none"
-               onclick="event.stopPropagation()">{{ f.material }}</a>
+              >{{ f.material }}</a>
           </td>
           <td data-label="{{ _('Cor') }}">
             {{ swatch(f.color_hex, translucent=f.translucent, hex2=f.color_hex2) }}{{ f.color_display or '—' }}
@@ -64,16 +64,16 @@
                  height="18" style="object-fit:contain;max-width:48px;vertical-align:middle" alt="" class="me-1">
             {% endif %}
             <a href="{{ url_for('spools_list') }}?q={{ f.brand }}"
-               class="text-decoration-none" onclick="event.stopPropagation()">{{ f.brand }}</a>
+               class="text-decoration-none">{{ f.brand }}</a>
           </td>
           <td data-label="{{ _('Família') }}">
             <a href="{{ url_for('spools_list') }}?q={{ f.family }}"
-               class="text-decoration-none" onclick="event.stopPropagation()">{{ f.family }}</a>
+               class="text-decoration-none">{{ f.family }}</a>
           </td>
           <td data-label="Ø">{{ f.diameter_mm }}mm</td>
           <td data-label="{{ _('Spools Ativos') }}">{{ f.active_count }}</td>
           <td data-label="{{ _('Total') }}">{{ f.spool_count }}</td>
-          <td class="sc-stack-actions" onclick="event.stopPropagation()">
+          <td class="sc-stack-actions">
             <a href="{{ url_for('filaments_detail', filament_id=f.id) }}" class="btn btn-sm btn-outline-secondary">{{ _('Ver') }}</a>
             {% if can_write %}
             <a href="{{ url_for('spools_new') }}?filament_id={{ f.id }}" class="btn btn-sm btn-outline-secondary" title="{{ _('+ Novo Spool') }}"><i class="bi bi-plus-lg"></i></a>
@@ -109,7 +109,7 @@
 <script nonce="{{ nonce }}">
 document.querySelectorAll('.filament-row').forEach(row => {
   row.addEventListener('click', e => {
-    if (e.target.closest('a, button, form')) return;
+    if (e.target.closest('a, button, form, .sc-stack-actions')) return;
     location.href = row.dataset.href;
   });
 });

@@ -112,7 +112,7 @@
             <span class="badge bg-secondary">{{ _('Finalizado') }}</span>
             {% endif %}
           </td>
-          <td class="sc-stack-actions" onclick="event.stopPropagation()">
+          <td class="sc-stack-actions">
             <a href="{{ url_for('spools_detail', spool_id=s.id) }}" class="btn btn-sm btn-outline-secondary">{{ _('Ver') }}</a>
             {% if can_write and s.active %}
             <a href="{{ url_for('spools_weigh', spool_id=s.id) }}" class="btn btn-sm btn-outline-secondary">{{ _('Pesar') }}</a>
@@ -151,7 +151,7 @@
 <script nonce="{{ nonce }}">
 document.querySelectorAll('.spool-row').forEach(row => {
   row.addEventListener('click', e => {
-    if (e.target.closest('a, button, form')) return;
+    if (e.target.closest('a, button, form, .sc-stack-actions')) return;
     location.href = row.dataset.href;
   });
 });

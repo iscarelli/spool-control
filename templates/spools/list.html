@@ -33,12 +33,11 @@
           <td class="weight-cell" data-label="{{ _('Peso Atual') }}">
             {% if s.current_net_g is not none %}{{ s.current_net_g|int }}g{% else %}<span class="text-muted" data-bs-toggle="tooltip" title="{{ _('não pesado') }}">{{ s.nominal_weight_g|int }}g</span>{% endif %}
           </td>
-          <td class="text-nowrap sc-stack-actions" onclick="event.stopPropagation()">
+          <td class="text-nowrap sc-stack-actions">
             <a href="{{ url_for('spools_detail', spool_id=s.id) }}" class="btn btn-sm btn-outline-secondary" title="{{ _('Ver') }}" aria-label="{{ _('Ver') }}"><i class="bi bi-eye"></i></a>
             {% if s.active %}
             {% if can_write %}
             <button class="btn btn-sm btn-outline-secondary weigh-btn"
-                    onclick="openWeighModal(this, event)"
                     title="{{ _('Pesar') }}">
               <span class="icon-scale"></span>
             </button>
@@ -151,7 +150,7 @@
           {% set gids = g.spools|map(attribute='id')|list %}
           {% set all_queued = gids|select('in', queue_ids)|list|length == gids|length %}
           {% set back = request.full_path.rstrip('?') %}
-          <td class="text-nowrap sc-stack-actions" onclick="event.stopPropagation()">
+          <td class="text-nowrap sc-stack-actions">
             <a href="{{ url_for('filaments_detail', filament_id=s0.filament_id) }}" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="{{ _('Abre a página do filamento, com todos os rolos dele') }}" aria-label="{{ _('Abre a página do filamento, com todos os rolos dele') }}"><i class="bi bi-eye"></i></a>
             {% if s0.active %}
             {% if can_write %}
@@ -270,7 +269,7 @@
 /* ── Row click ──────────────────────────────────────────────────────────── */
 document.querySelectorAll('.spool-row').forEach(row => {
   row.addEventListener('click', e => {
-    if (e.target.closest('a, button, form')) return;
+    if (e.target.closest('a, button, form, .sc-stack-actions')) return;
     location.href = row.dataset.href;
   });
 });
@@ -329,6 +328,11 @@ function openWeighModal(btn, event) {
   weighModal.show();
   setTimeout(() => document.getElementById('weighGross').focus(), 350);
 }
+
+/* Inline onclick is blocked by the nonce CSP — bind from here. */
+document.querySelectorAll('.weigh-btn:not([disabled])').forEach(btn => {
+  btn.addEventListener('click', e => openWeighModal(btn, e));
+});
 
 document.getElementById('weighGross').addEventListener('input', function() {
   const gross = parseFloat(this.value);
