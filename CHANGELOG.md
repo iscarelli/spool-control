@@ -10,6 +10,14 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.39.16] — 2026-10-13
+
+### Changed
+- **Low Stock is now per filament.** A filament is flagged only when all its active spools together hold less than the new limit (default 1000 g, Admin → Settings). One nearly-empty spool no longer raises the alert while full spools of the same filament are on the shelf. Never-weighed spools count as new and full.
+- The old per-spool list is now called **Spools near end**, with its own dashboard card, table and report. It still uses the existing weight and percentage thresholds.
+- The dashboard shows both cards and both tables, and the Reports menu has both reports.
+- API: `/api/summary` gains a `low_stock_filaments` key (count, threshold and items). `low_stock` in the summary and `/api/low-stock` are unchanged and keep the per-spool meaning.
+
 ## [1.39.15] — 2026-09-28
 
 ### Fixed

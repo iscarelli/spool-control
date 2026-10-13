@@ -16,8 +16,14 @@ def dashboard():
     stats = db.dashboard_stats()
     threshold_g = int(db.get_setting("low_stock_threshold_g", 200))
     threshold_pct = int(db.get_setting("low_stock_pct", 20))
-    low_stock = db.report_low_stock(threshold_g, threshold_pct)
-    return render_template("dashboard.html", stats=stats, low_stock=low_stock)
+    near_end = db.report_low_stock(threshold_g, threshold_pct)
+    try:
+        filament_g = int(db.get_setting("low_stock_filament_g", 1000))
+    except (TypeError, ValueError):
+        filament_g = 1000
+    low_filaments = db.report_low_stock_by_filament(filament_g)
+    return render_template("dashboard.html", stats=stats, near_end=near_end,
+                           low_filaments=low_filaments)
 
 
 # ── Search ─────────────────────────────────────────────────────────────────

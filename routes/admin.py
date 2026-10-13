@@ -194,6 +194,7 @@ def admin_settings():
         db.set_setting("app_base_url", request.form.get("app_base_url", "").strip())
         db.set_setting("low_stock_threshold_g", request.form.get("low_stock_threshold_g", "200").strip())
         db.set_setting("low_stock_pct", request.form.get("low_stock_pct", "20").strip())
+        db.set_setting("low_stock_filament_g", request.form.get("low_stock_filament_g", "1000").strip())
         db.set_setting("label_width_mm", request.form.get("label_width_mm", "60").strip())
         db.set_setting("label_height_mm", request.form.get("label_height_mm", "40").strip())
         # Escolhe-se a FAMÍLIA da impressora (B1/B1 Pro juntas) e o tamanho FÍSICO;

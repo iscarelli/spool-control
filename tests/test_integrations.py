@@ -66,7 +66,8 @@ def test_summary_shape(client, db):
     ha_key = db.get_api_key("homeassistant")["key"]
     data = client.get("/api/summary", headers={"X-API-Key": ha_key}).get_json()
     assert data["ok"] is True
-    assert {"totals", "low_stock", "by_material"} <= set(data)
+    assert {"totals", "low_stock", "low_stock_filaments", "by_material"} <= set(data)
+    assert {"count", "threshold_g", "items"} <= set(data["low_stock_filaments"])
     assert "net_weight_kg" in data["totals"]
 
 

@@ -189,6 +189,7 @@ def init_db():
             INSERT OR IGNORE INTO settings (key, value) VALUES
                 ('low_stock_threshold_g','200'),
                 ('low_stock_pct',        '20'),
+                ('low_stock_filament_g', '1000'),
                 ('label_width_mm',       '60'),
                 ('label_height_mm',      '40'),
                 ('currency',             'BRL'),
@@ -997,6 +998,34 @@ def report_low_stock(threshold_g=200, threshold_pct=20):
                    (s.nominal_weight_g > 0 AND COALESCE(l.net_weight_g, s.nominal_weight_g)*100.0/s.nominal_weight_g < ?))
             ORDER BY COALESCE(l.net_weight_g, s.nominal_weight_g) ASC
         """, (threshold_g, threshold_pct)).fetchall()
+
+
+# "Spools near end" is the per-spool concept; "Low stock" (below) is per filament.
+report_spools_near_end = report_low_stock
+
+
+def report_low_stock_by_filament(threshold_g=1000):
+    """Filaments whose active spools together hold less than `threshold_g` of net
+    filament. Never-weighed spools count as their nominal weight (new, full).
+    Filaments with no active spool are not listed."""
+    with closing(get_db()) as db:
+        return db.execute("""
+            WITH latest AS (
+                SELECT spool_id, net_weight_g
+                FROM weight_readings
+                WHERE id IN (SELECT MAX(id) FROM weight_readings GROUP BY spool_id)
+            )
+            SELECT f.id, f.brand, f.material, f.family, f.color_name,
+                   f.color_hex, f.color_hex2, f.translucent,
+                   COUNT(s.id) AS spool_count,
+                   SUM(COALESCE(l.net_weight_g, s.nominal_weight_g)) AS total_net_g
+            FROM filaments f
+            JOIN spools s ON s.filament_id = f.id AND s.active = 1
+            LEFT JOIN latest l ON l.spool_id = s.id
+            GROUP BY f.id
+            HAVING SUM(COALESCE(l.net_weight_g, s.nominal_weight_g)) < ?
+            ORDER BY total_net_g ASC, f.id ASC
+        """, (threshold_g,)).fetchall()
 
 
 def _month_cutoff(months):

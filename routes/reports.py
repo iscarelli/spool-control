@@ -179,6 +179,18 @@ def report_low_stock():
                            threshold_g=threshold_g, threshold_pct=threshold_pct)
 
 
+@app.route("/reports/low-stock-filaments")
+@login_required
+def report_low_stock_filaments():
+    try:
+        threshold_g = int(db.get_setting("low_stock_filament_g", 1000))
+    except (TypeError, ValueError):
+        threshold_g = 1000
+    rows = db.report_low_stock_by_filament(threshold_g)
+    return render_template("reports/low_stock_filaments.html", rows=rows,
+                           threshold_g=threshold_g)
+
+
 @app.route("/reports/consumption")
 @login_required
 def report_consumption():

@@ -32,8 +32,8 @@ Integrações**). Todos exigem o cabeçalho `X-API-Key`.
 
 | Endpoint | O que retorna |
 |---|---|
-| `GET /api/summary` | Totais (rolos ativos, filamentos, **peso líquido em g e kg**, nominal), contagem de estoque baixo e quebra por material |
-| `GET /api/low-stock` | Lista dos rolos abaixo do limite configurado (o que está acabando) |
+| `GET /api/summary` | Totais (rolos ativos, filamentos, **peso líquido em g e kg**, nominal), contagem de estoque baixo **por filamento** (`low_stock_filaments`), contagem de rolos perto do fim (`low_stock`) e quebra por material |
+| `GET /api/low-stock` | Lista dos **rolos** perto do fim (por rolo: peso ou % abaixo do limite) — não é o "Estoque Baixo" por filamento |
 | `GET /api/stock` | Estoque agregado por material **e** por local |
 | `GET /api/spools/<id>` | Detalhe de um rolo específico |
 
@@ -50,6 +50,10 @@ curl -H "X-API-Key: COLE_A_CHAVE_AQUI" https://spool.example.com/api/summary | j
   "totals": { "active_spools": 42, "filaments": 18,
               "net_weight_g": 31850, "net_weight_kg": 31.85, "nominal_weight_g": 42000 },
   "low_stock": { "count": 5, "threshold_g": 200, "threshold_pct": 20 },
+  "low_stock_filaments": { "count": 1, "threshold_g": 1000,
+      "items": [ { "filament_id": 7, "brand": "Creality", "material": "PETG", "family": "Hyper",
+                   "color_name": "Black", "color_hex": "#000000", "spool_count": 1,
+                   "net_weight_g": 350 } ] },
   "by_material": [ { "material": "PLA", "spool_count": 20, "net_weight_g": 15000 } ]
 }
 ```
@@ -76,9 +80,14 @@ rest:
         unique_id: spool_active_spools
         value_template: "{{ value_json.totals.active_spools }}"
         state_class: measurement
-      - name: "Filamento — estoque baixo (qtd)"
+      - name: "Filamento — rolos perto do fim (qtd)"
         unique_id: spool_low_stock_count
         value_template: "{{ value_json.low_stock.count }}"
+        state_class: measurement
+        icon: mdi:alert
+      - name: "Filamento — estoque baixo por filamento (qtd)"
+        unique_id: spool_low_stock_filaments_count
+        value_template: "{{ value_json.low_stock_filaments.count }}"
         state_class: measurement
         icon: mdi:alert
 
@@ -140,8 +149,9 @@ content: >
 
 - **HTTPS recomendado.** Use a URL pública (atrás do Traefik). Em rede local sem HTTPS, o HA também
   consegue consultar `http://IP:8001`, mas a chave trafega em claro — prefira HTTPS.
-- **Limite de estoque baixo** vem de **Admin → Configurações** (gramas e %); os endpoints já
-  refletem esses valores em `threshold_g`/`threshold_pct`.
+- **Limites** vêm de **Admin → Configurações**. `low_stock` e `/api/low-stock` são **por rolo**
+  ("Rolos perto do fim": gramas e %, `threshold_g`/`threshold_pct`). `low_stock_filaments` é o
+  "Estoque Baixo" **por filamento**: soma dos rolos ativos abaixo de `threshold_g` (padrão 1000 g).
 - **Segurança:** a chave do HA é read-only. Se vazar, gere uma nova em **Admin → Integrações** e
   atualize o `secrets.yaml` — a balança continua funcionando normalmente.
 - **Escrita** (registrar pesagem) **não** é feita pelo HA — isso é a API da balança/estação
