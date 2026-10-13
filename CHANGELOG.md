@@ -10,6 +10,11 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.39.17] — 2026-10-13
+
+### Added
+- **Finish a spool from its detail page.** A new Finish button (with confirmation) sits next to Edit. The page stays open afterwards and shows the Finished badge, instead of jumping back to the list.
+
 ## [1.39.16] — 2026-10-13
 
 ### Changed

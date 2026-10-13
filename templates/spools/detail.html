@@ -39,6 +39,13 @@
     <a href="{{ url_for('spools_new', from_spool=spool.id) }}" class="btn btn-outline-secondary btn-sm">
       <i class="bi bi-copy me-1"></i>{{ _('Adicionar mais iguais') }}
     </a>
+    {% if spool.active %}
+    <form method="post" action="{{ url_for('spools_deactivate', spool_id=spool.id) }}"
+          data-sc-confirm="{{ _('Marcar spool como finalizado?') }}">
+      <input type="hidden" name="next" value="{{ url_for('spools_detail', spool_id=spool.id) }}">
+      <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-check2-circle me-1"></i>{{ _('Finalizar') }}</button>
+    </form>
+    {% endif %}
     {% endif %}
     <a href="{{ url_for('spool_label_pdf', spool_id=spool.id) }}" class="btn btn-outline-dark btn-sm" target="_blank">
       <i class="bi bi-printer me-1"></i>{{ _('Etiqueta PDF') }}
