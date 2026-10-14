@@ -181,3 +181,20 @@ def test_dashboard_cards_share_one_row_and_warning_text_is_dark(auth_client, db)
     assert html.count("card text-center border-0 h-100 bg-warning") == 2
     css = open("static/spool.css", encoding="utf-8").read()
     assert ".card.bg-warning, .card-header.bg-warning { color: #000 !important; }" in css
+
+
+def test_near_end_shows_color(auth_client, db):
+    """Dashboard card and report list the spool's color name (not just material)."""
+    fid = db.create_filament("Elegoo", "PETG", "Rapid", "#00ff00", color_name="Verde Limao")
+    sid = db.create_spool(
+        filament_id=fid, spool_model_id=None, custom_tare_g=200,
+        nominal_weight_g=1000, location="A1", purchase_date="",
+        purchase_price=None, notes="",
+    )
+    db.add_weight_reading(sid, gross_weight_g=300, tare_weight_g=200)  # net 100g
+    row = next(r for r in db.report_low_stock(200, 20) if r["id"] == sid)
+    assert row["color_name"] == "Verde Limao"
+    html = auth_client.get("/").get_data(as_text=True)
+    near = html[html.rindex("Rolos perto do fim"):]
+    assert "Verde Limao" in near and "swatch" in near
+    assert "Verde Limao" in auth_client.get("/reports/low-stock").get_data(as_text=True)
