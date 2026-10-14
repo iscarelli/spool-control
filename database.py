@@ -986,6 +986,7 @@ def report_low_stock(threshold_g=200, threshold_pct=20):
             )
             SELECT s.id, s.location, s.nominal_weight_g,
                    f.brand, f.material, f.family, f.color_hex,
+                   f.color_name, f.translucent, f.color_hex2,
                    COALESCE(l.net_weight_g, s.nominal_weight_g) AS current_net_g,
                    CASE WHEN s.nominal_weight_g > 0
                         THEN CAST(COALESCE(l.net_weight_g, s.nominal_weight_g)*100.0/s.nominal_weight_g AS INTEGER)
