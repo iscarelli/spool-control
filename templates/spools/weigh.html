@@ -25,8 +25,11 @@
         <form method="post" id="weighForm">
           <div class="mb-3">
             <label class="form-label fw-semibold fs-5">{{ _('Peso Bruto na Balança (g)') }} <span class="text-danger">*</span></label>
-            <input type="number" name="gross_weight_g" id="grossInput" class="form-control form-control-lg"
-                   step="0.1" min="0" required autofocus placeholder="{{ _('ex: 1182') }}">
+            <div class="input-group input-group-lg">
+              <input type="number" name="gross_weight_g" id="grossInput" class="form-control"
+                     step="0.1" min="0" inputmode="decimal" required autofocus placeholder="{{ _('ex: 1182') }}">
+              <button type="submit" class="btn btn-dark px-3">{{ _('Salvar') }}</button>
+            </div>
             <div class="form-text">{{ _('Peso do rolo completo (filamento + carretel vazio).') }}</div>
           </div>
 
