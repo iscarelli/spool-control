@@ -46,6 +46,12 @@
     <a class="navbar-brand d-flex align-items-center" href="{{ url_for('dashboard') }}">
       {% set logo_h = 26 %}{% include '_brand.html' %}
     </a>
+    {# Scanner de QR: fora do .navbar-collapse para ficar acessível no celular sem abrir o menu #}
+    <button class="btn btn-outline-secondary btn-sm ms-auto me-2 d-inline-flex align-items-center justify-content-center"
+            type="button" id="qrScanBtn" data-bs-toggle="modal" data-bs-target="#qrScanModal"
+            title="{{ _('Escanear QR') }}" aria-label="{{ _('Escanear QR') }}" style="height:2rem;width:2rem">
+      <i class="bi bi-qr-code-scan"></i>
+    </button>
     <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
       <span class="navbar-toggler-icon"></span>
     </button>
@@ -187,6 +193,7 @@
     </div>
   </div>
 </nav>
+{% include '_qr_scan_modal.html' %}
 {% endif %}
 
 {% if demo_mode %}
@@ -232,6 +239,7 @@
 <script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
 <script src="{{ url_for('static', filename='csrf.js') }}"></script>
 <script src="{{ url_for('static', filename='spool.js') }}"></script>
+{% if session.user_id %}<script src="{{ url_for('static', filename='qr-scan.js') }}"></script>{% endif %}
 {% block scripts %}{% endblock %}
 </body>
 </html>

@@ -37,6 +37,7 @@ print 60×40mm thermal labels with a QR code, and get stock reports.
 - 60×40mm PDF labels with a QR code (points to the spool page — login required)
 - **Direct thermal printing to Niimbot** (B1 / B1 Pro / M2-H) straight from the browser via Web Bluetooth — no Niimbot app required
 - Batch label print queue
+- In-app QR scanner (button in the top bar): scans spool labels with the camera and opens the spool or its weighing page in the **same tab** (no new tab per scan); works on Android and iPhone (needs HTTPS)
 - Reports: inventory, statistics, by material, by location, low stock, weight history
 - Search and sorting on listings
 - Authentication with access control (admin / viewer); the admin must set a new password on first login

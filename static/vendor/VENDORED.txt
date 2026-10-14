@@ -1,4 +1,5 @@
 Vendored frontend assets (served same-origin, no CDN at runtime).
   bootstrap        5.3.3   (MIT, getbootstrap.com)
   bootstrap-icons  1.11.3   (MIT, icons.getbootstrap.com)
+  jsQR             1.4.0   (Apache-2.0, github.com/cozmo/jsQR; license in jsQR.LICENSE.txt)
 Refresh via deploy/vendor-frontend.sh — do not hand-edit.

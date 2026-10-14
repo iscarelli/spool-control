@@ -16,6 +16,7 @@ set -euo pipefail
 
 BS_VER="5.3.3"
 BI_VER="1.11.3"
+JSQR_VER="1.4.0"   # QR decoder fallback for iOS Safari (Apache-2.0), see static/qr-scan.js
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -39,11 +40,17 @@ curl -fsSL "$BI_CDN/bootstrap-icons.min.css"           -o "$BI_DIR/bootstrap-ico
 curl -fsSL "$BI_CDN/fonts/bootstrap-icons.woff2"       -o "$BI_DIR/fonts/bootstrap-icons.woff2"
 curl -fsSL "$BI_CDN/fonts/bootstrap-icons.woff"        -o "$BI_DIR/fonts/bootstrap-icons.woff"
 
+echo "Downloading jsQR ${JSQR_VER}…"
+# Apache-2.0 requires shipping the license text with redistributed copies.
+curl -fsSL "https://cdn.jsdelivr.net/npm/jsqr@${JSQR_VER}/dist/jsQR.js" -o "$VENDOR/jsQR.js"
+curl -fsSL "https://cdn.jsdelivr.net/npm/jsqr@${JSQR_VER}/LICENSE"      -o "$VENDOR/jsQR.LICENSE.txt"
+
 # Pin stamp (so the vendored version is traceable in git).
 cat > "$VENDOR/VENDORED.txt" <<EOF
 Vendored frontend assets (served same-origin, no CDN at runtime).
   bootstrap        ${BS_VER}   (MIT, getbootstrap.com)
   bootstrap-icons  ${BI_VER}   (MIT, icons.getbootstrap.com)
+  jsQR             ${JSQR_VER}   (Apache-2.0, github.com/cozmo/jsQR; license in jsQR.LICENSE.txt)
 Refresh via deploy/vendor-frontend.sh — do not hand-edit.
 EOF
 
