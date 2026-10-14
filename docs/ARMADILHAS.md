@@ -73,6 +73,14 @@ mordeu.
   que não contém as tags recentes ele devolve uma tag antiga como se fosse a última. Use
   `git tag --sort=-v:refname | head -1`. Confirmado na auditoria de 2026-07-19: `describe`
   devolveu `v1.36.0` com `v1.38.2` já publicada.
+- **Tag com sufixo (`v1.39.20-beta.1`, `-rc1`) vira atualização para TODAS as instalações.**
+  O `update-lxc.sh --latest-release` (`deploy/update-lxc.sh:83-87`), usado pelo botão de
+  `/admin/update`, pelo comando `update` e pelo reset da demo, instala a **maior tag `v*`**
+  por `--sort=-v:refname`, sem distinguir pré-release, e uma tag com sufixo ordena acima
+  da estável anterior. A detecção de versão nova usa outra fonte (`app.py:438`,
+  `releases/latest`, que ignora pré-release), então o painel diria "você está na última" e o
+  botão instalaria a beta mesmo assim. Não existe canal beta (decisão do dono, 2026-10-13):
+  só publique tag `vX.Y.Z` pronta para todos.
   **Irmãs — outras leituras de "última versão" que podem divergir:** o `VERSION` do
   checkout atual, `git show origin/main:VERSION`, e a release resolvida no servidor por
   `update-lxc.sh --latest-release` (que consulta o GitHub, não o clone local).
