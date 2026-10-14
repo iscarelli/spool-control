@@ -1,5 +1,6 @@
 """Stale-page protection: version exposed on the page, /health agrees, banner markup."""
 import json
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -50,3 +51,18 @@ def test_decide_pure_function():
               f"console.log(JSON.stringify({json.dumps(cases)}.map(c=>v.decide(...c.slice(0,5)))))")
     out = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True)
     assert json.loads(out.stdout) == [c[5] for c in cases]
+
+
+def test_standalone_reload_button(auth_client):
+    html = auth_client.get("/").get_data(as_text=True)
+    m = re.search(r'<button[^>]*id="scReloadBtn"[^>]*>', html)
+    assert m and "sc-standalone-only" in m.group(0)
+    assert "bi-arrow-clockwise" in html
+    assert INLINE_HANDLER.search(html) is None
+    css = (Path(__file__).resolve().parent.parent / "static" / "spool.css").read_text(encoding="utf-8")
+    assert ".sc-standalone-only { display: none !important; }" in css
+    assert "(display-mode: standalone)" in css
+
+
+def test_standalone_reload_button_absent_for_anonymous(client):
+    assert "scReloadBtn" not in client.get("/login").get_data(as_text=True)

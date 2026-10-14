@@ -52,6 +52,13 @@
             title="{{ _('Escanear QR') }}" aria-label="{{ _('Escanear QR') }}" style="height:2rem;width:2rem">
       <i class="bi bi-qr-code-scan"></i>
     </button>
+    {% if session.user_id %}
+    {# Recarregar: só no app instalado (standalone), onde não há barra de endereço nem pull-to-refresh #}
+    <button class="btn btn-outline-secondary btn-sm me-2 align-items-center justify-content-center sc-standalone-only"
+            type="button" id="scReloadBtn" title="{{ _('Recarregar') }}" aria-label="{{ _('Recarregar') }}" style="height:2rem;width:2rem">
+      <i class="bi bi-arrow-clockwise"></i>
+    </button>
+    {% endif %}
     <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
       <span class="navbar-toggler-icon"></span>
     </button>

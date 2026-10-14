@@ -13,6 +13,15 @@
     return 'reload';
   }
 
+  // iOS home-screen apps do not match display-mode media queries reliably.
+  if (typeof navigator !== 'undefined' && navigator.standalone === true && typeof document !== 'undefined') {
+    document.documentElement.classList.add('sc-standalone');
+  }
+  if (typeof document !== 'undefined') {
+    var rb = document.getElementById('scReloadBtn');
+    if (rb) rb.addEventListener('click', function () { location.reload(); });
+  }
+
   var api = { decide: decide };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof document === 'undefined' || !document.body) return;

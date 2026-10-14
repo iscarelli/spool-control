@@ -566,3 +566,10 @@ hr { border-color: var(--sc-border); }
 }
 .sc-update-banner .btn { white-space: nowrap; margin-left: 0 !important; }
 .sc-update-banner[hidden] { display: none; }
+
+/* ── Reload button, installed-app (standalone) mode only ───────────────── */
+.sc-standalone-only { display: none !important; }
+@media (display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui) {
+  .sc-standalone-only { display: inline-flex !important; }
+}
+html.sc-standalone .sc-standalone-only { display: inline-flex !important; }
