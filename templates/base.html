@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap-icons/bootstrap-icons.min.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='spool.css') }}">
 </head>
-<body>
+<body data-app-version="{{ app_version }}">
 
 {# Padrão global de xadrez (checkerboard) p/ amostras de cor translúcidas —
    definido UMA vez, referenciado por `stroke="url(#sc-checker)"` em qualquer
@@ -52,6 +52,13 @@
             title="{{ _('Escanear QR') }}" aria-label="{{ _('Escanear QR') }}" style="height:2rem;width:2rem">
       <i class="bi bi-qr-code-scan"></i>
     </button>
+    {% if session.user_id %}
+    {# Recarregar: só no app instalado (standalone), onde não há barra de endereço nem pull-to-refresh #}
+    <button class="btn btn-outline-secondary btn-sm me-2 align-items-center justify-content-center sc-standalone-only"
+            type="button" id="scReloadBtn" title="{{ _('Recarregar') }}" aria-label="{{ _('Recarregar') }}" style="height:2rem;width:2rem">
+      <i class="bi bi-arrow-clockwise"></i>
+    </button>
+    {% endif %}
     <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
       <span class="navbar-toggler-icon"></span>
     </button>
@@ -236,9 +243,15 @@
 
 <div class="sc-version">v{{ app_version }}</div>
 
+<div id="scUpdateBanner" class="sc-update-banner" role="status" hidden>
+  <span>{{ _('Nova versão disponível') }}</span>
+  <button type="button" class="btn btn-sm btn-warning ms-2" id="scUpdateReload">{{ _('Recarregar') }}</button>
+</div>
+
 <script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
 <script src="{{ url_for('static', filename='csrf.js') }}"></script>
 <script src="{{ url_for('static', filename='spool.js') }}"></script>
+<script src="{{ url_for('static', filename='version-check.js') }}"></script>
 {% if session.user_id %}<script src="{{ url_for('static', filename='qr-scan.js') }}"></script>{% endif %}
 {% block scripts %}{% endblock %}
 </body>

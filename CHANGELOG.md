@@ -10,6 +10,10 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.39.23] — 2026-10-13
+
+- Pages left open, or restored from the phone's tab history, now refresh themselves after a server update instead of showing an outdated version. If you are in the middle of editing a form, a "New version available" banner with a Reload button appears instead. The installed app (home-screen icon) also gets a reload button in the top bar, since it has no address bar or pull-to-refresh.
+
 ## [1.39.22] — 2026-10-13
 
 - The dashboard summary cards fit on one row again on wide screens (the fifth card, with the add buttons, had wrapped onto its own line). The yellow warning cards and the yellow table headers on the dashboard (low stock, spools near the end) now use dark text, so they are readable in the dark theme.

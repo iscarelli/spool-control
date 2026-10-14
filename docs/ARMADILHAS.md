@@ -17,6 +17,18 @@ mordeu.
   em rolos/filamentos) estavam mortos pelo mesmo motivo. O teste
   `tests/test_no_inline_handlers.py` trava a regressão nas páginas renderizadas.
 
+- 🔥 **Página velha depois de um update, mesmo com `Cache-Control: no-cache`.** Restauração de
+  aba no celular e bfcache não refazem a requisição, então o `no-cache` do HTML (`app.py`,
+  bloco "Cache" do `after_request`) não ajuda. O conserto é a checagem no cliente
+  (`static/version-check.js`, `data-app-version` em `templates/base.html:25`, comparado com
+  `/health`). **Custo:** o celular do dono mostrava v1.39.15 com o servidor na v1.39.22.
+
+- 🔥 **`.text-dark` NÃO significa texto escuro aqui.** `static/spool.css:543` remapeia para
+  `var(--sc-text)` (claro no tema escuro). Superfície amarela tem regra própria
+  (`.card.bg-warning, .card-header.bg-warning` no `spool.css`, perto de `.badge.bg-warning`).
+  **Custo:** a primeira tentativa da v1.39.22 pôs `text-dark` nos cards amarelos e continuou
+  ilegível; só uma checagem no navegador pegou.
+
 - 🔥 **`update-lxc.sh` roda da cópia instalada, que ele mesmo atualiza.** Uma mudança no
   script só vale a partir do deploy **seguinte** (`deploy/update-lxc.sh`, passo do
   `git archive`). **Custo:** LXC atualizada com script antigo entra em crash loop por
