@@ -25,7 +25,7 @@
     </div>
   </div>
   <div class="col-6 col-md">
-    <div class="card text-center border-0 h-100 {% if low_filaments|length > 0 %}bg-warning text-dark{% else %}bg-success text-white{% endif %}">
+    <div class="card text-center border-0 h-100 {% if low_filaments|length > 0 %}bg-warning{% else %}bg-success text-white{% endif %}">
       <div class="card-body py-3 d-flex flex-column justify-content-center">
         <div class="fs-2 fw-bold">{{ low_filaments|length }}</div>
         <div class="small">{{ _('Estoque Baixo') }}</div>
@@ -33,7 +33,7 @@
     </div>
   </div>
   <div class="col-6 col-md">
-    <div class="card text-center border-0 h-100 {% if near_end|length > 0 %}bg-warning text-dark{% else %}bg-success text-white{% endif %}">
+    <div class="card text-center border-0 h-100 {% if near_end|length > 0 %}bg-warning{% else %}bg-success text-white{% endif %}">
       <div class="card-body py-3 d-flex flex-column justify-content-center">
         <div class="fs-2 fw-bold">{{ near_end|length }}</div>
         <div class="small">{{ _('Rolos perto do fim') }}</div>

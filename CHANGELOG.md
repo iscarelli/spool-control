@@ -12,7 +12,7 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ## [1.39.22] — 2026-10-13
 
-- The dashboard summary cards fit on one row again on wide screens (the fifth card, with the add buttons, had wrapped onto its own line). The yellow warning cards (low stock, spools near the end) now use dark text, so the number and label are readable.
+- The dashboard summary cards fit on one row again on wide screens (the fifth card, with the add buttons, had wrapped onto its own line). The yellow warning cards and the yellow table headers on the dashboard (low stock, spools near the end) now use dark text, so they are readable in the dark theme.
 
 ## [1.39.21] — 2026-10-13
 

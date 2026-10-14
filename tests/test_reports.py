@@ -178,4 +178,6 @@ def test_dashboard_cards_share_one_row_and_warning_text_is_dark(auth_client, db)
     assert "col-6 col-md-3" not in html
     assert html.count('class="col-6 col-md"') == 4
     assert 'class="col-12 col-md"' in html
-    assert html.count("bg-warning text-dark") == 2
+    assert html.count("card text-center border-0 h-100 bg-warning") == 2
+    css = open("static/spool.css", encoding="utf-8").read()
+    assert ".card.bg-warning, .card-header.bg-warning { color: #000 !important; }" in css
