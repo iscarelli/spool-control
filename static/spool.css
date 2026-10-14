@@ -361,6 +361,8 @@ h1, h2, h3, h4, h5, h6 { letter-spacing: -0.02em; }
 .badge.bg-danger  { background: rgba(239,68,68,0.85) !important; }
 .badge.bg-success { background: rgba(34,197,94,0.85) !important; }
 .badge.bg-warning { background: rgba(251,191,36,0.85) !important; color:#000 !important; }
+/* Yellow surfaces keep dark text in both themes (.text-dark is remapped to the theme text color). */
+.card.bg-warning, .card-header.bg-warning { color: #000 !important; }
 
 /* ── Forms ──────────────────────────────────────────────────────────────── */
 .form-control, .form-select {
