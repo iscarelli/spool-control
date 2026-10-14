@@ -72,7 +72,7 @@ def test_viewer_children_have_no_write_buttons(auth_client, viewer_client, db):
     assert "data-group-child" in html
     assert f"/spools/{a[0]}/edit" not in html
     assert f"/spools/{a[0]}/deactivate" not in html
-    assert "weigh-btn" not in html
+    assert not re.search(r"<button[^>]*weigh-btn", html)  # the JS selector also mentions the class
 
 
 # -- Botões da linha de grupo -------------------------------------------------

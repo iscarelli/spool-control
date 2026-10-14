@@ -8,6 +8,15 @@ mordeu.
 
 ---
 
+- 🔥 **Handler inline (`onclick=`, `onchange=`...) é bloqueado em silêncio pelo CSP com nonce.**
+  `script-src 'self' 'nonce-…'` (`app.py:315`) barra todo atributo `on*=` (diretiva
+  `script-src-attr`); o clique não faz nada e não há erro na página. Use `addEventListener`
+  em `<script nonce>` ou em `static/spool.js` (`data-sc-confirm`, `data-sc-print`); não afrouxe
+  o CSP. **Custo:** botão "Pesar" de `/spools` morto em produção até a v1.39.17; os botões
+  Imprimir dos 6 relatórios e o `stopPropagation` das células de ação (`.sc-stack-actions`
+  em rolos/filamentos) estavam mortos pelo mesmo motivo. O teste
+  `tests/test_no_inline_handlers.py` trava a regressão nas páginas renderizadas.
+
 - 🔥 **`update-lxc.sh` roda da cópia instalada, que ele mesmo atualiza.** Uma mudança no
   script só vale a partir do deploy **seguinte** (`deploy/update-lxc.sh`, passo do
   `git archive`). **Custo:** LXC atualizada com script antigo entra em crash loop por

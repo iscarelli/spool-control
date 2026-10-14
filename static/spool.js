@@ -135,3 +135,9 @@ document.querySelectorAll('tr.sc-group-row').forEach(head => {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
   });
 });
+
+/* ── Print buttons (data-sc-print) ─────────────────────────────────────── */
+/* Replaces onclick="window.print()" — inline handlers are blocked by the nonce CSP. */
+document.addEventListener("click", function (e) {
+  if (e.target.closest && e.target.closest("[data-sc-print]")) window.print();
+});
