@@ -26,7 +26,7 @@ def _make_spool(db):
 def test_no_inline_handlers_on_pages(auth_client, db):
     fid, sid = _make_spool(db)
     urls = ["/", "/spools", "/spools?group=1", "/filaments", f"/filaments/{fid}",
-            f"/spools/{sid}"] + REPORTS
+            f"/spools/{sid}", "/weigh"] + REPORTS
     for url in urls:
         resp = auth_client.get(url)
         assert resp.status_code == 200, url
