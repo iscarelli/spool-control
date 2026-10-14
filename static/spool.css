@@ -555,9 +555,14 @@ hr { border-color: var(--sc-border); }
 
 /* ── Stale-page banner (static/version-check.js) ───────────────────────── */
 .sc-update-banner {
-  position: fixed; top: 0; left: 50%; transform: translateX(-50%);
-  z-index: 2000; padding: .5rem .75rem; border-radius: 0 0 .5rem .5rem;
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  max-width: calc(100% - 2rem);
+  z-index: 1020; /* above content, below modals (1055) and their backdrop (1050) */
+  display: flex; align-items: center; gap: .75rem;
+  padding: .5rem .75rem; border-radius: .5rem;
   background: var(--sc-surface, #222); color: var(--sc-text);
   border: 1px solid var(--sc-border); box-shadow: 0 2px 8px rgba(0,0,0,.4);
 }
+.sc-update-banner .btn { white-space: nowrap; margin-left: 0 !important; }
 .sc-update-banner[hidden] { display: none; }
