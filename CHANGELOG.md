@@ -10,6 +10,10 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.39.21] — 2026-10-13
+
+- The weighing page now has a Save button right next to the weight field, so on a phone you no longer have to scroll down to save. The numeric keypad opens for the weight field.
+
 ## [1.39.20] — 2026-10-13
 
 - A QR scan button in the top bar now scans spool labels inside the app and opens the spool page or its weighing page in the same tab, instead of the camera app opening a new browser tab per scan. The target (spool page or weighing) is a per-device setting. Works on Android and iPhone (camera needs HTTPS).
