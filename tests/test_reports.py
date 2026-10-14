@@ -168,3 +168,14 @@ def test_low_stock_pages_render(auth_client, db):
     assert dash.count(b"Rolos perto do fim") >= 2 and b"MarcaTeste" in dash
     assert b"MarcaTeste" in auth_client.get("/reports/low-stock-filaments").data
     assert b"low_stock_filament_g" in auth_client.get("/admin/settings").data
+
+
+def test_dashboard_cards_share_one_row_and_warning_text_is_dark(auth_client, db):
+    fid = db.create_filament("MarcaTeste", "PETG", "Basic", "#000000")
+    sid = _spool_of(db, fid)
+    db.add_weight_reading(sid, gross_weight_g=250, tare_weight_g=200)
+    html = auth_client.get("/").data.decode()
+    assert "col-6 col-md-3" not in html
+    assert html.count('class="col-6 col-md"') == 4
+    assert 'class="col-12 col-md"' in html
+    assert html.count("bg-warning text-dark") == 2
