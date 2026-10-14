@@ -40,6 +40,82 @@ def _fit_pdf(c, text: str, font: str, size: float, max_w: float) -> str:
     return (text + "…") if text else ""
 
 
+# ── Nome da cor em até 2 linhas (compartilhado por PDF e PNG) ─────────────────
+
+def _fit_lines(text: str, measure, sizes, max_w: float, max_h: float,
+               height, max_lines: int = 2):
+    """Escolhe (tamanho, linhas) para `text` caber em `max_w` x `max_h`.
+
+    `sizes` vem do maior para o menor. Em cada tamanho tenta 1 linha, depois
+    quebra em até `max_lines` linhas nas fronteiras de palavra; só encolhe se
+    nada coube. `measure(s, size)` -> largura; `height(size, n)` -> altura de
+    n linhas. Se nem o menor tamanho serve, devolve esse tamanho com
+    reticências na última linha (nº de linhas limitado pela altura, mín. 1).
+    """
+    text = " ".join((text or "").split())
+    if not text:
+        return sizes[0], [""]
+    words = text.split(" ")
+    for size in sizes:
+        if measure(text, size) <= max_w and height(size, 1) <= max_h:
+            return size, [text]
+        for n in range(2, max_lines + 1):
+            if height(size, n) > max_h:
+                break
+            split = _split_words(words, n, lambda s: measure(s, size), max_w)
+            if split:
+                return size, split
+    size = sizes[-1]
+    n = 1
+    for k in range(2, max_lines + 1):
+        if height(size, k) <= max_h:
+            n = k
+    lines = _greedy_lines(words, n, lambda s: measure(s, size), max_w)
+    return size, lines
+
+
+def _split_words(words, n, width, max_w):
+    """Divide `words` em exatamente `n` (2) linhas que cabem; a mais equilibrada."""
+    if n != 2 or len(words) < 2:
+        return None
+    best = None
+    for i in range(1, len(words)):
+        a, b = " ".join(words[:i]), " ".join(words[i:])
+        wa, wb = width(a), width(b)
+        if wa <= max_w and wb <= max_w:
+            m = max(wa, wb)
+            if best is None or m < best[0]:
+                best = (m, [a, b])
+    return best[1] if best else None
+
+
+def _ellipsize(text, width, max_w):
+    if width(text) <= max_w:
+        return text
+    while text and width(text + "…") > max_w:
+        text = text[:-1]
+    return (text + "…") if text else ""
+
+
+def _greedy_lines(words, n, width, max_w):
+    """Preenche até `n` linhas; a última recebe o resto, com reticências."""
+    lines, rest = [], list(words)
+    while rest and len(lines) < n - 1:
+        line = rest.pop(0)
+        if width(line) > max_w:
+            rest.insert(0, line)
+            break
+        while rest and width(line + " " + rest[0]) <= max_w:
+            line += " " + rest.pop(0)
+        lines.append(line)
+    lines.append(_ellipsize(" ".join(rest), width, max_w))
+    return [l for l in lines if l] or [""]
+
+
+_COLOR_FLOOR = 0.6   # o nome da cor encolhe até 60% do tamanho normal
+_LINE_GAP = 1.15     # entrelinha (x tamanho) quando o nome ocupa 2 linhas
+
+
 def _draw_label(c, spool: dict, base_url: str, page_w: float, page_h: float):
     """Desenha uma etiqueta na página atual. Coordenadas em pontos (origem inf-esq)."""
     margin = 3 * mm
@@ -126,11 +202,23 @@ def _draw_label(c, spool: dict, base_url: str, page_w: float, page_h: float):
         cy -= f_family + g_mat_fam
         c.drawString(left, cy, _fit_pdf(c, family, "Helvetica", f_family, text_w))
 
-    # Cor (média) — NUNCA encolhe por causa do marcador abaixo.
+    # Cor (média) — até 2 linhas; encolhe (até _COLOR_FLOOR) só se não couber.
+    # NUNCA encolhe por causa do marcador abaixo.
+    loc_floor = (margin + f_loc + 1.5 * scale + f_cap + 2.0 * scale) if location else margin
     if color_nm:
-        c.setFont("Helvetica-Bold", f_color)
-        cy -= f_color + g_fam_cor
-        c.drawString(left, cy, _fit_pdf(c, color_nm, "Helvetica-Bold", f_color, text_w))
+        font_c = "Helvetica-Bold"
+        floor = max(6.0, f_color * _COLOR_FLOOR)
+        sizes = [f_color - i * 0.5 for i in range(int((f_color - floor) / 0.5) + 1)]
+        size_c, c_lines = _fit_lines(
+            color_nm, lambda t, sz: c.stringWidth(t, font_c, sz), sizes, text_w,
+            cy - g_fam_cor - loc_floor,
+            lambda sz, n: sz * (1 + _LINE_GAP * (n - 1)))
+        c.setFont(font_c, size_c)
+        cy -= size_c + g_fam_cor
+        c.drawString(left, cy, c_lines[0])
+        for ln in c_lines[1:]:
+            cy -= size_c * _LINE_GAP
+            c.drawString(left, cy, ln)
 
     # Marcador "Translúcido"/"Transparent" — linha PRÓPRIA, na fonte pequena já
     # usada em Família/Local (nunca na fonte da Cor). Prioridade baixa: some
@@ -139,7 +227,6 @@ def _draw_label(c, spool: dict, base_url: str, page_w: float, page_h: float):
     if marker:
         g_cor_marker = 2.0 * scale
         marker_baseline = cy - (f_family + g_cor_marker)
-        loc_floor = (margin + f_loc + 1.5 * scale + f_cap + 2.0 * scale) if location else margin
         if marker_baseline >= loc_floor:
             c.setFont("Helvetica", f_family)
             cy = marker_baseline
@@ -227,7 +314,6 @@ def generate_label_png(spool: dict, base_url: str,
     f_code = _load_font(max(12, round(h_px * 0.075)), bold=True)
     f_material = _load_font(max(16, round(h_px * 0.15)), bold=True)
     f_family = _load_font(max(10, round(h_px * 0.07)))
-    f_color = _load_font(max(12, round(h_px * 0.105)), bold=True)
     # Local (valor) em negrito e um pouco maior — legível mesmo na B1 (203 dpi).
     f_loc = _load_font(max(11, round(h_px * 0.08)), bold=True)
     f_cap = _load_font(max(8, round(h_px * 0.055)))
@@ -312,28 +398,41 @@ def generate_label_png(spool: dict, base_url: str,
         draw.text((tx, cy), fam, font=f_family, fill=0)
         cy += _text_h(draw, fam, f_family)
 
-    # Cor (média) — NUNCA encolhe por causa do marcador abaixo.
+    # Topo do bloco de Local (ou margem inferior): limite para Cor e marcador.
+    if location:
+        loc_h_probe = _text_h(draw, _fit_png(draw, location, f_loc, tw), f_loc)
+        cap_h_probe = _text_h(draw, "Local:", f_cap)
+        loc_top = (h_px - margin) - loc_h_probe - cap_h_probe - max(2, round(h_px * 0.01))
+    else:
+        loc_top = h_px - margin
+
+    # Cor (média) — até 2 linhas; encolhe (até _COLOR_FLOOR) só se não couber.
+    # NUNCA encolhe por causa do marcador abaixo.
+    color_h = 0
     if color_nm:
         cy += g_fam_cor
-        cnm = _fit_png(draw, color_nm, f_color, tw)
-        draw.text((tx, cy), cnm, font=f_color, fill=0)
+        base_c = max(12, round(h_px * 0.105))
+        floor = max(10, round(base_c * _COLOR_FLOOR))
+        fonts = {sz: _load_font(sz, bold=True) for sz in range(base_c, floor - 1, -1)}
+        step = lambda sz: round(sz * _LINE_GAP)
+        size_c, c_lines = _fit_lines(
+            color_nm, lambda t, sz: draw.textlength(t, font=fonts[sz]),
+            sorted(fonts, reverse=True), tw, loc_top - cy,
+            lambda sz, n: _text_h(draw, "X", fonts[sz]) + (n - 1) * step(sz))
+        f_c = fonts[size_c]
+        for i, ln in enumerate(c_lines):
+            draw.text((tx, cy + i * step(size_c)), ln, font=f_c, fill=0)
+        color_h = (len(c_lines) - 1) * step(size_c) + _text_h(draw, c_lines[-1], f_c)
 
     # Marcador "Translúcido"/"Transparent" — linha PRÓPRIA, na fonte pequena já
     # usada em Família (nunca na fonte da Cor). Prioridade baixa: some primeiro
     # se não houver espaço, e nunca invade o bloco de Local no rodapé.
     marker = str(spool.get("translucent_marker", "") or "")
     if marker:
-        if color_nm:
-            cy += _text_h(draw, cnm, f_color)
+        cy += color_h
         g_cor_marker = max(2, round(h_px * 0.02))
         marker_t = _fit_png(draw, marker, f_family, tw)
         marker_h = _text_h(draw, marker_t, f_family)
-        if location:
-            loc_h_probe = _text_h(draw, _fit_png(draw, location, f_loc, tw), f_loc)
-            cap_h_probe = _text_h(draw, "Local:", f_cap)
-            loc_top = (h_px - margin) - loc_h_probe - cap_h_probe - max(2, round(h_px * 0.01))
-        else:
-            loc_top = h_px - margin
         if cy + g_cor_marker + marker_h <= loc_top:
             cy += g_cor_marker
             draw.text((tx, cy), marker_t, font=f_family, fill=0)
