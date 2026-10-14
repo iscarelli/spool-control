@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap-icons/bootstrap-icons.min.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='spool.css') }}">
 </head>
-<body>
+<body data-app-version="{{ app_version }}">
 
 {# Padrão global de xadrez (checkerboard) p/ amostras de cor translúcidas —
    definido UMA vez, referenciado por `stroke="url(#sc-checker)"` em qualquer
@@ -236,9 +236,15 @@
 
 <div class="sc-version">v{{ app_version }}</div>
 
+<div id="scUpdateBanner" class="sc-update-banner" role="status" hidden>
+  <span>{{ _('Nova versão disponível') }}</span>
+  <button type="button" class="btn btn-sm btn-warning ms-2" id="scUpdateReload">{{ _('Recarregar') }}</button>
+</div>
+
 <script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
 <script src="{{ url_for('static', filename='csrf.js') }}"></script>
 <script src="{{ url_for('static', filename='spool.js') }}"></script>
+<script src="{{ url_for('static', filename='version-check.js') }}"></script>
 {% if session.user_id %}<script src="{{ url_for('static', filename='qr-scan.js') }}"></script>{% endif %}
 {% block scripts %}{% endblock %}
 </body>

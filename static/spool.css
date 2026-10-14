@@ -552,3 +552,12 @@ hr { border-color: var(--sc-border); }
   .navbar, .btn, form, .alert-dismissible .btn-close { display: none !important; }
   .card { border: 1px solid #ccc !important; }
 }
+
+/* ── Stale-page banner (static/version-check.js) ───────────────────────── */
+.sc-update-banner {
+  position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+  z-index: 2000; padding: .5rem .75rem; border-radius: 0 0 .5rem .5rem;
+  background: var(--sc-surface, #222); color: var(--sc-text);
+  border: 1px solid var(--sc-border); box-shadow: 0 2px 8px rgba(0,0,0,.4);
+}
+.sc-update-banner[hidden] { display: none; }
