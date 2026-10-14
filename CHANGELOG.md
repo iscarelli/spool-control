@@ -10,6 +10,11 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.39.19] — 2026-10-13
+
+### Fixed
+- Long color names on labels are no longer cut off with "…". They now wrap onto a second line and, if still too long (for example a single long word like "Transparent"), shrink slightly to fit. Applies to both PDF and Niimbot labels, and never overlaps the storage location.
+
 ## [1.39.18] — 2026-10-13
 
 ### Fixed
