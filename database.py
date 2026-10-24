@@ -203,6 +203,14 @@ def init_db():
                 weigh_reminder_last_at TEXT   NOT NULL DEFAULT ''
             );
 
+            -- Rolos para os quais o aviso "rolo acabando" já foi enviado a um usuário (um aviso por
+            -- cruzamento do limite; a marca sai quando uma pesagem volta a ficar acima dele).
+            CREATE TABLE IF NOT EXISTS low_stock_notified (
+                user_id  INTEGER NOT NULL,
+                spool_id INTEGER NOT NULL,
+                PRIMARY KEY (user_id, spool_id)
+            );
+
             CREATE TABLE IF NOT EXISTS brands (
                 name       TEXT PRIMARY KEY,
                 domain     TEXT NOT NULL DEFAULT '',
@@ -565,6 +573,56 @@ def save_notification_prefs(user_id, low_stock_on, low_stock_g, last_spool_on,
              int(bool(weigh_reminder_on)), weigh_reminder_days),
         )
         db.commit()
+
+
+def list_notification_recipients(pref_column):
+    """[(user_id, prefs dict)] dos usuários com a preferência `pref_column` ligada."""
+    if pref_column not in ("low_stock_on", "last_spool_on", "weigh_reminder_on"):
+        raise ValueError(pref_column)
+    with closing(get_db()) as db:
+        rows = db.execute(
+            f"SELECT np.*, u.role FROM notification_prefs np JOIN users u ON u.id = np.user_id "
+            f"WHERE np.{pref_column} = 1").fetchall()
+    return [dict(r) for r in rows]
+
+
+def mark_low_stock_notified(user_id, spool_id):
+    """True se a marca é nova (quem ganhar a corrida envia o aviso; o outro não)."""
+    with closing(get_db()) as db:
+        cur = db.execute("INSERT OR IGNORE INTO low_stock_notified (user_id, spool_id) VALUES (?,?)",
+                         (user_id, spool_id))
+        db.commit()
+        return cur.rowcount == 1
+
+
+def clear_low_stock_notified(user_id, spool_id):
+    with closing(get_db()) as db:
+        db.execute("DELETE FROM low_stock_notified WHERE user_id=? AND spool_id=?",
+                   (user_id, spool_id))
+        db.commit()
+
+
+def set_weigh_reminder_last_at(user_id, ts):
+    with closing(get_db()) as db:
+        db.execute("UPDATE notification_prefs SET weigh_reminder_last_at=? WHERE user_id=?",
+                   (ts, user_id))
+        db.commit()
+
+
+def count_spools_unweighed_since(cutoff_iso):
+    """Rolos ATIVOS cuja última pesagem é anterior a `cutoff_iso` (ou que nunca foram pesados)."""
+    with closing(get_db()) as db:
+        return db.execute(
+            """SELECT COUNT(*) FROM spools s
+               LEFT JOIN (SELECT spool_id, MAX(ts) AS ts FROM weight_readings GROUP BY spool_id) lw
+                      ON lw.spool_id = s.id
+               WHERE s.active = 1 AND (lw.ts IS NULL OR lw.ts < ?)""", (cutoff_iso,)).fetchone()[0]
+
+
+def count_active_spools_of_filament(filament_id):
+    with closing(get_db()) as db:
+        return db.execute("SELECT COUNT(*) FROM spools WHERE filament_id=? AND active=1",
+                          (filament_id,)).fetchone()[0]
 
 
 def store_recovery_codes(user_id, code_hashes):
@@ -1050,6 +1108,8 @@ def deactivate_spool(spool_id):
             (now_iso(), spool_id),
         )
         db.commit()
+    import notify  # late: notify imports this module
+    notify.after_finish(spool_id)
 
 
 def delete_spool(spool_id):
@@ -1061,6 +1121,7 @@ def delete_spool(spool_id):
     with closing(get_db()) as db:
         db.execute("DELETE FROM label_queue WHERE spool_id=?", (spool_id,))
         db.execute("DELETE FROM weight_readings WHERE spool_id=?", (spool_id,))
+        db.execute("DELETE FROM low_stock_notified WHERE spool_id=?", (spool_id,))
         db.execute("DELETE FROM spools WHERE id=?", (spool_id,))
         db.commit()
 
@@ -1076,6 +1137,10 @@ def add_weight_reading(spool_id, gross_weight_g, tare_weight_g, recorded_by="", 
             (spool_id, gross_weight_g, tare_weight_g, now_iso(), recorded_by, notes),
         )
         db.commit()
+    # Every weight write (form, scanner JSON, quick weigh, scale API) ends here, so the low-stock
+    # alert lives here and cannot be forgotten by a new path.
+    import notify  # late: notify imports this module
+    notify.after_weighing(spool_id)
 
 
 def list_weight_readings(spool_id=None, filament_id=None, limit=200):

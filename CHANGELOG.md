@@ -10,6 +10,12 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.39.26] — 2026-10-24
+
+- The QR scanner now keeps everything on one page: the scan result and the weighing happen inside the scanner, and the camera is opened once per page. On iPhone this stops the camera permission prompt that used to come back at every weighing. If the camera is not available, you can type the spool number instead.
+- New Web Push notifications page under Account > Notifications. Each device turns notifications on for itself, there is a test button, and a check of the device's camera and notification permissions with the steps to fix a blocked one. On iPhone, notifications only work once the app is added to the Home Screen (iOS 16.4 or later). This release adds the `pywebpush` dependency. The push keys are generated automatically on first use and are not part of the backup, so after restoring a backup on a new installation each user turns notifications on again.
+- Three optional alerts, switchable per user on that page: "Spool running out" when a weighing takes a spool below a weight you choose (once per crossing; it re-arms if a later weighing goes back above), "Last spool" when finishing a spool leaves a single active spool of that filament, and a weighing reminder every N days (sent between 09:00 and 21:00, only to users who can weigh, and only when some spool has gone unweighed for longer than N days). Nothing is sent in demo mode.
+
 ## [1.39.25] — 2026-10-24
 
 - The iPhone home-screen app now keeps its camera permission instead of asking again on every scan or after the screen locks. The app registers a minimal service worker (no offline caching), so iOS treats it as an installed app. To benefit, remove the app from the Home Screen once and add it again.
