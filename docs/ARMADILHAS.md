@@ -160,10 +160,18 @@ mordeu.
   `tests/test_ui_v138.py` — mantenha-o ao adicionar novo teste que renderize
   `/admin/update`.
 
-- 🔥 **Sem service worker, o iOS trata o app da tela de início como favorito do Safari e a
-  permissão de câmera não persiste.** `static/sw.js` (registrado em `static/spool.js`, caminho
-  fixo `/static/sw.js` — nunca `url_for`, o `?v=` mudaria a URL do worker a cada deploy) dá ao
-  app entrada própria em Ajustes. Custo: o dono reautorizou a câmera a cada leitura no iPhone.
+- 🔥 **No iPhone a permissão de câmera vale por DOCUMENTO aberto, não pelo site: o scanner nunca
+  pode navegar entre leituras e tem de reaproveitar o `MediaStream`.** Carregar outra página (ou,
+  no app da tela de início, até mudar o hash — WebKit 215884) e chamar `getUserMedia` de novo
+  pergunta de novo. `static/qr-scan.js` mostra o rolo e a pesagem dentro do modal
+  (`/spools/<id>/summary.json`, `/spools/<id>/weigh.json`), pede a câmera uma vez (`acquireStream`),
+  fecha o modal só pausando a decodificação e solta as tracks apenas no `pagehide`. Custo: o dono
+  reautorizou a câmera a cada pesagem; a tentativa da 1.39.25 (service worker) não resolveu.
+  Fonte: orientação da sessão do fup + bug WebKit 215884. Qualquer fluxo novo com câmera segue a
+  mesma regra (uma página, um stream).
+- **`static/sw.js` não faz a permissão de câmera persistir** (a nota da 1.39.25 que dizia isso
+  estava errada). Ele continua registrado em `static/spool.js` (caminho fixo `/static/sw.js` —
+  nunca `url_for`, o `?v=` mudaria a URL do worker a cada deploy) porque o push precisa dele.
   O worker **tem de pular o que não é GET**: o WebKit perde o corpo de um POST multipart
   reemitido por worker (o restore de `/admin/backup` sobe um zip).
 - **Asset referenciado de dentro do CSS não recebe o `?v=<hash>` automático.** O

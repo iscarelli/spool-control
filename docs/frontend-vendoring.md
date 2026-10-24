@@ -52,7 +52,7 @@ os `.woff2`/`.woff` precisam ficar em `static/vendor/bootstrap-icons/fonts/` —
 | `static/vendor/bootstrap-icons/fonts/` | Fontes dos ícones (`.woff2`/`.woff`) referenciadas pelo CSS |
 | `static/vendor/jsQR.js` | jsQR 1.4.0 (vendorado — não editar). Carregado **sob demanda** por `static/qr-scan.js` só quando o navegador não tem `BarcodeDetector` (iOS Safari); 250 KB não custam nada nas outras páginas |
 | `static/vendor/jsQR.LICENSE.txt` | Texto da Apache-2.0, que exige acompanhar a redistribuição |
-| `static/qr-scan.js` | Scanner de QR do botão da navbar (modal `templates/_qr_scan_modal.html`): lê `/spools/<id>` e navega na **mesma aba** para o rolo ou a pesagem (preferência por aparelho em `localStorage` `sc.scanTarget`) |
+| `static/qr-scan.js` | Scanner de QR do botão da navbar (modal `templates/_qr_scan_modal.html`): lê `/spools/<id>` e mostra o resultado (e a pesagem, se `sc.scanTarget` = `weigh`) **dentro do modal**, via `/spools/<id>/summary.json` e `/spools/<id>/weigh.json` — nunca navega entre leituras e mantém um único `MediaStream` por carga de página (preferência por aparelho em `localStorage` `sc.scanTarget`) |
 | `static/vendor/VENDORED.txt` | Carimbo das versões vendoradas (gerado pelo script) |
 | `templates/base.html`, `templates/login.html` | Referenciam `static/vendor/...` via `url_for('static', …)` |
 
