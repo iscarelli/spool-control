@@ -200,7 +200,8 @@ def init_db():
                 last_spool_on         INTEGER NOT NULL DEFAULT 0,
                 weigh_reminder_on     INTEGER NOT NULL DEFAULT 0,
                 weigh_reminder_days   INTEGER NOT NULL DEFAULT 7,
-                weigh_reminder_last_at TEXT   NOT NULL DEFAULT ''
+                weigh_reminder_last_at TEXT   NOT NULL DEFAULT '',
+                out_of_stock_on       INTEGER NOT NULL DEFAULT 0
             );
 
             -- Rolos para os quais o aviso "rolo acabando" já foi enviado a um usuário (um aviso por
@@ -282,6 +283,8 @@ def init_db():
             # Segunda cor opcional (filamento bicolor, ex.: Silk "Black Green"). '' = uma cor só.
             # Default '' p/ instalações existentes — nenhum filamento antigo muda de aparência.
             "ALTER TABLE filaments ADD COLUMN color_hex2 TEXT NOT NULL DEFAULT ''",
+            # Aviso "acabou o filamento" (último rolo finalizado). Desligado p/ quem já tem prefs.
+            "ALTER TABLE notification_prefs ADD COLUMN out_of_stock_on INTEGER NOT NULL DEFAULT 0",
         ]:
             try:
                 db.execute(sql)
@@ -555,29 +558,30 @@ def get_notification_prefs(user_id):
         return dict(row)
     return {"user_id": user_id, "low_stock_on": 0, "low_stock_g": _default_low_stock_g(),
             "last_spool_on": 0, "weigh_reminder_on": 0, "weigh_reminder_days": 7,
-            "weigh_reminder_last_at": ""}
+            "weigh_reminder_last_at": "", "out_of_stock_on": 0}
 
 
 def save_notification_prefs(user_id, low_stock_on, low_stock_g, last_spool_on,
-                            weigh_reminder_on, weigh_reminder_days):
+                            weigh_reminder_on, weigh_reminder_days, out_of_stock_on=False):
     """Grava as preferências; o carimbo do último lembrete (`weigh_reminder_last_at`) é preservado."""
     with closing(get_db()) as db:
         db.execute(
             "INSERT INTO notification_prefs (user_id, low_stock_on, low_stock_g, last_spool_on, "
-            "weigh_reminder_on, weigh_reminder_days) VALUES (?,?,?,?,?,?) "
+            "weigh_reminder_on, weigh_reminder_days, out_of_stock_on) VALUES (?,?,?,?,?,?,?) "
             "ON CONFLICT(user_id) DO UPDATE SET low_stock_on=excluded.low_stock_on, "
             "low_stock_g=excluded.low_stock_g, last_spool_on=excluded.last_spool_on, "
             "weigh_reminder_on=excluded.weigh_reminder_on, "
-            "weigh_reminder_days=excluded.weigh_reminder_days",
+            "weigh_reminder_days=excluded.weigh_reminder_days, "
+            "out_of_stock_on=excluded.out_of_stock_on",
             (user_id, int(bool(low_stock_on)), low_stock_g, int(bool(last_spool_on)),
-             int(bool(weigh_reminder_on)), weigh_reminder_days),
+             int(bool(weigh_reminder_on)), weigh_reminder_days, int(bool(out_of_stock_on))),
         )
         db.commit()
 
 
 def list_notification_recipients(pref_column):
     """[(user_id, prefs dict)] dos usuários com a preferência `pref_column` ligada."""
-    if pref_column not in ("low_stock_on", "last_spool_on", "weigh_reminder_on"):
+    if pref_column not in ("low_stock_on", "last_spool_on", "weigh_reminder_on", "out_of_stock_on"):
         raise ValueError(pref_column)
     with closing(get_db()) as db:
         rows = db.execute(

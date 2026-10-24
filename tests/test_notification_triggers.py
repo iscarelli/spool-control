@@ -253,6 +253,76 @@ def test_last_spool_demo_mode(db, sent, monkeypatch):
     assert sent == []
 
 
+# ── Out of stock ─────────────────────────────────────────────────────────────
+
+def _setup_oos(db, last=False):
+    uid = _uid(db)
+    _subscribe(db, uid)
+    db.save_notification_prefs(uid, False, 200, last, False, 7, out_of_stock_on=True)
+    return uid
+
+
+def test_out_of_stock_fires_only_on_zero_left(db, sent):
+    _setup_oos(db)
+    a, fid = _spool(db)
+    b, _f = _spool(db, filament_id=fid)
+    db.deactivate_spool(a)        # one remains: not this alert
+    assert sent == []
+    db.deactivate_spool(b)
+    assert len(sent) == 1
+    assert sent[0]["title"] == "Acabou o filamento"
+    assert sent[0]["body"] == "Esse era o último rolo de Acme PLA Basic Red"
+    assert sent[0]["url"] == f"/filaments/{fid}"
+
+
+def test_out_of_stock_only_for_users_with_pref_on(db, sent):
+    uid = _uid(db)
+    _subscribe(db, uid)
+    db.save_notification_prefs(uid, False, 200, True, False, 7)   # last-spool on, out-of-stock off
+    a, _fid = _spool(db)
+    db.deactivate_spool(a)
+    assert sent == []
+
+
+def test_one_left_alert_unchanged_and_independent(db, sent):
+    _setup_oos(db, last=True)
+    a, fid = _spool(db)
+    b, _f = _spool(db, filament_id=fid)
+    db.deactivate_spool(a)
+    assert [n["title"] for n in sent] == ["Último rolo"]
+
+
+def test_out_of_stock_banners_on_finish_routes(db, auth_client):
+    a, fid = _spool(db)
+    b, _f = _spool(db, filament_id=fid)
+    r = auth_client.post(f"/spools/{a}/deactivate", follow_redirects=True)
+    assert "Só resta 1 rolo de Acme PLA Basic Red." in r.get_data(as_text=True)
+    r = auth_client.post(f"/spools/{b}/deactivate", follow_redirects=True)
+    assert "Esse era o último rolo de Acme PLA Basic Red. Sem estoque." in r.get_data(as_text=True)
+
+
+def test_out_of_stock_banner_on_bulk_finish(db, auth_client):
+    a, fid = _spool(db)
+    b, _f = _spool(db, filament_id=fid)
+    r = auth_client.post("/spools/deactivate-bulk", data={"ids": [str(a), str(b)]},
+                         follow_redirects=True)
+    assert "Sem estoque." in r.get_data(as_text=True)
+
+
+def test_last_active_spool_banner_on_page_and_summary(db, auth_client):
+    a, fid = _spool(db)
+    b, _f = _spool(db, filament_id=fid)
+    assert "Este é o último rolo" not in auth_client.get(f"/spools/{a}").get_data(as_text=True)
+    assert auth_client.get(f"/spools/{a}/summary.json").get_json()["last_spool_msg"] == ""
+    db.deactivate_spool(b)
+    html = auth_client.get(f"/spools/{a}").get_data(as_text=True)
+    assert "Este é o último rolo de Acme PLA Basic Red." in html
+    assert auth_client.get(f"/spools/{a}/summary.json").get_json()["last_spool_msg"] == \
+        "Este é o último rolo de Acme PLA Basic Red."
+    # the finished spool itself never gets the banner
+    assert auth_client.get(f"/spools/{b}/summary.json").get_json()["last_spool_msg"] == ""
+
+
 # ── Weigh reminder ───────────────────────────────────────────────────────────
 
 def _age_reading(db, spool_id, days):
@@ -371,7 +441,10 @@ def test_new_strings_have_en_and_es():
     keys = ["Rolo acabando", "{name} (SP-{id}): {g} g restantes", "Último rolo",
             "Só resta 1 rolo de {name}", "Hora de pesar",
             "{n} rolos sem pesagem há mais de {days} dias",
-            "1 rolo sem pesagem há mais de {days} dias"]
+            "1 rolo sem pesagem há mais de {days} dias", "Acabou o filamento",
+            "Esse era o último rolo de {name}", "Esse era o último rolo de {name}. Sem estoque.",
+            "Só resta 1 rolo de {name}.", "Este é o último rolo de {name}.",
+            "Quando acabar o filamento (sem nenhum rolo)"]
     assert all(k in i18n._EN and k in i18n._ES for k in keys)
     assert not [k for k in i18n._EN if k not in i18n._ES]
 

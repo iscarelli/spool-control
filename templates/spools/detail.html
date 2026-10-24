@@ -8,6 +8,9 @@
   {% set pct = 100 %}
 {% endif %}
 {% set fill = spool.color_hex if spool.color_hex else '#6c757d' %}
+{% if last_spool_msg %}
+<div class="alert alert-warning py-2 mb-3" id="lastSpoolBanner" role="status"><i class="bi bi-exclamation-triangle me-1"></i>{{ last_spool_msg }}</div>
+{% endif %}
 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
   {% if logged_in %}
   <div class="btn-group btn-group-sm me-2" role="group">

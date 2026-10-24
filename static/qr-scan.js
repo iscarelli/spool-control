@@ -264,6 +264,9 @@
     $('qrResName').textContent = [d.material, d.brand].filter(Boolean).join(' · ');
     $('qrResColor').textContent = [d.family, d.color_name].filter(Boolean).join(' · ');
     $('qrResCode').textContent = d.code;
+    var last = $('qrResLast');
+    last.textContent = d.last_spool_msg || '';
+    last.classList.toggle('d-none', !d.last_spool_msg);
     var fin = $('qrResFinished');
     fin.textContent = msg('msgFinished');
     fin.classList.toggle('d-none', d.active);

@@ -70,9 +70,13 @@
             <input type="number" class="form-control form-control-sm d-inline-block mx-1" style="width:6rem" name="low_stock_g"
                    min="1" max="{{ grams_max }}" value="{{ prefs.low_stock_g }}" aria-label="{{ _('Peso em gramas') }}"> g
           </div>
-          <div class="form-check form-switch mb-3">
+          <div class="form-check form-switch mb-1">
             <input class="form-check-input" type="checkbox" role="switch" id="last_spool_on" name="last_spool_on" value="1" {{ 'checked' if prefs.last_spool_on }}>
             <label class="form-check-label" for="last_spool_on">{{ _('Quando sobrar só um rolo de um filamento') }}</label>
+          </div>
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" role="switch" id="out_of_stock_on" name="out_of_stock_on" value="1" {{ 'checked' if prefs.out_of_stock_on }}>
+            <label class="form-check-label" for="out_of_stock_on">{{ _('Quando acabar o filamento (sem nenhum rolo)') }}</label>
           </div>
           {% if can_write %}
           <div class="form-check form-switch mb-1">
