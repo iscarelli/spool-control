@@ -47,6 +47,10 @@ def main():
             "UPDATE users SET totp_secret='', totp_enabled=0 WHERE id=?", (user_id,)
         )
         conn.execute("DELETE FROM recovery_codes WHERE user_id=?", (user_id,))
+        try:  # a tabela só existe depois que o app (>= 1.39.25) subiu uma vez
+            conn.execute("DELETE FROM webauthn_credentials WHERE user_id=?", (user_id,))
+        except sqlite3.OperationalError:
+            pass
         conn.commit()
     finally:
         conn.close()

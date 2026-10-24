@@ -39,6 +39,20 @@
         <div class="alert alert-{{ cat }} py-2">{{ msg }}</div>
         {% endfor %}
       {% endwith %}
+      {% if has_passkey %}
+      <div data-passkey-wrap>
+        <button type="button" class="btn btn-primary w-100 mb-1" id="passkeyLogin"
+                data-csrf="{{ csrf_token() }}"
+                data-options-url="{{ url_for('login_passkey_options') }}"
+                data-verify-url="{{ url_for('login_passkey_verify') }}"
+                data-msg-cancelled="{{ _('Verificação cancelada.') }}"
+                data-msg-failed="{{ _('Não foi possível usar a passkey. Use o código abaixo.') }}">
+          <i class="bi bi-fingerprint me-1"></i>{{ _('Entrar com Face ID / passkey') }}
+        </button>
+        <div id="passkeyMsg" class="small mt-2" hidden></div>
+        <div class="text-center text-muted small my-3">{{ _('ou') }}</div>
+      </div>
+      {% endif %}
       <p class="text-muted small mb-3">{{ _('Digite o código de 6 dígitos do seu app autenticador, ou um código de recuperação.') }}</p>
       <form method="post">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -58,5 +72,6 @@
 </div>
 <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap-icons/bootstrap-icons.min.css') }}">
 <script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
+{% if has_passkey %}<script src="{{ url_for('static', filename='passkey.js') }}"></script>{% endif %}
 </body>
 </html>

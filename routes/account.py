@@ -160,4 +160,5 @@ def account_2fa():
     return render_template(
         "account/2fa.html", enabled=enabled, qr_uri=qr_uri, manual_key=manual_key,
         new_codes=new_codes, remaining=remaining,
+        passkeys=db.list_passkeys(user["id"]) if enabled else [],
     )

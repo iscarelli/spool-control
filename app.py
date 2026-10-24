@@ -1031,6 +1031,7 @@ def login_2fa():
     if not user or not user["totp_enabled"]:
         session.pop("pre2fa_user_id", None)
         return redirect(url_for("login"))
+    has_passkey = bool(db.list_passkeys(uid))
     if request.method == "POST":
         ip = request.remote_addr or ""
         # Mesmo throttle por IP da senha — barra brute-force dos 6 dígitos.
@@ -1039,7 +1040,7 @@ def login_2fa():
                 t("Muitas tentativas. Aguarde {min} minutos e tente novamente.").format(min=LOGIN_WINDOW_MIN),
                 "danger",
             )
-            return render_template("login_2fa.html"), 429
+            return render_template("login_2fa.html", has_passkey=has_passkey), 429
         code = request.form.get("code", "").strip().replace(" ", "")
         totp = pyotp.TOTP(user["totp_secret"])
         ok = totp.verify(code, valid_window=1) or db.consume_recovery_code(uid, code)
@@ -1048,12 +1049,12 @@ def login_2fa():
             remember = bool(session.pop("pre2fa_remember", False))
             nxt = session.pop("pre2fa_next", "") or ""
             session.pop("pre2fa_user_id", None)
-            log.info("auth.2fa_ok")
+            log.info("auth.2fa_ok", method="totp")
             return _promote_session(user, remember, ip, nxt)
         db.record_login_failure(ip, user["username"])
-        log.warning("auth.2fa_fail")
+        log.warning("auth.2fa_fail", method="totp")
         flash(t("Código inválido"), "danger")
-    return render_template("login_2fa.html")
+    return render_template("login_2fa.html", has_passkey=has_passkey)
 
 
 @app.route("/logout", methods=["POST"])
@@ -1184,7 +1185,7 @@ def err_unhandled(e):
 # é o que "liga" as rotas ao app. Importar aqui (e não no topo) evita import circular.
 from routes import (  # noqa: E402
     main, filaments, spool_models, spools, label_queue, reports, admin, api, account,  # noqa: F401
-    integrations,  # noqa: F401
+    integrations, passkey,  # noqa: F401
 )
 
 
