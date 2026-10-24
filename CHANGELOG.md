@@ -10,6 +10,10 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.39.28] — 2026-10-24
+
+- Fixed: on phones, the theme, language, account and log-out buttons in the open menu now sit together in one row under the search box instead of each on its own line. Desktop is unchanged.
+
 ## [1.39.27] — 2026-10-24
 
 - You are now told when a filament is down to its last spool. Finishing a spool shows a warning banner: "Only 1 spool of X left." or "That was the last spool of X. Out of stock." The spool page and the QR scanner result also warn "This is the last spool of X." while a spool is the only active one of its filament.

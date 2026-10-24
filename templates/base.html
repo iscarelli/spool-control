@@ -148,7 +148,7 @@
         {% endif %}
       </ul>
 
-      <form class="d-flex me-2" action="{{ url_for('search') }}" method="get">
+      <form class="d-flex my-2 my-lg-0 me-lg-2" action="{{ url_for('search') }}" method="get">
         <div class="input-group input-group-sm">
           <input class="form-control" type="search" name="q"
                  placeholder="{{ _('Buscar...') }}"
@@ -158,14 +158,15 @@
         </div>
       </form>
 
+      <div class="d-flex align-items-center gap-2 pb-2 pb-lg-0">
       {# Theme toggle #}
-      <button class="btn btn-outline-secondary btn-sm me-1 d-inline-flex align-items-center justify-content-center" id="themeToggle" title="{{ _('Tema') }}" style="height:2rem;width:2rem">
+      <button class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center justify-content-center" id="themeToggle" title="{{ _('Tema') }}" style="height:2rem;width:2rem">
         <i class="bi" id="themeIcon"></i>
       </button>
 
       {# Language switcher — bandeiras em SVG (emoji de bandeira não renderiza no Windows) #}
       {% set _flag = {'pt': 'br', 'en': 'us', 'es': 'es'} %}
-      <div class="dropdown me-2">
+      <div class="dropdown">
         <button class="btn btn-outline-secondary btn-sm dropdown-toggle d-inline-flex align-items-center justify-content-center" data-bs-toggle="dropdown"
                 style="height:2rem;font-size:0.8rem;letter-spacing:0.03em;gap:.3rem">
           <img src="{{ url_for('static', filename='flags/' + _flag.get(lang, 'br') + '.svg') }}" alt="" class="sc-flag">{{ lang.upper() }}
@@ -180,11 +181,11 @@
       {% if demo_mode %}
       {# No modo demo as ações de conta (trocar senha / 2FA) são bloqueadas no backend;
          não oferecemos os links para não virarem beco sem saída. Só o nome do usuário. #}
-      <span class="btn btn-outline-secondary btn-sm disabled d-inline-flex align-items-center justify-content-center me-2" style="height:2rem">
+      <span class="btn btn-outline-secondary btn-sm disabled d-inline-flex align-items-center justify-content-center" style="height:2rem">
         <i class="bi bi-person-circle me-1"></i>{{ session.username }}
       </span>
       {% else %}
-      <div class="dropdown me-2">
+      <div class="dropdown">
         <button class="btn btn-outline-secondary btn-sm dropdown-toggle d-inline-flex align-items-center justify-content-center" data-bs-toggle="dropdown" style="height:2rem">
           <i class="bi bi-person-circle me-1"></i>{{ session.username }}
         </button>
@@ -198,6 +199,7 @@
       <form method="post" action="{{ url_for('logout') }}" class="d-inline">
         <button class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center justify-content-center" type="submit" style="height:2rem">{{ _('Sair') }}</button>
       </form>
+      </div>
     </div>
   </div>
 </nav>
