@@ -170,7 +170,7 @@
                 style="height:2rem;font-size:0.8rem;letter-spacing:0.03em;gap:.3rem">
           <img src="{{ url_for('static', filename='flags/' + _flag.get(lang, 'br') + '.svg') }}" alt="" class="sc-flag">{{ lang.upper() }}
         </button>
-        <ul class="dropdown-menu dropdown-menu-end" style="min-width:0">
+        <ul class="dropdown-menu dropdown-menu-lg-end" style="min-width:0">
           <li><a class="dropdown-item d-flex align-items-center gap-2" href="{{ url_for('set_lang', code='pt') }}"><img src="{{ url_for('static', filename='flags/br.svg') }}" alt="" class="sc-flag">PT</a></li>
           <li><a class="dropdown-item d-flex align-items-center gap-2" href="{{ url_for('set_lang', code='en') }}"><img src="{{ url_for('static', filename='flags/us.svg') }}" alt="" class="sc-flag">EN</a></li>
           <li><a class="dropdown-item d-flex align-items-center gap-2" href="{{ url_for('set_lang', code='es') }}"><img src="{{ url_for('static', filename='flags/es.svg') }}" alt="" class="sc-flag">ES</a></li>
@@ -188,7 +188,7 @@
         <button class="btn btn-outline-secondary btn-sm dropdown-toggle d-inline-flex align-items-center justify-content-center" data-bs-toggle="dropdown" style="height:2rem">
           <i class="bi bi-person-circle me-1"></i>{{ session.username }}
         </button>
-        <ul class="dropdown-menu dropdown-menu-end" style="min-width:0">
+        <ul class="dropdown-menu dropdown-menu-lg-end" style="min-width:0">
           <li><a class="dropdown-item" href="{{ url_for('account_password') }}"><i class="bi bi-key me-2"></i>{{ _('Trocar senha') }}</a></li>
           <li><a class="dropdown-item" href="{{ url_for('account_2fa') }}"><i class="bi bi-shield-lock me-2"></i>{{ _('Verificação em duas etapas') }}</a></li>
           <li><a class="dropdown-item" href="{{ url_for('account_notifications') }}"><i class="bi bi-bell me-2"></i>{{ _('Notificações') }}</a></li>
