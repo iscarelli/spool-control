@@ -46,7 +46,7 @@ Os gatilhos (quem dispara cada aviso) estão em `notify.py` e na seção "Gatilh
 ## Preferências
 
 Tabela `notification_prefs` (uma linha por usuário, criada ao salvar; sem linha valem os padrões):
-`low_stock_on`/`low_stock_g` (padrão = setting `low_stock_threshold_g`, 200), `last_spool_on`,
+`low_stock_on`/`low_stock_g` (padrão = setting `low_stock_threshold_g`, 200), `last_spool_on`, `out_of_stock_on`,
 `weigh_reminder_on`/`weigh_reminder_days` (padrão 7) e `weigh_reminder_last_at` (carimbo do último lembrete enviado). **Tudo desligado** até o usuário ligar. Gramas 1–5000, dias 1–60; valor inválido
 recusa o formulário inteiro. Usuário sem permissão de escrita (`WRITE_ROLES`) não vê nem consegue
 ligar o lembrete de pesagem (o servidor força desligado).
@@ -72,6 +72,15 @@ quebra pesagem nem finalização. Pelas requisições, o envio é `push.send_asy
   caminho de finalização, nem automático). Se sobrou exatamente 1 rolo ativo do mesmo filamento,
   avisa todo usuário com a opção ligada ("Último rolo" / "Só resta 1 rolo de <filamento>", abre
   `/filaments/<id>`). Com 0 ou 2+ restantes, nada. Apagar um rolo não conta como finalizar.
+- **Acabou o filamento** (`out_of_stock_on`): mesma função, `notify.after_finish`. Se a
+  finalização deixou 0 rolos ativos do filamento, avisa quem ligou a opção ("Acabou o filamento" /
+  "Esse era o último rolo de <filamento>", abre `/filaments/<id>`). Coluna criada por
+  `ALTER TABLE` idempotente (`database.py`), desligada por padrão.
+- **Avisos na tela** (sempre, independem das opções): `routes/spools.py` — ao finalizar (botão do
+  rolo e finalização em lote) vira flash amarelo "Só resta 1 rolo de X." ou "Esse era o último
+  rolo de X. Sem estoque."; a página do rolo e o `summary.json`/`weigh.json` do scanner
+  (`last_spool_msg`, mostrado em `#qrResLast` por `static/qr-scan.js`) avisam "Este é o último
+  rolo de X." quando o rolo é ativo e o único ativo do filamento. Não há finalização por JSON.
 - **Lembrete de pesagem** (`weigh_reminder_*`): `notify.run_weigh_reminders`, terceiro passo
   independente (try/except próprio, e o `import notify` dentro dele) do tick horário
   `deploy/backup-cron.py`. Só entre 09:00 e 21:00 no horário local do servidor; só usuário com

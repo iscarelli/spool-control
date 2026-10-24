@@ -10,6 +10,7 @@ from flask import (
 import database as db
 import labels as lbl
 import niimbot_registry as reg
+import notify
 import logger as log_cfg
 from app import (app, _safe_next, login_required, write_required, admin_required, t, _parse_price,
                  public_base_url, _label_spool, _currency_meta, hexcolor, localdate)
@@ -152,7 +153,7 @@ def spools_detail(spool_id):
     in_queue = db.is_in_queue(spool_id)
     queue_prompt = request.args.get("queue_prompt") == "1"
     prev_id, next_id = db.spool_neighbors(spool_id)
-    return render_template("spools/detail.html", spool=spool, readings=readings,
+    return render_template("spools/detail.html", spool=spool, last_spool_msg=_last_spool_message(spool), readings=readings,
                            logged_in=logged_in, in_queue=in_queue, queue_prompt=queue_prompt,
                            prev_id=prev_id, next_id=next_id)
 
@@ -243,6 +244,23 @@ def spools_weigh(spool_id):
     return render_template("spools/weigh.html", spool=spool)
 
 
+def _last_spool_message(spool):
+    """Warning text when `spool` is ACTIVE and the only active spool of its filament, else ''."""
+    if not spool["active"] or db.count_active_spools_of_filament(spool["filament_id"]) != 1:
+        return ""
+    return t("Este é o último rolo de {name}.").format(name=notify.filament_name(spool))
+
+
+def _flash_stock_after_finish(spool):
+    """Banner after finishing `spool`: out of stock (0 left) or a single spool left (1 left)."""
+    left = db.count_active_spools_of_filament(spool["filament_id"])
+    name = notify.filament_name(spool)
+    if left == 0:
+        flash(t("Esse era o último rolo de {name}. Sem estoque.").format(name=name), "warning")
+    elif left == 1:
+        flash(t("Só resta 1 rolo de {name}.").format(name=name), "warning")
+
+
 def _spool_scan_payload(spool):
     """Dados do resultado do scanner (modal). Mesma regra da página do rolo
     (`templates/spools/detail.html`): sem pesagem = nominal, tratado como cheio."""
@@ -255,6 +273,7 @@ def _spool_scan_payload(spool):
     color_name = (spool["color_name"] or "").strip() or (db.classify_color(spool["color_hex"]) or "")
     return {
         "ok": True,
+        "last_spool_msg": _last_spool_message(spool),
         "id": spool["id"],
         "code": f"SP-{spool['id']:04d}",
         "active": bool(spool["active"]),
@@ -307,6 +326,9 @@ def spools_weigh_json(spool_id):
 def spools_deactivate(spool_id):
     db.deactivate_spool(spool_id)
     flash(t("Rolo marcado como finalizado"), "success")
+    finished = db.get_spool(spool_id)
+    if finished:
+        _flash_stock_after_finish(finished)
     return redirect(_safe_next(request.form.get("next"), url_for("spools_list")))
 
 
@@ -315,14 +337,18 @@ def spools_deactivate(spool_id):
 def spools_deactivate_bulk():
     """Finaliza vários rolos de uma vez (linha de grupo). Ignora ids inexistentes/já finalizados."""
     done = 0
+    touched = {}
     for raw in request.form.getlist("ids"):
         if not raw.isdigit():
             continue
         spool = db.get_spool(int(raw))
         if spool and spool["active"]:
             db.deactivate_spool(spool["id"])
+            touched.setdefault(spool["filament_id"], spool["id"])
             done += 1
     flash(t("{n} rolos finalizados").format(n=done), "success")
+    for sid in touched.values():
+        _flash_stock_after_finish(db.get_spool(sid))
     return redirect(_safe_next(request.form.get("next"), url_for("spools_list")))
 
 

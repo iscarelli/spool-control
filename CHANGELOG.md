@@ -12,6 +12,8 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ## [1.39.27] — 2026-10-24
 
+- You are now told when a filament is down to its last spool. Finishing a spool shows a warning banner: "Only 1 spool of X left." or "That was the last spool of X. Out of stock." The spool page and the QR scanner result also warn "This is the last spool of X." while a spool is the only active one of its filament.
+- New optional push alert, "When a filament runs out (no spool left)", switchable per user under Account > Notifications (off by default). The existing "only one spool left" alert is unchanged.
 - Fixed: on phones, the account and language menus opened at the far right edge of the screen instead of under their buttons. They now open under the button below the large-screen breakpoint; on desktop they stay right-aligned.
 
 ## [1.39.26] — 2026-10-24

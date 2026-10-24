@@ -1,10 +1,11 @@
 """Push notification triggers: who gets which alert, and when.
 
-Delivery (keys, subscriptions, the sender) is in push.py; this module decides. Three alerts, each
+Delivery (keys, subscriptions, the sender) is in push.py; this module decides. Four alerts, each
 switchable per user in `notification_prefs`:
 
 - low stock   (`after_weighing`): a weighing takes a spool's remaining filament from >= N g to < N g.
 - last spool  (`after_finish`):   finishing a spool leaves exactly one active spool of the filament.
+- out of stock (`after_finish`):  finishing a spool leaves none.
 - weigh reminder (`run_weigh_reminders`): hourly, from deploy/backup-cron.py.
 
 Imports nothing from Flask or app.py so the cron can use it. Request-time alerts go through
@@ -42,6 +43,10 @@ def _filament_name(row):
     return " ".join(p.strip() for p in parts if p and p.strip())
 
 
+def filament_name(row):
+    return _filament_name(row)
+
+
 def _grams(value):
     return f"{float(value):.0f}"
 
@@ -72,22 +77,28 @@ def after_weighing(spool_id):
 
 
 def after_finish(spool_id):
-    """Last-spool alert, called by `database.deactivate_spool` after the spool is finished."""
+    """Last-spool / out-of-stock alerts, called by `database.deactivate_spool` after the finish."""
     if _demo():
         return
     try:
         spool = db.get_spool(spool_id)
         if not spool:
             return
-        if db.count_active_spools_of_filament(spool["filament_id"]) != 1:
+        left = db.count_active_spools_of_filament(spool["filament_id"])
+        if left == 1:
+            column, title = "last_spool_on", "Último rolo"
+            body = "Só resta 1 rolo de {name}"
+        elif left == 0:
+            column, title = "out_of_stock_on", "Acabou o filamento"
+            body = "Esse era o último rolo de {name}"
+        else:
             return
         _ = _tr()
-        title = _("Último rolo")
-        body = _("Só resta 1 rolo de {name}").format(name=_filament_name(spool))
-        for pref in db.list_notification_recipients("last_spool_on"):
-            push.send_async(pref["user_id"], title, body, f"/filaments/{spool['filament_id']}")
+        body = _(body).format(name=_filament_name(spool))
+        for pref in db.list_notification_recipients(column):
+            push.send_async(pref["user_id"], _(title), body, f"/filaments/{spool['filament_id']}")
     except Exception as e:
-        log.warning("notify.last_spool_failed", spool_id=spool_id, error=type(e).__name__)
+        log.warning("notify.after_finish_failed", spool_id=spool_id, error=type(e).__name__)
 
 
 def _parse_iso(ts):

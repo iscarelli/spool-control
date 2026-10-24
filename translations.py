@@ -1640,3 +1640,17 @@ _EN['{n} rolos sem pesagem há mais de {days} dias'] = '{n} spools not weighed f
 _ES['{n} rolos sem pesagem há mais de {days} dias'] = '{n} rollos sin pesar hace más de {days} días'
 _EN['1 rolo sem pesagem há mais de {days} dias'] = '1 spool not weighed for more than {days} days'
 _ES['1 rolo sem pesagem há mais de {days} dias'] = '1 rollo sin pesar hace más de {days} días'
+
+# ── Out-of-stock alert and last-spool banners ──
+_EN['Acabou o filamento'] = 'Out of stock'
+_ES['Acabou o filamento'] = 'Sin existencias'
+_EN['Esse era o último rolo de {name}'] = 'That was the last spool of {name}'
+_ES['Esse era o último rolo de {name}'] = 'Ese era el último rollo de {name}'
+_EN['Esse era o último rolo de {name}. Sem estoque.'] = 'That was the last spool of {name}. Out of stock.'
+_ES['Esse era o último rolo de {name}. Sem estoque.'] = 'Ese era el último rollo de {name}. Sin existencias.'
+_EN['Só resta 1 rolo de {name}.'] = 'Only 1 spool of {name} left.'
+_ES['Só resta 1 rolo de {name}.'] = 'Solo queda 1 rollo de {name}.'
+_EN['Este é o último rolo de {name}.'] = 'This is the last spool of {name}.'
+_ES['Este é o último rolo de {name}.'] = 'Este es el último rollo de {name}.'
+_EN['Quando acabar o filamento (sem nenhum rolo)'] = 'When a filament runs out (no spool left)'
+_ES['Quando acabar o filamento (sem nenhum rolo)'] = 'Cuando se acabe el filamento (sin ningún rollo)'

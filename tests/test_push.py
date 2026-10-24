@@ -165,16 +165,19 @@ def test_prefs_default_off_and_threshold_from_setting(auth_client, db):
 def test_prefs_save(auth_client, db):
     r = auth_client.post("/account/notifications/prefs", data={
         "low_stock_on": "1", "low_stock_g": "350", "last_spool_on": "1",
-        "weigh_reminder_on": "1", "weigh_reminder_days": "14"})
+        "weigh_reminder_on": "1", "weigh_reminder_days": "14",
+        "out_of_stock_on": "1"})
     assert r.status_code == 302
     p = db.get_notification_prefs(_admin_id(db))
     assert (p["low_stock_on"], p["low_stock_g"], p["last_spool_on"],
             p["weigh_reminder_on"], p["weigh_reminder_days"]) == (1, 350, 1, 1, 14)
+    assert p["out_of_stock_on"] == 1
     # unchecked boxes turn the switches off
     auth_client.post("/account/notifications/prefs",
                      data={"low_stock_g": "350", "weigh_reminder_days": "14"})
     p = db.get_notification_prefs(_admin_id(db))
     assert (p["low_stock_on"], p["last_spool_on"], p["weigh_reminder_on"]) == (0, 0, 0)
+    assert p["out_of_stock_on"] == 0
 
 
 @pytest.mark.parametrize("field,value", [

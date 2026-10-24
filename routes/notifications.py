@@ -98,7 +98,8 @@ def account_notifications_prefs():
     # The weighing reminder is for people who weigh: a read-only user can neither see nor enable it.
     reminder = bool(request.form.get("weigh_reminder_on")) and _can_write()
     db.save_notification_prefs(uid, bool(request.form.get("low_stock_on")), grams,
-                               bool(request.form.get("last_spool_on")), reminder, days)
+                               bool(request.form.get("last_spool_on")), reminder, days,
+                               bool(request.form.get("out_of_stock_on")))
     flash(t("Avisos salvos."), "success")
     return redirect(url_for("account_notifications"))
 
