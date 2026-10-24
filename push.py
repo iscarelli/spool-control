@@ -115,8 +115,12 @@ def vapid_sub():
     """Identifies the sender to the push service (RFC 8292). The installation's public URL when it
     is https, WITHOUT a trailing slash or path (py_vapid's `_check_sub` anchors `$` right after the
     host and refuses "https://host/"); otherwise a `mailto:`."""
-    from app import public_base_url  # late: app imports this module while it is being built
-    parts = urlsplit(public_base_url())
+    # Same rule as app.public_base_url, repeated here so the hourly cron can send without
+    # importing the whole Flask app.
+    base = (db.get_setting("app_base_url", "") or "").strip()
+    if not base or base == "http://localhost:5000":
+        base = (os.environ.get("APP_BASE_URL", "") or "").strip() or base or "http://localhost:5000"
+    parts = urlsplit(base)
     if parts.scheme == "https" and parts.netloc:
         return f"https://{parts.netloc}"
     return f"mailto:admin@{parts.hostname or 'localhost'}"

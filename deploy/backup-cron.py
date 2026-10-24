@@ -4,13 +4,14 @@
 Roda no venv SEM subir o Flask: só configura o logging JSON e dispara o backup
 rotativo (backup.run_scheduled_backup) e, piggyback no mesmo tick horário, o
 refresh diário do catálogo de filamentos (spoolmandb_refresh.run_scheduled_refresh —
-ver docs/spoolmandb.md). O status de cada um fica gravado em settings p/ a UI
+ver docs/spoolmandb.md) e o lembrete de pesagem (notify.run_weigh_reminders — ver
+docs/notificacoes.md). O status de cada um fica gravado em settings p/ a UI
 alertar. Ver backup.py e deploy/spool-backup.{service,timer}.
 
-Os dois são independentes: cada chamada já engole a própria exceção e grava o
+Os três são independentes: cada chamada já engole a própria exceção e grava o
 erro em settings (nunca deixam nada escapar), mas envolvemos em try/except aqui
-TAMBÉM — de propósito, redundante — para que um bug futuro num dos dois não
-impeça o outro de rodar neste tick.
+TAMBÉM — de propósito, redundante — para que um bug futuro num deles não
+impeça os outros de rodar neste tick.
 """
 import sys
 from pathlib import Path
@@ -37,3 +38,9 @@ if __name__ == "__main__":
         spoolmandb_refresh.run_scheduled_refresh()
     except Exception:
         log.error("backup_cron.catalog_step_failed", exc_info=True)
+
+    try:
+        import notify  # inside the step: an import problem here must not stop the backup above
+        notify.run_weigh_reminders()
+    except Exception:
+        log.error("backup_cron.weigh_reminder_step_failed", exc_info=True)

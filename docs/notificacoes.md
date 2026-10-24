@@ -1,12 +1,13 @@
-Código: push.py, routes/notifications.py, templates/account/notifications.html,
-static/notifications.js, static/sw.js, database.py (tabelas `push_subscriptions` e
+Código: notify.py, push.py, deploy/backup-cron.py, translations.py, tests/test_notification_triggers.py,
+routes/notifications.py, templates/account/notifications.html,
+static/notifications.js, static/sw.js, database.py (tabelas `push_subscriptions`, `low_stock_notified` e
 `notification_prefs` + helpers), requirements.txt (pywebpush e transitivas),
 LXC 117:/opt/spool-control/data/vapid.json
 
 # Notificações push
 
 Infraestrutura de Web Push, a página `/account/notifications` e as preferências por usuário.
-**Os gatilhos (quem dispara cada aviso) não estão aqui** — esta camada só entrega.
+Os gatilhos (quem dispara cada aviso) estão em `notify.py` e na seção "Gatilhos" abaixo.
 
 ## Chaves VAPID
 
@@ -46,10 +47,41 @@ Infraestrutura de Web Push, a página `/account/notifications` e as preferência
 
 Tabela `notification_prefs` (uma linha por usuário, criada ao salvar; sem linha valem os padrões):
 `low_stock_on`/`low_stock_g` (padrão = setting `low_stock_threshold_g`, 200), `last_spool_on`,
-`weigh_reminder_on`/`weigh_reminder_days` (padrão 7) e `weigh_reminder_last_at` (carimbo para o
-gatilho futuro). **Tudo desligado** até o usuário ligar. Gramas 1–5000, dias 1–60; valor inválido
+`weigh_reminder_on`/`weigh_reminder_days` (padrão 7) e `weigh_reminder_last_at` (carimbo do último lembrete enviado). **Tudo desligado** até o usuário ligar. Gramas 1–5000, dias 1–60; valor inválido
 recusa o formulário inteiro. Usuário sem permissão de escrita (`WRITE_ROLES`) não vê nem consegue
 ligar o lembrete de pesagem (o servidor força desligado).
+
+## Gatilhos (`notify.py`)
+
+Não importa Flask nem `app.py` (o cron usa). Nada dispara no modo demo (`DEMO_MODE=1`). O usuário
+não tem idioma gravado, então os textos saem em português (`notify._tr(lang)` já aceita o idioma;
+as traduções EN/ES existem em `translations.py`). Cada gatilho engole o próprio erro: aviso nunca
+quebra pesagem nem finalização. Pelas requisições, o envio é `push.send_async`.
+
+- **Rolo acabando** (`low_stock_on`, `low_stock_g`): `notify.after_weighing`, chamado no fim de
+  `database.add_weight_reading` — o único `INSERT` em `weight_readings`, então passa por ele a
+  pesagem do formulário, a do scanner (`weigh.json`), a de `/weigh`, a API da balança
+  (`/api/weigh`) e qualquer caminho futuro (um teste vigia isso). Compara o restante do rolo
+  (`current_net_g`, o mesmo número da página do rolo) com o N de cada usuário. Um aviso por
+  cruzamento: a tabela `low_stock_notified (user_id, spool_id)` guarda quem já foi avisado; a marca
+  sai quando uma pesagem volta a ficar >= N. A primeira pesagem já abaixo de N conta como cruzamento.
+  Só rolos ativos. A marca é gravada com `INSERT OR IGNORE`, então duas workers não duplicam o aviso.
+  Texto: "Rolo acabando" / "<filamento> (SP-0001): 150 g restantes", abre `/spools/<id>`.
+- **Último rolo** (`last_spool_on`): `notify.after_finish`, chamado no fim de
+  `database.deactivate_spool` (usado pelo botão do rolo e pelo "finalizar em lote"; não há outro
+  caminho de finalização, nem automático). Se sobrou exatamente 1 rolo ativo do mesmo filamento,
+  avisa todo usuário com a opção ligada ("Último rolo" / "Só resta 1 rolo de <filamento>", abre
+  `/filaments/<id>`). Com 0 ou 2+ restantes, nada. Apagar um rolo não conta como finalizar.
+- **Lembrete de pesagem** (`weigh_reminder_*`): `notify.run_weigh_reminders`, terceiro passo
+  independente (try/except próprio, e o `import notify` dentro dele) do tick horário
+  `deploy/backup-cron.py`. Só entre 09:00 e 21:00 no horário local do servidor; só usuário com
+  `WRITE_ROLES`, a opção ligada e pelo menos um aparelho inscrito; só se passaram N dias desde
+  `weigh_reminder_last_at` (ou nunca enviou) E há rolos ativos sem pesagem há mais de N dias (ou
+  nunca pesados). Sem rolo atrasado não faz nada e **não** avança o carimbo. Envio síncrono
+  (`push.send_to_user`). Texto: "Hora de pesar" / "<k> rolos sem pesagem há mais de <N> dias",
+  abre `/spools`. `notify.WRITE_ROLES` repete `app.WRITE_ROLES` (um teste exige que sejam iguais).
+- O cron manda sem importar `app`: `push.vapid_sub` aplica a mesma regra de `app.public_base_url`
+  lendo a setting `app_base_url` e `APP_BASE_URL`.
 
 ## Página e permissões do celular
 
@@ -80,4 +112,4 @@ continua só repassando GET.
 O `deploy/update-lxc.sh` instala o `requirements.txt` antes do smoke `import app`, então a dep nova
 chega sozinha no update pela web.
 
-Testes: `tests/test_push.py`.
+Testes: `tests/test_push.py` e `tests/test_notification_triggers.py`.
