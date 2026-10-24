@@ -179,6 +179,30 @@ def init_db():
                 last_used_at  TEXT    NOT NULL DEFAULT ''
             );
 
+            -- Web Push: um aparelho = uma inscrição. endpoint é único no mundo (o serviço
+            -- de push do navegador o emite); p256dh/auth são as chaves do canal.
+            CREATE TABLE IF NOT EXISTS push_subscriptions (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                endpoint   TEXT    NOT NULL UNIQUE,
+                p256dh     TEXT    NOT NULL,
+                auth       TEXT    NOT NULL,
+                user_agent TEXT    NOT NULL DEFAULT '',
+                created_at TEXT    NOT NULL DEFAULT '',
+                last_ok_at TEXT    NOT NULL DEFAULT ''
+            );
+
+            -- Preferências de aviso por usuário. Tudo desligado até o usuário ligar.
+            CREATE TABLE IF NOT EXISTS notification_prefs (
+                user_id               INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+                low_stock_on          INTEGER NOT NULL DEFAULT 0,
+                low_stock_g           INTEGER NOT NULL DEFAULT 200,
+                last_spool_on         INTEGER NOT NULL DEFAULT 0,
+                weigh_reminder_on     INTEGER NOT NULL DEFAULT 0,
+                weigh_reminder_days   INTEGER NOT NULL DEFAULT 7,
+                weigh_reminder_last_at TEXT   NOT NULL DEFAULT ''
+            );
+
             CREATE TABLE IF NOT EXISTS brands (
                 name       TEXT PRIMARY KEY,
                 domain     TEXT NOT NULL DEFAULT '',
@@ -453,6 +477,93 @@ def delete_passkey(user_id, passkey_id):
 def delete_all_passkeys(user_id):
     with closing(get_db()) as db:
         db.execute("DELETE FROM webauthn_credentials WHERE user_id=?", (user_id,))
+        db.commit()
+
+
+# ── Web Push: inscrições e preferências ─────────────────────────────────────
+
+def save_push_subscription(user_id, endpoint, p256dh, auth, user_agent=""):
+    """Insere a inscrição ou, se o endpoint já existe, a passa para este usuário."""
+    with closing(get_db()) as db:
+        db.execute(
+            "INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth, user_agent, created_at) "
+            "VALUES (?,?,?,?,?,?) ON CONFLICT(endpoint) DO UPDATE SET "
+            "user_id=excluded.user_id, p256dh=excluded.p256dh, auth=excluded.auth, "
+            "user_agent=excluded.user_agent",
+            (user_id, endpoint, p256dh, auth, (user_agent or "")[:300], now_iso()),
+        )
+        db.commit()
+
+
+def list_push_subscriptions(user_id):
+    with closing(get_db()) as db:
+        return db.execute(
+            "SELECT * FROM push_subscriptions WHERE user_id=? ORDER BY id", (user_id,)
+        ).fetchall()
+
+
+def delete_push_subscription(user_id, sub_id):
+    """Apaga só se a inscrição for do usuário. Devolve True se apagou."""
+    with closing(get_db()) as db:
+        cur = db.execute(
+            "DELETE FROM push_subscriptions WHERE id=? AND user_id=?", (sub_id, user_id))
+        db.commit()
+        return cur.rowcount > 0
+
+
+def delete_push_subscription_by_endpoint(user_id, endpoint):
+    with closing(get_db()) as db:
+        cur = db.execute(
+            "DELETE FROM push_subscriptions WHERE endpoint=? AND user_id=?", (endpoint, user_id))
+        db.commit()
+        return cur.rowcount > 0
+
+
+def drop_push_subscription(sub_id):
+    """Remove inscrição expirada (o serviço de push respondeu 404/410)."""
+    with closing(get_db()) as db:
+        db.execute("DELETE FROM push_subscriptions WHERE id=?", (sub_id,))
+        db.commit()
+
+
+def touch_push_subscription(sub_id):
+    with closing(get_db()) as db:
+        db.execute("UPDATE push_subscriptions SET last_ok_at=? WHERE id=?", (now_iso(), sub_id))
+        db.commit()
+
+
+def _default_low_stock_g():
+    try:
+        return int(get_setting("low_stock_threshold_g", "200"))
+    except ValueError:
+        return 200
+
+
+def get_notification_prefs(user_id):
+    """Preferências do usuário como dict; sem linha gravada devolve os padrões (tudo desligado)."""
+    with closing(get_db()) as db:
+        row = db.execute("SELECT * FROM notification_prefs WHERE user_id=?", (user_id,)).fetchone()
+    if row:
+        return dict(row)
+    return {"user_id": user_id, "low_stock_on": 0, "low_stock_g": _default_low_stock_g(),
+            "last_spool_on": 0, "weigh_reminder_on": 0, "weigh_reminder_days": 7,
+            "weigh_reminder_last_at": ""}
+
+
+def save_notification_prefs(user_id, low_stock_on, low_stock_g, last_spool_on,
+                            weigh_reminder_on, weigh_reminder_days):
+    """Grava as preferências; o carimbo do último lembrete (`weigh_reminder_last_at`) é preservado."""
+    with closing(get_db()) as db:
+        db.execute(
+            "INSERT INTO notification_prefs (user_id, low_stock_on, low_stock_g, last_spool_on, "
+            "weigh_reminder_on, weigh_reminder_days) VALUES (?,?,?,?,?,?) "
+            "ON CONFLICT(user_id) DO UPDATE SET low_stock_on=excluded.low_stock_on, "
+            "low_stock_g=excluded.low_stock_g, last_spool_on=excluded.last_spool_on, "
+            "weigh_reminder_on=excluded.weigh_reminder_on, "
+            "weigh_reminder_days=excluded.weigh_reminder_days",
+            (user_id, int(bool(low_stock_on)), low_stock_g, int(bool(last_spool_on)),
+             int(bool(weigh_reminder_on)), weigh_reminder_days),
+        )
         db.commit()
 
 

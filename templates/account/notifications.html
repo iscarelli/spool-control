@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Notificações') }} — Spool Control{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-7">
+    <h4 class="mb-3"><i class="bi bi-bell me-2"></i>{{ _('Notificações') }}</h4>
+
+    <div id="notif-root" data-public-key="{{ public_key }}"
+         data-subscribe-url="{{ url_for('account_notifications_subscribe') }}"
+         data-unsubscribe-url="{{ url_for('account_notifications_unsubscribe') }}"
+         data-test-url="{{ url_for('account_notifications_test') }}"
+         data-app-name="Spool"
+         data-i18n='{{ js_i18n|tojson }}'>
+
+      {# ── Este aparelho ── #}
+      <div class="card mb-3">
+        <div class="card-header fw-semibold"><i class="bi bi-phone me-1"></i>{{ _('Este aparelho') }}</div>
+        <div class="card-body">
+          <p class="small text-muted mb-2">{{ _('Ative para receber os avisos abaixo neste aparelho, mesmo com o app fechado.') }}</p>
+          <div class="d-flex flex-wrap gap-2 mb-2">
+            <button type="button" class="btn btn-primary btn-sm" id="push-enable">
+              <i class="bi bi-bell me-1"></i>{{ _('Ativar notificações') }}</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm d-none" id="push-disable">
+              <i class="bi bi-bell-slash me-1"></i>{{ _('Desativar neste aparelho') }}</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="push-test">
+              <i class="bi bi-send me-1"></i>{{ _('Enviar teste') }}</button>
+          </div>
+          <div class="small" id="push-status" role="status"></div>
+          <ul class="small mb-0 mt-1 ps-3" id="push-results"></ul>
+
+          <div class="alert alert-info small mt-3 mb-0 d-none" id="push-ios-note">
+            <i class="bi bi-info-circle me-1"></i>
+            {{ _('No iPhone, as notificações só funcionam com o app adicionado à Tela de Início (iOS 16.4 ou mais novo).') }}
+            <ol class="mb-0 mt-1 ps-3">
+              <li>{{ _('Abra esta página no Safari.') }}</li>
+              <li>{{ _('Toque em Compartilhar e depois em “Adicionar à Tela de Início”.') }}</li>
+              <li>{{ _('Abra o Spool pelo ícone novo e volte aqui.') }}</li>
+            </ol>
+          </div>
+
+          <hr>
+          <div class="fw-semibold small mb-1">{{ _('Aparelhos com notificações') }}</div>
+          {% if devices %}
+          <ul class="list-group list-group-flush">
+            {% for d in devices %}
+            <li class="list-group-item px-0 d-flex align-items-center justify-content-between">
+              <span>
+                <i class="bi bi-{{ 'phone' if d.name in ('iPhone', 'Android') else 'laptop' }} me-2"></i>{{ d.name }}
+                <span class="text-muted small ms-1">{{ _('desde') }} {{ d.created_at }}</span>
+              </span>
+              <form method="post" action="{{ url_for('account_notifications_device_delete', sub_id=d.id) }}">
+                <button class="btn btn-outline-danger btn-sm" type="submit">{{ _('Remover') }}</button>
+              </form>
+            </li>
+            {% endfor %}
+          </ul>
+          {% else %}
+          <div class="small text-muted" id="push-no-devices">{{ _('Nenhum aparelho inscrito ainda.') }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      {# ── Avisos ── #}
+      <form method="post" action="{{ url_for('account_notifications_prefs') }}" class="card mb-3">
+        <div class="card-header fw-semibold"><i class="bi bi-sliders me-1"></i>{{ _('Avisos') }}</div>
+        <div class="card-body">
+          <div class="form-check form-switch mb-1">
+            <input class="form-check-input" type="checkbox" role="switch" id="low_stock_on" name="low_stock_on" value="1" {{ 'checked' if prefs.low_stock_on }}>
+            <label class="form-check-label" for="low_stock_on">{{ _('Rolo abaixo de') }}</label>
+            <input type="number" class="form-control form-control-sm d-inline-block mx-1" style="width:6rem" name="low_stock_g"
+                   min="1" max="{{ grams_max }}" value="{{ prefs.low_stock_g }}" aria-label="{{ _('Peso em gramas') }}"> g
+          </div>
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" role="switch" id="last_spool_on" name="last_spool_on" value="1" {{ 'checked' if prefs.last_spool_on }}>
+            <label class="form-check-label" for="last_spool_on">{{ _('Quando sobrar só um rolo de um filamento') }}</label>
+          </div>
+          {% if can_write %}
+          <div class="form-check form-switch mb-1">
+            <input class="form-check-input" type="checkbox" role="switch" id="weigh_reminder_on" name="weigh_reminder_on" value="1" {{ 'checked' if prefs.weigh_reminder_on }}>
+            <label class="form-check-label" for="weigh_reminder_on">{{ _('Lembrete de pesagem a cada') }}</label>
+            <input type="number" class="form-control form-control-sm d-inline-block mx-1" style="width:5rem" name="weigh_reminder_days"
+                   min="1" max="{{ days_max }}" value="{{ prefs.weigh_reminder_days }}" aria-label="{{ _('Dias') }}"> {{ _('dias') }}
+          </div>
+          {% endif %}
+        </div>
+        <div class="card-footer text-end">
+          <button class="btn btn-primary btn-sm" type="submit">{{ _('Salvar') }}</button>
+        </div>
+      </form>
+
+      {# ── Permissões do celular ── #}
+      <div class="card mb-3" id="perm-check">
+        <div class="card-header fw-semibold"><i class="bi bi-shield-check me-1"></i>{{ _('Permissões do celular') }}</div>
+        <div class="card-body">
+          <p class="small text-muted">{{ _('Confira se este aparelho deixa o Spool usar a câmera (para escanear etiquetas) e enviar notificações.') }}</p>
+          <div class="d-flex justify-content-between align-items-start py-2" data-perm="camera">
+            <div>
+              <div class="fw-semibold"><i class="bi bi-camera me-1"></i>{{ _('Câmera') }}</div>
+              <div class="small mt-1 text-secondary" data-perm-state></div>
+            </div>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-perm-test>{{ _('Testar') }}</button>
+          </div>
+          <div class="d-flex justify-content-between align-items-start py-2 border-top" data-perm="notifications">
+            <div>
+              <div class="fw-semibold"><i class="bi bi-bell me-1"></i>{{ _('Notificações') }}</div>
+              <div class="small mt-1 text-secondary" data-perm-state></div>
+            </div>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-perm-test>{{ _('Testar') }}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='notifications.js') }}"></script>
+{% endblock %}

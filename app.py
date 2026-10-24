@@ -1185,7 +1185,7 @@ def err_unhandled(e):
 # é o que "liga" as rotas ao app. Importar aqui (e não no topo) evita import circular.
 from routes import (  # noqa: E402
     main, filaments, spool_models, spools, label_queue, reports, admin, api, account,  # noqa: F401
-    integrations, passkey,  # noqa: F401
+    integrations, passkey, notifications,  # noqa: F401
 )
 
 
