@@ -13,6 +13,7 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 ## [1.39.25] — 2026-10-24
 
 - The iPhone home-screen app now keeps its camera permission instead of asking again on every scan or after the screen locks. The app registers a minimal service worker (no offline caching), so iOS treats it as an installed app. To benefit, remove the app from the Home Screen once and add it again.
+- Users who have two-step verification turned on can now add a passkey (Face ID, Touch ID or the device unlock) under Account > Two-step verification, and confirm their login with it instead of typing the authenticator code. The password is still required first, and authenticator and recovery codes keep working as an alternative. Turning two-step verification off also removes the account's passkeys. Passkeys are tied to the site's address, so they only work on the domain where they were created. This release adds the `webauthn` Python dependency.
 
 ## [1.39.24] — 2026-10-14
 

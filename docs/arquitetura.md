@@ -1,5 +1,7 @@
 # Arquitetura — organização das rotas
 
+Código: app.py, routes/*.py, routes/account.py, routes/passkey.py, static/passkey.js, database.py
+
 Documento de referência sobre **como o código é organizado** e **por que** foi feito
 assim. Escrito em termos simples (o mantenedor é iniciante em desenvolvimento).
 
@@ -69,3 +71,25 @@ faz sentido — e dá para fazer **depois**, gradualmente, usando a **suíte de 
 
 > Princípio que guia estas decisões: **use a solução mais simples que resolve o problema de
 > hoje; só pague a complexidade extra quando a necessidade dela aparecer de verdade.**
+
+## Login em duas etapas: TOTP e passkey
+
+Código: `app.py` (`login`, `login_2fa`, `_promote_session`), `routes/account.py`
+(`account_2fa`), `routes/passkey.py`, `static/passkey.js`, `database.py`
+(`webauthn_credentials`, `disable_totp`).
+
+- Senha é sempre o 1º passo. Com 2FA ligado, o app guarda `pre2fa_*` na sessão e manda
+  para `/login/2fa`, onde vale **um** de: código TOTP, código de recuperação ou **passkey**
+  (Face ID / Touch ID via WebAuthn). Passkey **não** é login sem senha.
+- Passkey só pode ser registrada por quem já tem TOTP ligado (`/account/2fa`). Desativar o
+  2FA (`database.disable_totp`) e o `deploy/reset-2fa.py` apagam as passkeys — não sobra
+  segundo fator órfão.
+- O `rp_id` e a origem esperada vêm de **cada requisição** (`routes/passkey.py:_rp`):
+  hostname sem porta e `esquema://host`. Atrás do Traefik isso depende do `ProxyFix`
+  (`app.py`, `x_host=1, x_proto=1`) para o esquema ser `https`. Uma passkey vale só para o
+  domínio onde foi criada: trocar o domínio da instalação invalida as passkeys (o TOTP segue).
+- O challenge fica na sessão e é descartado (`pop`) a cada verificação — uso único. A
+  verificação de login usa o mesmo throttle por IP do TOTP e registra falha em
+  `login_failures`. O `sign_count` é atualizado a cada uso.
+- `User verification` é obrigatória nos dois fluxos (biometria/PIN do aparelho).
+

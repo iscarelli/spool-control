@@ -61,6 +61,54 @@
       </div>
     </div>
 
+    {# ── Passkeys (Face ID / Touch ID) como alternativa ao código ── #}
+    <div class="card mb-3">
+      <div class="card-header fw-semibold"><i class="bi bi-fingerprint me-1"></i>{{ _('Passkeys (Face ID / Touch ID)') }}</div>
+      <div class="card-body">
+        <p class="small text-muted">{{ _('Confirme o login com Face ID, Touch ID ou o desbloqueio do aparelho em vez de digitar o código. O código do app autenticador continua funcionando.') }}</p>
+        {% if passkeys %}
+        <ul class="list-group mb-3">
+          {% for p in passkeys %}
+          <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
+            <div>
+              <div class="fw-semibold">{{ p['name'] }}</div>
+              <div class="small text-muted">
+                {{ _('Criada em') }} {{ p['created_at'][:10] }} ·
+                {{ _('Último uso') }}: {{ p['last_used_at'][:10] if p['last_used_at'] else _('nunca') }}
+              </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-danger js-passkey-delete"
+                    data-url="{{ url_for('passkey_delete', pk_id=p['id']) }}"
+                    data-csrf="{{ csrf_token() }}"
+                    data-confirm="{{ _('Remover esta passkey?') }}">
+              <i class="bi bi-trash"></i> {{ _('Remover') }}
+            </button>
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        <div class="row g-2 align-items-end">
+          <div class="col-sm-7">
+            <label class="form-label" for="passkeyName">{{ _('Nome (opcional)') }}</label>
+            <input type="text" id="passkeyName" class="form-control" maxlength="60" placeholder="iPhone">
+          </div>
+          <div class="col-sm-5">
+            <button type="button" class="btn btn-outline-primary w-100" id="passkeyAdd"
+                    data-csrf="{{ csrf_token() }}"
+                    data-options-url="{{ url_for('passkey_register_options') }}"
+                    data-verify-url="{{ url_for('passkey_register_verify') }}"
+                    data-msg-cancelled="{{ _('Cadastro cancelado.') }}"
+                    data-msg-exists="{{ _('Esta passkey já está registrada.') }}"
+                    data-msg-unsupported="{{ _('Este navegador não suporta passkeys (é preciso HTTPS).') }}"
+                    data-msg-failed="{{ _('Não foi possível registrar a passkey.') }}">
+              <i class="bi bi-plus-lg"></i> {{ _('Adicionar passkey') }}
+            </button>
+          </div>
+        </div>
+        <div id="passkeyAddMsg" class="small mt-2" hidden></div>
+      </div>
+    </div>
+
     <div class="card border-danger">
       <div class="card-header fw-semibold text-danger">{{ _('Desativar 2FA') }}</div>
       <div class="card-body">
@@ -75,6 +123,7 @@
             <label class="form-label">{{ _('Código de verificação') }}</label>
             <input type="text" name="code" class="form-control" inputmode="numeric" autocomplete="one-time-code" required>
           </div>
+          <p class="small text-muted">{{ _('Isto também remove todas as suas passkeys.') }}</p>
           <button type="submit" class="btn btn-outline-danger">{{ _('Desativar 2FA') }}</button>
         </form>
       </div>
@@ -116,6 +165,7 @@
 {% endblock %}
 
 {% block scripts %}
+{% if enabled %}<script src="{{ url_for('static', filename='passkey.js') }}"></script>{% endif %}
 {% if new_codes %}
 <script nonce="{{ nonce }}">
   (function () {

@@ -7,3 +7,4 @@ qrcode[pil]>=8.2
 Pillow>=12.3.0
 structlog>=26.1.0
 pyotp>=2.10.0
+webauthn>=2.7.1

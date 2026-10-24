@@ -166,6 +166,19 @@ def init_db():
                 used_at   TEXT    NOT NULL DEFAULT ''
             );
 
+            -- Passkeys (WebAuthn) como SEGUNDO fator do login. credential_id em
+            -- base64url; public_key é o COSE cru devolvido pelo py_webauthn.
+            CREATE TABLE IF NOT EXISTS webauthn_credentials (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id       INTEGER NOT NULL REFERENCES users(id),
+                credential_id TEXT    NOT NULL UNIQUE,
+                public_key    BLOB    NOT NULL,
+                sign_count    INTEGER NOT NULL DEFAULT 0,
+                name          TEXT    NOT NULL DEFAULT '',
+                created_at    TEXT    NOT NULL DEFAULT '',
+                last_used_at  TEXT    NOT NULL DEFAULT ''
+            );
+
             CREATE TABLE IF NOT EXISTS brands (
                 name       TEXT PRIMARY KEY,
                 domain     TEXT NOT NULL DEFAULT '',
@@ -385,6 +398,61 @@ def disable_totp(user_id):
             "UPDATE users SET totp_secret='', totp_enabled=0 WHERE id=?", (user_id,)
         )
         db.execute("DELETE FROM recovery_codes WHERE user_id=?", (user_id,))
+        # Sem 2FA não pode sobrar passkey órfã como segundo fator.
+        db.execute("DELETE FROM webauthn_credentials WHERE user_id=?", (user_id,))
+        db.commit()
+
+
+# ── Passkeys (WebAuthn, segundo fator) ───────────────────────────────────────
+
+def add_passkey(user_id, credential_id, public_key, sign_count, name):
+    with closing(get_db()) as db:
+        db.execute(
+            "INSERT INTO webauthn_credentials "
+            "(user_id, credential_id, public_key, sign_count, name, created_at) "
+            "VALUES (?,?,?,?,?,?)",
+            (user_id, credential_id, public_key, sign_count, name, now_iso()),
+        )
+        db.commit()
+
+
+def list_passkeys(user_id):
+    with closing(get_db()) as db:
+        return db.execute(
+            "SELECT * FROM webauthn_credentials WHERE user_id=? ORDER BY id", (user_id,)
+        ).fetchall()
+
+
+def get_passkey_by_credential_id(credential_id):
+    with closing(get_db()) as db:
+        return db.execute(
+            "SELECT * FROM webauthn_credentials WHERE credential_id=?", (credential_id,)
+        ).fetchone()
+
+
+def touch_passkey(passkey_id, sign_count):
+    with closing(get_db()) as db:
+        db.execute(
+            "UPDATE webauthn_credentials SET sign_count=?, last_used_at=? WHERE id=?",
+            (sign_count, now_iso(), passkey_id),
+        )
+        db.commit()
+
+
+def delete_passkey(user_id, passkey_id):
+    """Apaga só se a passkey for do usuário. Devolve True se apagou."""
+    with closing(get_db()) as db:
+        cur = db.execute(
+            "DELETE FROM webauthn_credentials WHERE id=? AND user_id=?",
+            (passkey_id, user_id),
+        )
+        db.commit()
+        return cur.rowcount > 0
+
+
+def delete_all_passkeys(user_id):
+    with closing(get_db()) as db:
+        db.execute("DELETE FROM webauthn_credentials WHERE user_id=?", (user_id,))
         db.commit()
 
 
