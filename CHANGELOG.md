@@ -10,6 +10,10 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.39.27] — 2026-10-24
+
+- Fixed: on phones, the account and language menus opened at the far right edge of the screen instead of under their buttons. They now open under the button below the large-screen breakpoint; on desktop they stay right-aligned.
+
 ## [1.39.26] — 2026-10-24
 
 - The QR scanner now keeps everything on one page: the scan result and the weighing happen inside the scanner, and the camera is opened once per page. On iPhone this stops the camera permission prompt that used to come back at every weighing. If the camera is not available, you can type the spool number instead.
