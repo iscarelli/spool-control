@@ -160,6 +160,12 @@ mordeu.
   `tests/test_ui_v138.py` — mantenha-o ao adicionar novo teste que renderize
   `/admin/update`.
 
+- 🔥 **Sem service worker, o iOS trata o app da tela de início como favorito do Safari e a
+  permissão de câmera não persiste.** `static/sw.js` (registrado em `static/spool.js`, caminho
+  fixo `/static/sw.js` — nunca `url_for`, o `?v=` mudaria a URL do worker a cada deploy) dá ao
+  app entrada própria em Ajustes. Custo: o dono reautorizou a câmera a cada leitura no iPhone.
+  O worker **tem de pular o que não é GET**: o WebKit perde o corpo de um POST multipart
+  reemitido por worker (o restore de `/admin/backup` sobe um zip).
 - **Asset referenciado de dentro do CSS não recebe o `?v=<hash>` automático.** O
   carimbo de cache do `app.py` só vale para `url_for('static', ...)`; o
   `url('/static/icon-scale.svg?v=2')` em `static/spool.css:537-538` é fixo, e com o

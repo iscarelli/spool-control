@@ -10,6 +10,10 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.39.25] — 2026-10-24
+
+- The iPhone home-screen app now keeps its camera permission instead of asking again on every scan or after the screen locks. The app registers a minimal service worker (no offline caching), so iOS treats it as an installed app. To benefit, remove the app from the Home Screen once and add it again.
+
 ## [1.39.24] — 2026-10-14
 
 - The "Spools near the end" card on the dashboard and the matching report now show each spool's color, so two spools of the same material, brand and family can be told apart.

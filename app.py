@@ -328,7 +328,12 @@ def set_security_headers(resp):
     # carimbadas — se ele mesmo ficar em cache heurístico, o hash novo nunca chega
     # ao navegador e o carimbo não serve para nada.
     if request.endpoint == "static":
-        if request.args.get("v"):
+        if request.path == "/static/sw.js":
+            # Service worker: fixed URL, must be revalidated every time (never immutable),
+            # and allowed to control the whole site even though it lives under /static/.
+            resp.headers["Service-Worker-Allowed"] = "/"
+            resp.headers["Cache-Control"] = "no-cache"
+        elif request.args.get("v"):
             resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"
     elif "Cache-Control" not in resp.headers and resp.mimetype == "text/html":
         # Nunca sobrescreve quem definiu o header de propósito — p.ex. o `no-store`

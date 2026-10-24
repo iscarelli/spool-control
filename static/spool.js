@@ -141,3 +141,10 @@ document.querySelectorAll('tr.sc-group-row').forEach(head => {
 document.addEventListener("click", function (e) {
   if (e.target.closest && e.target.closest("[data-sc-print]")) window.print();
 });
+
+/* ── Service worker ─────────────────────────────────────────────────────── */
+/* Lets iOS treat the home-screen app as installed (camera permission persists). Fixed path,
+   not url_for: a ?v= stamp would change the worker URL on every deploy. */
+if ('serviceWorker' in navigator) window.addEventListener('load', function () {
+  navigator.serviceWorker.register('/static/sw.js', {scope: '/'}).catch(function () {});
+});
