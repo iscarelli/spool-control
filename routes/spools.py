@@ -1,6 +1,7 @@
 """Rotas de rolos (spools): cadastro/edição, pesagem, etiquetas (PDF/PNG/QR),
 registro Niimbot e pesagem rápida."""
 import io
+import math
 import re
 from datetime import date
 from flask import (
@@ -11,7 +12,7 @@ import labels as lbl
 import niimbot_registry as reg
 import logger as log_cfg
 from app import (app, _safe_next, login_required, write_required, admin_required, t, _parse_price,
-                 public_base_url, _label_spool, _currency_meta)
+                 public_base_url, _label_spool, _currency_meta, hexcolor, localdate)
 
 log = log_cfg.get_logger()
 
@@ -191,6 +192,27 @@ def spools_edit(spool_id):
                            selected_filament_id=spool["filament_id"])
 
 
+def _record_weighing(spool, raw_gross, notes=""):
+    """Validação + gravação de UMA pesagem — fonte única da rota HTML (`spools_weigh`)
+    e da JSON usada pelo scanner (`spools_weigh_json`). Devolve (net_g, None) ou
+    (None, mensagem). `ValueError` = valor não numérico. Qualquer efeito colateral de
+    uma pesagem tem de morar AQUI, senão a tela do scanner e a do formulário divergem."""
+    gross = float(raw_gross)
+    if not math.isfinite(gross):
+        raise ValueError("non-finite weight")
+    tare = float(spool["effective_tare_g"])
+    if gross < tare:
+        return None, t("Peso bruto ({g:.0f}g) menor que tara ({t:.0f}g). Verifique.").format(g=gross, t=tare)
+    db.add_weight_reading(
+        spool_id=spool["id"],
+        gross_weight_g=gross,
+        tare_weight_g=tare,
+        recorded_by=session.get("username", ""),
+        notes=notes,
+    )
+    return gross - tare, None
+
+
 @app.route("/spools/<int:spool_id>/weigh", methods=["GET", "POST"])
 @write_required
 def spools_weigh(spool_id):
@@ -200,22 +222,13 @@ def spools_weigh(spool_id):
     if request.method == "POST":
         ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
         try:
-            gross = float(request.form["gross_weight_g"])
-            tare = float(spool["effective_tare_g"])
-            if gross < tare:
-                msg = t("Peso bruto ({g:.0f}g) menor que tara ({t:.0f}g). Verifique.").format(g=gross, t=tare)
+            net, err = _record_weighing(spool, request.form["gross_weight_g"],
+                                        request.form.get("notes", "").strip())
+            if err:
                 if ajax:
-                    return {"ok": False, "error": msg}
-                flash(msg, "warning")
+                    return {"ok": False, "error": err}
+                flash(err, "warning")
             else:
-                db.add_weight_reading(
-                    spool_id=spool_id,
-                    gross_weight_g=gross,
-                    tare_weight_g=tare,
-                    recorded_by=session.get("username", ""),
-                    notes=request.form.get("notes", "").strip(),
-                )
-                net = gross - tare
                 if ajax:
                     nominal = float(spool["nominal_weight_g"] or 1000)
                     pct = min(100, round(net / nominal * 100, 1)) if nominal else 0
@@ -228,6 +241,65 @@ def spools_weigh(spool_id):
                 return {"ok": False, "error": "invalid_input"}
             flash(t("Valor inválido"), "danger")
     return render_template("spools/weigh.html", spool=spool)
+
+
+def _spool_scan_payload(spool):
+    """Dados do resultado do scanner (modal). Mesma regra da página do rolo
+    (`templates/spools/detail.html`): sem pesagem = nominal, tratado como cheio."""
+    nominal = float(spool["nominal_weight_g"] or 0)
+    net = spool["current_net_g"]
+    weighed = net is not None
+    remaining = float(net) if weighed else nominal
+    pct = min(100, int(remaining / nominal * 100)) if (weighed and nominal > 0) else 100
+    hex1 = hexcolor(spool["color_hex"])
+    color_name = (spool["color_name"] or "").strip() or (db.classify_color(spool["color_hex"]) or "")
+    return {
+        "ok": True,
+        "id": spool["id"],
+        "code": f"SP-{spool['id']:04d}",
+        "active": bool(spool["active"]),
+        "material": spool["material"] or "",
+        "brand": spool["brand"] or "",
+        "family": spool["family"] or "",
+        "color_name": color_name,
+        "color_hex": hex1,
+        "color_hex2": hexcolor(spool["color_hex2"]),
+        "translucent": bool(spool["translucent"]),
+        "remaining_g": int(remaining),
+        "nominal_g": int(nominal),
+        "pct": pct,
+        "weighed": weighed,
+        "last_weighed_at": localdate(spool["last_weighed_at"]) if spool["last_weighed_at"] else "",
+    }
+
+
+@app.route("/spools/<int:spool_id>/summary.json")
+def spools_summary_json(spool_id):
+    """Resultado do scanner dentro do modal (sem navegar — ver docs/ARMADILHAS.md,
+    permissão de câmera no iPhone). Mesmo acesso de `/spools/<id>`: exige login."""
+    if "user_id" not in session:
+        return jsonify(error="Unauthorized"), 401
+    spool = db.get_spool(spool_id)
+    if not spool:
+        return jsonify(ok=False, error="not_found"), 404
+    return jsonify(_spool_scan_payload(spool))
+
+
+@app.route("/spools/<int:spool_id>/weigh.json", methods=["POST"])
+@write_required
+def spools_weigh_json(spool_id):
+    """Pesagem do scanner (fetch). Mesma validação e gravação de `spools_weigh`."""
+    spool = db.get_spool(spool_id)
+    if not spool:
+        return jsonify(ok=False, error="not_found"), 404
+    data = request.get_json(silent=True) or {}
+    try:
+        net, err = _record_weighing(spool, data.get("gross_weight_g"))
+    except (TypeError, ValueError):
+        return jsonify(ok=False, error=t("Valor inválido")), 400
+    if err:
+        return jsonify(ok=False, error=err), 422
+    return jsonify(_spool_scan_payload(db.get_spool(spool_id)))
 
 
 @app.route("/spools/<int:spool_id>/deactivate", methods=["POST"])
