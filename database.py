@@ -321,6 +321,16 @@ def init_db():
             # Last use reported by an external client (Spoolman API `last_used`). '' = never
             # set; the API reports max(this, latest weighing).
             "ALTER TABLE spools ADD COLUMN last_used_at TEXT NOT NULL DEFAULT ''",
+            # Spoolman-API filament data (SpoolmanScale create flow). NULL / '' = unknown.
+            "ALTER TABLE filaments ADD COLUMN article_number  TEXT NOT NULL DEFAULT ''",
+            "ALTER TABLE filaments ADD COLUMN external_id     TEXT NOT NULL DEFAULT ''",
+            "ALTER TABLE filaments ADD COLUMN density         REAL",
+            "ALTER TABLE filaments ADD COLUMN weight_g        REAL",
+            "ALTER TABLE filaments ADD COLUMN spool_weight_g  REAL",
+            "ALTER TABLE filaments ADD COLUMN extruder_temp   INTEGER",
+            "ALTER TABLE filaments ADD COLUMN bed_temp        INTEGER",
+            # Empty-spool weight of the maker: last link of the tare chain (EFFECTIVE_TARE_SQL).
+            "ALTER TABLE brands ADD COLUMN empty_spool_g REAL",
         ]:
             try:
                 db.execute(sql)
@@ -1052,14 +1062,24 @@ def delete_filament(filament_id):
 
 # ── Spools ─────────────────────────────────────────────────────────────────
 
+# ONE tare rule for UI and API: the spool's own, else its model's, else the filament's,
+# else the maker's empty-spool weight, else 0. Zero counts as unset at every step.
+# Needs aliases s (spools), sm (spool_models), f (filaments), b (brands).
+EFFECTIVE_TARE_SQL = ("COALESCE(NULLIF(s.custom_tare_g, 0), NULLIF(sm.tare_weight_g, 0), "
+                      "NULLIF(f.spool_weight_g, 0), NULLIF(b.empty_spool_g, 0), 0)")
+
+
 def _spool_query_base():
-    return """
+    return f"""
         SELECT s.*,
                f.brand, f.material, f.family, f.color_hex, f.color_hex2, f.color_name, f.translucent, f.diameter_mm,
+               f.article_number, f.external_id, f.density, f.extruder_temp, f.bed_temp,
+               f.weight_g AS filament_weight_g, f.spool_weight_g AS filament_spool_weight_g,
                b.logo_path AS brand_logo,
                b.rowid AS brand_id,
+               b.empty_spool_g AS brand_empty_spool_g,
                sm.name AS model_name,
-               COALESCE(s.custom_tare_g, sm.tare_weight_g, 0) AS effective_tare_g,
+               {EFFECTIVE_TARE_SQL} AS effective_tare_g,
                wr.net_weight_g AS current_net_g,
                wr.gross_weight_g AS current_gross_g,
                wr.ts AS last_weighed_at
@@ -1337,6 +1357,74 @@ def update_spool_api_fields(spool_id, **fields):
         db.execute(f"UPDATE spools SET {', '.join(c + '=?' for c in cols)} WHERE id=?",
                    [fields[c] for c in cols] + [spool_id])
         db.commit()
+
+
+# -- Vendors and filaments for the Spoolman API (create flow, spec 6.5) -------
+
+def get_brand_by_id(brand_id):
+    """Brand row by the id the API exposes (`brands.rowid`)."""
+    with closing(get_db()) as db:
+        return db.execute("SELECT rowid AS id, * FROM brands WHERE rowid=?", (brand_id,)).fetchone()
+
+
+def api_list_brands(name=None):
+    """Brands with their API id. `name`: exact, case-insensitive match."""
+    sql, args = "SELECT rowid AS id, * FROM brands", []
+    if name is not None:
+        sql += " WHERE LOWER(name)=LOWER(?)"
+        args.append(name)
+    with closing(get_db()) as db:
+        return db.execute(sql + " ORDER BY rowid", args).fetchall()
+
+
+def set_brand_empty_spool(name, grams):
+    """Maker's empty-spool weight; None / 0 = unset."""
+    with closing(get_db()) as db:
+        db.execute("UPDATE brands SET empty_spool_g=? WHERE name=?", (grams or None, name))
+        db.commit()
+
+
+_FILAMENT_API_COLS = {"article_number", "external_id", "density", "weight_g", "spool_weight_g",
+                      "extruder_temp", "bed_temp"}
+
+
+def update_filament_api_fields(filament_id, **fields):
+    """Narrow UPDATE for the filament columns only the Spoolman API writes, plus notes."""
+    cols = [k for k in fields if k in _FILAMENT_API_COLS or k == "notes"]
+    if not cols:
+        return
+    with closing(get_db()) as db:
+        db.execute(f"UPDATE filaments SET {', '.join(c + '=?' for c in cols)} WHERE id=?",
+                   [fields[c] for c in cols] + [filament_id])
+        db.commit()
+
+
+def api_list_filaments(article_number=None, external_id=None, vendor_name=None,
+                       material=None, color_hex=None):
+    """Filaments (with brand rowid) matching every given filter exactly, case-insensitively."""
+    where, args = [], []
+    for col, val in (("f.article_number", article_number), ("f.external_id", external_id),
+                     ("f.brand", vendor_name), ("f.material", material)):
+        if val is not None:
+            where.append(f"LOWER({col})=LOWER(?)")
+            args.append(val)
+    if color_hex is not None:
+        where.append("LOWER(LTRIM(f.color_hex, '#'))=LOWER(?)")
+        args.append(color_hex.lstrip("#"))
+    clause = ("WHERE " + " AND ".join(where)) if where else ""
+    with closing(get_db()) as db:
+        return db.execute(
+            f"""SELECT f.*, b.rowid AS brand_id, b.empty_spool_g AS brand_empty_spool_g
+                FROM filaments f LEFT JOIN brands b ON b.name = f.brand
+                {clause} ORDER BY f.id""", args).fetchall()
+
+
+def api_get_filament(filament_id):
+    with closing(get_db()) as db:
+        return db.execute(
+            """SELECT f.*, b.rowid AS brand_id, b.empty_spool_g AS brand_empty_spool_g
+               FROM filaments f LEFT JOIN brands b ON b.name = f.brand
+               WHERE f.id=?""", (filament_id,)).fetchone()
 
 
 # ── Weight Readings ────────────────────────────────────────────────────────
@@ -1804,11 +1892,11 @@ def stats_counts():
 def list_inventory(q=None):
     """Spools ATIVOS para o grid de inventário — um item por spool físico
     ('repete' filamentos). Inclui o logo da marca p/ o modal de detalhe."""
-    sql = """
+    sql = f"""
         SELECT s.id, s.location, s.notes, s.nominal_weight_g, s.purchase_date,
                f.brand, f.material, f.family, f.color_hex, f.color_hex2, f.color_name, f.translucent, f.diameter_mm,
                b.logo_path AS brand_logo,
-               COALESCE(s.custom_tare_g, sm.tare_weight_g, 0) AS effective_tare_g,
+               {EFFECTIVE_TARE_SQL} AS effective_tare_g,
                sm.name AS model_name,
                wr.net_weight_g AS current_net_g,
                wr.ts AS last_weighed_at

@@ -10,6 +10,7 @@ The tare reported in a spool object is the ONE tare the server subtracts on meas
 Docs: docs/spoolmanscale.md.
 """
 import base64
+import hashlib
 import json
 import math
 import re
@@ -18,6 +19,7 @@ from datetime import datetime, timezone
 from flask import request, jsonify, redirect, url_for
 
 import database as db
+import filament_catalog
 from app import app, csrf, current_version
 
 INTEGRATION = "spoolmanscale"
@@ -106,21 +108,52 @@ def _one(spool_id):
     return _spool_objects([row])[0] if row else None
 
 
-def _spool_obj(r, tags, extra, fextra):
-    hex1, hex2 = _hex(r["color_hex"]), _hex(r["color_hex2"])
+def _vendor_obj(brand_id, name, empty_spool_g):
+    vendor = {"id": brand_id or 0, "name": name}
+    if empty_spool_g:
+        vendor["empty_spool_weight"] = _num(empty_spool_g)
+    return vendor
+
+
+def _filament_obj(d, fextra):
+    """Spoolman filament object from a dict with the filament columns (+ brand_id,
+    brand_empty_spool_g). Unknown values are omitted, never faked."""
+    hex1, hex2 = _hex(d["color_hex"]), _hex(d["color_hex2"])
     filament = {
-        "id": r["filament_id"],
-        "name": " ".join(x for x in (r["family"], r["color_name"]) if x).strip() or r["material"],
-        "material": r["material"],
+        "id": d["id"],
+        "name": " ".join(x for x in (d["family"], d["color_name"]) if x).strip() or d["material"],
+        "material": d["material"],
         "color_hex": hex1,
-        "diameter": r["diameter_mm"],
+        "diameter": d["diameter_mm"],
+        "density": d["density"],
+        "weight": None if d["weight_g"] is None else _num(d["weight_g"]),
+        "spool_weight": _num(d["spool_weight_g"]) if d["spool_weight_g"] else None,
+        "article_number": d["article_number"] or None,
+        "external_id": d["external_id"] or None,
+        "settings_extruder_temp": d["extruder_temp"],
+        "settings_bed_temp": d["bed_temp"],
+        "comment": d.get("notes") or None,
         "extra": fextra,
     }
     if hex1 and hex2:
         filament["multi_color_hexes"] = f"{hex1},{hex2}"
         filament["multi_color_direction"] = "coaxial"
-    if r["brand"]:
-        filament["vendor"] = {"id": r["brand_id"] or 0, "name": r["brand"]}
+    if d["brand"]:
+        filament["vendor"] = _vendor_obj(d["brand_id"], d["brand"], d["brand_empty_spool_g"])
+    return {k: v for k, v in filament.items() if v is not None}
+
+
+def _spool_obj(r, tags, extra, fextra):
+    filament = _filament_obj({
+        "id": r["filament_id"], "family": r["family"], "color_name": r["color_name"],
+        "material": r["material"], "color_hex": r["color_hex"], "color_hex2": r["color_hex2"],
+        "diameter_mm": r["diameter_mm"], "density": r["density"],
+        "weight_g": r["filament_weight_g"], "spool_weight_g": r["filament_spool_weight_g"],
+        "article_number": r["article_number"], "external_id": r["external_id"],
+        "extruder_temp": r["extruder_temp"], "bed_temp": r["bed_temp"],
+        "brand": r["brand"], "brand_id": r["brand_id"],
+        "brand_empty_spool_g": r["brand_empty_spool_g"],
+    }, fextra)
     tare = float(r["effective_tare_g"] or 0)
     last_used = max(r["last_used_at"] or "", r["last_weighed_at"] or "") or None
     obj = {
@@ -135,7 +168,7 @@ def _spool_obj(r, tags, extra, fextra):
         "location": r["location"] or None,
         "extra": extra,
         "tags": tags,
-        "filament": {k: v for k, v in filament.items() if v is not None},
+        "filament": filament,
     }
     return {k: v for k, v in obj.items() if v is not None}
 
@@ -410,6 +443,341 @@ def v1_tag_unlink(spool_id, uid):
         return _err(f"Tag {uid} is not linked to spool {spool_id}.", 404)
     _clear_companion_fields(spool_id, uid)
     return jsonify(_one(spool_id))
+
+
+# ── Filament database (spec 6.4, light form) ────────────────────────────────
+# Served from the vendored SpoolmanDB snapshot (filament_catalog.py). The search route of
+# the Spoolman form is deliberately absent (404): a server offers ONE form.
+
+# Densities in g/cm3 for the plain materials only; composites (PLA-CF, PETG-GF...) differ
+# and are left out rather than guessed. A trailing '+' is the same polymer.
+_DENSITY = {"PLA": 1.24, "PETG": 1.27, "ABS": 1.04, "ASA": 1.07, "TPU": 1.21, "PC": 1.20,
+            "PA": 1.14, "PVA": 1.23, "HIPS": 1.04, "PP": 0.90}
+
+
+def _density(material):
+    m = (material or "").strip().upper()
+    return _DENSITY.get(m) or _DENSITY.get(m.rstrip("+"))
+
+
+def _entry_id(e, hex6):
+    raw = "|".join(str(x) for x in (e["brand"], e["material"], e.get("finish", ""),
+                                    e.get("color", ""), hex6, e.get("diameter", "")))
+    return "sdb-" + hashlib.sha1(raw.encode("utf-8")).hexdigest()[:16]
+
+
+def _catalog_entries(manufacturer=None, material=None, diameter=None):
+    """Well formed entries of the snapshot, filtered (exact, case-insensitive) and
+    ordered by name. Entries without a colour are not listed (6.4)."""
+    maker = manufacturer.strip().lower() if manufacturer else None
+    mat = material.strip().lower() if material else None
+    seen, out = set(), []
+    for e in filament_catalog.get_filaments():
+        if maker and e["brand"].lower() != maker:
+            continue
+        if mat and e["material"].lower() != mat:
+            continue
+        dia = e.get("diameter") or 1.75
+        if diameter is not None and abs(dia - diameter) > 1e-6:
+            continue
+        hex6 = (e.get("color_hex") or "").lstrip("#")
+        if not re.fullmatch(r"[0-9A-Fa-f]{6}", hex6):
+            continue
+        eid = _entry_id(e, hex6)
+        if eid in seen:
+            continue
+        seen.add(eid)
+        finish, color = (e.get("finish") or "").strip(), (e.get("color") or "").strip()
+        name = color if (not finish or finish.lower() in color.lower()) else f"{finish} {color}"
+        entry = {"id": eid, "manufacturer": e["brand"], "material": e["material"],
+                 "name": name, "color_hex": hex6.upper(), "diameter": dia}
+        density = _density(e["material"])
+        if density:
+            entry["density"] = density
+        out.append(entry)
+    out.sort(key=lambda x: (x["manufacturer"].lower(), x["material"].lower(), x["name"].lower(), x["id"]))
+    return out
+
+
+def _diameter_arg():
+    raw = request.args.get("diameter")
+    try:
+        return float(raw) if raw not in (None, "") else None
+    except ValueError:
+        return None
+
+
+@_route("/api/v1/external/manufacturer", methods=["GET"])
+def v1_external_manufacturer():
+    if not filament_catalog.available():
+        return _err("No filament database", 404)
+    makers = {}
+    for e in _catalog_entries(diameter=_diameter_arg()):
+        m = makers.setdefault(e["manufacturer"], {})
+        m[e["material"]] = m.get(e["material"], 0) + 1
+    return jsonify([
+        {"name": name, "count": sum(mats.values()),
+         "materials": [{"name": k, "count": v} for k, v in sorted(mats.items())]}
+        for name, mats in sorted(makers.items(), key=lambda kv: kv[0].lower())])
+
+
+@_route("/api/v1/external/filament", methods=["GET"])
+def v1_external_filament():
+    if not filament_catalog.available():
+        return _err("No filament database", 404)
+    return jsonify(_catalog_entries(request.args.get("manufacturer"), request.args.get("material"),
+                                    _diameter_arg()))
+
+
+@_route("/api/v1/external/filament/search", methods=["GET"])
+def v1_external_filament_search():
+    return _err("Search is not offered; use /external/manufacturer and /external/filament", 404)
+
+
+@_route("/api/v1/external/material", methods=["GET"])
+def v1_external_material():
+    names = {m for m in filament_catalog.get_materials() if _density(m)} | set(_DENSITY)
+    return jsonify([{"material": m, "density": _density(m)} for m in sorted(names)])
+
+
+# ── Creating vendor, filament, spool (spec 6.5, 7.2) ────────────────────────
+
+def _unquote(value):
+    """Spoolman's exact-match quoting: ?name="Polymaker". Bare text matches exactly too."""
+    if value is None:
+        return None
+    v = value.strip()
+    return v[1:-1] if len(v) >= 2 and v[0] == v[-1] == '"' else v
+
+
+def _text(body, key, required=False, limit=200):
+    v = body.get(key)
+    if v is None:
+        if required:
+            raise _Invalid(f"{key} is required")
+        return None
+    if not isinstance(v, str):
+        raise _Invalid(f"{key} must be a string")
+    v = v.strip()
+    if required and not v:
+        raise _Invalid(f"{key} is required")
+    if len(v) > limit:
+        raise _Invalid(f"{key} is too long")
+    return v
+
+
+def _integer(body, key):
+    v = _number(body, key)
+    return None if v is None else int(round(v))
+
+
+def _vendor_row_obj(row):
+    return _vendor_obj(row["id"], row["name"], row["empty_spool_g"])
+
+
+@_route("/api/v1/vendor", methods=["GET"])
+def v1_vendor_list():
+    return jsonify([_vendor_row_obj(r) for r in db.api_list_brands(_unquote(request.args.get("name")))])
+
+
+@_route("/api/v1/vendor", methods=["POST"])
+def v1_vendor_create():
+    body = _json_body()
+    name = _text(body, "name", required=True, limit=100)
+    empty = _number(body, "empty_spool_weight")
+    db.create_brand(name)   # INSERT OR IGNORE: an existing maker is returned, not duplicated
+    if empty is not None:
+        db.set_brand_empty_spool(name, empty)
+    resp = jsonify(_vendor_row_obj(db.api_list_brands(name)[0]))
+    resp.status_code = 201
+    return resp
+
+
+@_route("/api/v1/vendor/<int:vendor_id>", methods=["GET"])
+def v1_vendor_get(vendor_id):
+    row = db.get_brand_by_id(vendor_id)
+    return jsonify(_vendor_row_obj(row)) if row else _err(f"No vendor with ID {vendor_id} found.", 404)
+
+
+@_route("/api/v1/vendor/<int:vendor_id>", methods=["PATCH"])
+def v1_vendor_patch(vendor_id):
+    row = db.get_brand_by_id(vendor_id)
+    if not row:
+        return _err(f"No vendor with ID {vendor_id} found.", 404)
+    body = _json_body()
+    if "empty_spool_weight" in body:
+        db.set_brand_empty_spool(row["name"], _number(body, "empty_spool_weight"))
+    return jsonify(_vendor_row_obj(db.get_brand_by_id(vendor_id)))
+
+
+@_route("/api/v1/vendor/<int:vendor_id>", methods=["DELETE"])
+def v1_vendor_delete(vendor_id):
+    row = db.get_brand_by_id(vendor_id)
+    if not row:
+        return _err(f"No vendor with ID {vendor_id} found.", 404)
+    try:
+        db.delete_brand(row["name"])
+    except ValueError:
+        return _err("Vendor still has filaments", 409)
+    return jsonify({})
+
+
+def _filament_response(filament_id):
+    return _filament_obj(dict(db.api_get_filament(filament_id)),
+                         db.filament_extra_map([filament_id])[filament_id])
+
+
+@_route("/api/v1/filament", methods=["GET"])
+def v1_filament_list():
+    a = request.args
+    rows = db.api_list_filaments(
+        article_number=_unquote(a.get("article_number")), external_id=_unquote(a.get("external_id")),
+        vendor_name=_unquote(a.get("vendor.name")), material=_unquote(a.get("material")),
+        color_hex=_unquote(a.get("color_hex")))
+    fextra = db.filament_extra_map([r["id"] for r in rows])
+    return jsonify([_filament_obj(dict(r), fextra[r["id"]]) for r in rows])
+
+
+@_route("/api/v1/filament/<int:filament_id>", methods=["GET"])
+def v1_filament_get(filament_id):
+    if not db.api_get_filament(filament_id):
+        return _err(f"No filament with ID {filament_id} found.", 404)
+    return jsonify(_filament_response(filament_id))
+
+
+def _colour_columns(body):
+    """(color_hex, color_hex2, translucent) from multi_color_hexes / color_hex, or None
+    when the body names no colour. RRGGBBAA keeps the RGB; an alpha below FF = translucent."""
+    multi = body.get("multi_color_hexes")
+    if multi:
+        parts = [p.strip().lstrip("#") for p in str(multi).split(",") if p.strip()]
+        if not parts or not all(_HEX_RE.match(p) for p in parts):
+            raise _Invalid("multi_color_hexes must be a comma list of RRGGBB")
+        second = "#" + parts[1][:6] if len(parts) > 1 else ""
+        return "#" + parts[0][:6], second, False
+    if "color_hex" not in body:
+        return None
+    raw = body["color_hex"]
+    if raw in (None, ""):
+        return "", "", False
+    raw = str(raw).lstrip("#")
+    if not _HEX_RE.match(raw):
+        raise _Invalid("color_hex must be RRGGBB or RRGGBBAA")
+    return "#" + raw[:6], "", len(raw) == 8 and raw[6:].upper() != "FF"
+
+
+def _filament_columns(body):
+    """Validated API-only columns present in the body (null / 0 / '' = clear)."""
+    cols = {}
+    for key in ("article_number", "external_id"):
+        if key in body:
+            cols[key] = _text(body, key) or ""
+    for key, col in (("density", "density"), ("weight", "weight_g"), ("spool_weight", "spool_weight_g")):
+        if key in body:
+            cols[col] = _number(body, key) or None
+    for key, col in (("settings_extruder_temp", "extruder_temp"), ("settings_bed_temp", "bed_temp")):
+        if key in body:
+            cols[col] = _integer(body, key) or None
+    if "comment" in body:
+        cols["notes"] = _text(body, "comment", limit=2000) or ""
+    return cols
+
+
+@_route("/api/v1/filament", methods=["POST"])
+def v1_filament_create():
+    body = _json_body()
+    name = _text(body, "name", required=True, limit=150)
+    material = _text(body, "material", limit=50) or ""
+    vendor_id = body.get("vendor_id")
+    if isinstance(vendor_id, bool) or not isinstance(vendor_id, int):
+        raise _Invalid("vendor_id is required")
+    brand = db.get_brand_by_id(vendor_id)
+    if not brand:
+        return _err(f"No vendor with ID {vendor_id} found.", 404)
+    diameter = _number(body, "diameter", strict=True) or 1.75
+    colour = _colour_columns(body) or ("", "", False)
+    cols = _filament_columns(body)
+    extra = _extra_values(body)
+    # Spoolman's `name` is product line + colour; ours is family (+ colour_name, left empty).
+    fid = db.create_filament(brand["name"], material, name, color_hex=colour[0], color_name="",
+                             diameter_mm=diameter, notes=cols.pop("notes", ""),
+                             translucent=colour[2], color_hex2=colour[1])
+    db.update_filament_api_fields(fid, **cols)
+    if extra:
+        db.merge_extra("filament_extra", fid, extra)
+    resp = jsonify(_filament_response(fid))
+    resp.status_code = 201
+    return resp
+
+
+@_route("/api/v1/filament/<int:filament_id>", methods=["PATCH"])
+def v1_filament_patch(filament_id):
+    if not db.api_get_filament(filament_id):
+        return _err(f"No filament with ID {filament_id} found.", 404)
+    body = _json_body()
+    cols = _filament_columns(body)
+    extra = _extra_values(body)
+    db.update_filament_api_fields(filament_id, **cols)
+    if extra:
+        db.merge_extra("filament_extra", filament_id, extra)
+    return jsonify(_filament_response(filament_id))
+
+
+@_route("/api/v1/filament/<int:filament_id>", methods=["DELETE"])
+def v1_filament_delete(filament_id):
+    if not db.api_get_filament(filament_id):
+        return _err(f"No filament with ID {filament_id} found.", 404)
+    try:
+        db.delete_filament(filament_id)
+    except ValueError:
+        return _err("Filament still has spools", 409)
+    return jsonify({})
+
+
+@_route("/api/v1/spool", methods=["POST"])
+def v1_spool_create():
+    body = _json_body()
+    fid = body.get("filament_id")
+    if isinstance(fid, bool) or not isinstance(fid, int):
+        raise _Invalid("filament_id is required")
+    filament = db.api_get_filament(fid)
+    if not filament:
+        return _err(f"No filament with ID {fid} found.", 404)
+    initial = _number(body, "initial_weight", strict=True)
+    remaining = _number(body, "remaining_weight")
+    tare_in = _number(body, "spool_weight")
+    location = body.get("location")
+    if location is not None and not isinstance(location, str):
+        raise _Invalid("location must be a string or null")
+    last_used = _utc_stamp(body["last_used"]) if body.get("last_used") else ""
+    comment = _text(body, "comment", limit=2000) or ""
+    extra = _extra_values(body)
+    if initial is None:   # spec 4.4: filament weight, else 1000 g
+        initial = float(filament["weight_g"] or 1000)
+    if remaining is not None and remaining > initial:
+        initial = remaining
+    spool_id = db.create_spool(fid, None, tare_in or None, initial, (location or "").strip(),
+                               "", None, comment)
+    if last_used:
+        db.update_spool_api_fields(spool_id, last_used_at=last_used)
+    if extra:
+        db.merge_extra("spool_extra", spool_id, extra)
+    if remaining is not None:
+        tare = float(db.get_spool(spool_id)["effective_tare_g"] or 0)
+        _apply_remaining(spool_id, remaining, tare)
+    if body.get("archived") is True:
+        db.deactivate_spool(spool_id)
+    resp = jsonify(_one(spool_id))
+    resp.status_code = 201
+    return resp
+
+
+@_route("/api/v1/spool/<int:spool_id>", methods=["DELETE"])
+def v1_spool_delete(spool_id):
+    if not db.get_spool(spool_id):
+        return _err(f"No spool with ID {spool_id} found.", 404)
+    db.delete_spool(spool_id)
+    return jsonify({})
 
 
 # ── Locations / spool page ───────────────────────────────────────────────────

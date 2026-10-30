@@ -474,3 +474,215 @@ def test_deleting_a_spool_removes_tags_and_extra(api, db):
 def test_init_db_is_idempotent(db):
     db.init_db()
     db.init_db()
+
+
+# ── Task B: tare chain ───────────────────────────────────────────────────────
+
+def test_tare_chain_filament_then_vendor_then_zero(api, db):
+    """custom -> model -> filament.spool_weight -> vendor.empty_spool_weight -> 0, API and UI alike."""
+    fid = db.create_filament("Chain Co", "PLA", "Basic", "#112233")
+    sid = db.create_spool(fid, None, None, 1000, "", "", None, "")
+    assert db.get_spool(sid)["effective_tare_g"] == 0
+    assert "spool_weight" not in api.get(f"/spool/{sid}").get_json()
+
+    db.set_brand_empty_spool("Chain Co", 140)
+    assert db.get_spool(sid)["effective_tare_g"] == 140
+    assert api.get(f"/spool/{sid}").get_json()["spool_weight"] == 140
+
+    db.update_filament_api_fields(fid, spool_weight_g=180)
+    assert db.get_spool(sid)["effective_tare_g"] == 180
+    assert api.get(f"/spool/{sid}").get_json()["spool_weight"] == 180
+
+    db.update_spool_api_fields(sid, custom_tare_g=200)
+    assert db.get_spool(sid)["effective_tare_g"] == 200
+
+
+def test_inventory_query_uses_the_same_tare_chain(db):
+    fid = db.create_filament("Inv Co", "PLA", "Basic", "#112233")
+    db.create_spool(fid, None, None, 1000, "", "", None, "")
+    db.set_brand_empty_spool("Inv Co", 111)
+    rows = db.list_inventory()
+    rows = rows if isinstance(rows, list) else next(v for v in rows.values() if isinstance(v, list) and v)
+    assert rows[0]["effective_tare_g"] == 111
+
+
+def test_spool_object_carries_filament_and_vendor_extras(api, db):
+    fid = db.create_filament("Bambu Lab", "PLA", "Matte", "#000000", color_name="Black")
+    db.update_filament_api_fields(fid, article_number="A-1", external_id="x1", density=1.24,
+                                  weight_g=1000, spool_weight_g=250, extruder_temp=210, bed_temp=55)
+    db.set_brand_empty_spool("Bambu Lab", 100)
+    sid = db.create_spool(fid, None, None, 1000, "", "", None, "")
+    f = api.get(f"/spool/{sid}").get_json()["filament"]
+    assert (f["weight"], f["spool_weight"], f["article_number"], f["external_id"]) == (1000, 250, "A-1", "x1")
+    assert f["vendor"]["empty_spool_weight"] == 100 and f["vendor"]["id"] > 0
+    assert (f["density"], f["settings_extruder_temp"], f["settings_bed_temp"]) == (1.24, 210, 55)
+
+
+# ── Filament database (15, 16) ───────────────────────────────────────────────
+
+def test_external_index_and_filtered_list(api):
+    r = api.get("/external/manufacturer?diameter=1.75")
+    assert r.status_code == 200
+    index = r.get_json()
+    names = [m["name"].lower() for m in index]
+    assert index and len(names) == len(set(names))
+    maker = next(m for m in index if m["materials"])
+    mat = maker["materials"][0]
+    entries = api.get("/external/filament", query_string={
+        "manufacturer": maker["name"], "material": mat["name"], "diameter": "1.75"}).get_json()
+    assert len(entries) == mat["count"] > 0
+    ids = [e["id"] for e in entries]
+    assert len(ids) == len(set(ids))
+    for e in entries:
+        assert e["manufacturer"] == maker["name"] and e["material"] == mat["name"]
+        assert e["name"] and len(e["id"]) <= 79 and len(e["color_hex"]) == 6 and "#" not in e["color_hex"]
+        assert e["diameter"] == 1.75
+    again = api.get("/external/filament", query_string={
+        "manufacturer": maker["name"].upper(), "material": mat["name"].lower(), "diameter": "1.75"}).get_json()
+    assert [e["id"] for e in again] == ids
+
+
+def test_external_ids_are_stable(api):
+    a = api.get("/external/filament?manufacturer=Polymaker&material=PLA").get_json()
+    b = api.get("/external/filament?manufacturer=Polymaker&material=PLA").get_json()
+    assert a and a == b
+
+
+def test_external_search_is_404_and_catalog_missing_is_404(api, monkeypatch):
+    assert api.get("/external/filament/search?limit=1&query=PLA").status_code == 404
+    import filament_catalog
+    monkeypatch.setattr(filament_catalog, "available", lambda: False)
+    assert api.get("/external/manufacturer").status_code == 404
+    assert api.get("/external/filament").status_code == 404
+
+
+def test_external_material_has_numeric_density(api):
+    items = api.get("/external/material").get_json()
+    assert items and all(isinstance(i["density"], (int, float)) and i["material"] for i in items)
+    assert {"PLA", "PETG"} <= {i["material"] for i in items}
+
+
+def test_external_routes_need_the_key(client):
+    assert client.get("/api/v1/external/manufacturer").status_code == 401
+
+
+# ── Creating a maker, a filament and a spool (17, 7.2) ───────────────────────
+
+def test_create_flow_like_the_checker(api, db):
+    v = api.post("/vendor", {"name": "SpoolmanScale check", "empty_spool_weight": 140})
+    assert v.status_code in (200, 201)
+    vid = v.get_json()["id"]
+    assert v.get_json()["empty_spool_weight"] == 140
+    assert [x["id"] for x in api.get('/vendor?name="spoolmanscale CHECK"').get_json()] == [vid]
+    assert api.get('/vendor?name="nobody"').get_json() == []
+
+    fil = {"name": "Check Blue", "vendor_id": vid, "material": "PLA", "density": 1.24, "diameter": 1.75,
+           "color_hex": "0055AA", "weight": 1000, "spool_weight": 140, "settings_extruder_temp": 210,
+           "settings_bed_temp": 55, "external_id": "sms-1", "article_number": "SMS-1"}
+    r = api.post("/filament", fil)
+    assert r.status_code in (200, 201)
+    f = r.get_json()
+    fid = f["id"]
+    assert (f["name"], f["external_id"], f["article_number"]) == ("Check Blue", "sms-1", "SMS-1")
+    assert f["vendor"]["name"] == "SpoolmanScale check" and f["color_hex"].lower() == "0055aa"
+    for q in ('external_id="sms-1"', 'article_number="SMS-1"', 'external_id=sms-1',
+              'vendor.name="spoolmanscale check"&material="pla"&color_hex=0055AA&color_similarity_threshold=0'):
+        assert [x["id"] for x in api.get("/filament?" + q).get_json()] == [fid], q
+    assert api.get('/filament?external_id="nothing"').get_json() == []
+
+    s = api.post("/spool", {"filament_id": fid, "initial_weight": 1000, "spool_weight": 140,
+                            "remaining_weight": 850})
+    assert s.status_code in (200, 201)
+    spool = s.get_json()
+    assert spool["remaining_weight"] == 850 and spool["initial_weight"] == 1000
+    assert spool["spool_weight"] == 140 and spool["filament"]["id"] == fid
+    sid = spool["id"]
+    assert db.get_spool(sid)["current_net_g"] == 850
+
+    assert api.delete(f"/vendor/{vid}").status_code == 409
+    assert api.delete(f"/filament/{fid}").status_code == 409
+    assert api.delete(f"/spool/{sid}").status_code == 200
+    assert api.delete(f"/filament/{fid}").status_code == 200
+    assert api.delete(f"/vendor/{vid}").status_code == 200
+    assert api.get(f"/spool/{sid}").status_code == 404
+    assert api.delete(f"/vendor/{vid}").status_code == 404
+
+
+def test_vendor_patch_and_duplicate_create(api, db):
+    a = api.post("/vendor", {"name": "Dup Co"}).get_json()
+    assert "empty_spool_weight" not in a
+    assert api.post("/vendor", {"name": "Dup Co"}).get_json()["id"] == a["id"]
+    r = api.patch(f"/vendor/{a['id']}", {"empty_spool_weight": 196})
+    assert r.status_code == 200 and r.get_json()["empty_spool_weight"] == 196
+    assert api.patch(f"/vendor/{a['id']}", {"empty_spool_weight": None}).get_json().get("empty_spool_weight") is None
+    assert api.patch("/vendor/9999", {}).status_code == 404
+    assert api.post("/vendor", {"name": ""}).status_code == 422
+
+
+def test_filament_validation(api):
+    vid = api.post("/vendor", {"name": "V"}).get_json()["id"]
+    assert api.post("/filament", {"vendor_id": vid}).status_code == 422
+    assert api.post("/filament", {"name": "x"}).status_code == 422
+    assert api.post("/filament", {"name": "x", "vendor_id": 9999}).status_code == 404
+    assert api.post("/filament", {"name": "x", "vendor_id": vid, "color_hex": "zz"}).status_code == 422
+    assert api.post("/filament", {"name": "x", "vendor_id": vid, "density": "heavy"}).status_code == 422
+    assert api.get("/filament").get_json() == []
+
+
+def test_filament_multicolor_and_rgba(api, db):
+    vid = api.post("/vendor", {"name": "V"}).get_json()["id"]
+    f = api.post("/filament", {"name": "Duo", "vendor_id": vid, "material": "PLA",
+                               "multi_color_hexes": "FF0000,00FF00,0000FF",
+                               "multi_color_direction": "coaxial"}).get_json()
+    assert f["multi_color_hexes"].lower() == "ff0000,00ff00" and f["color_hex"].lower() == "ff0000"
+    g = api.post("/filament", {"name": "Glass", "vendor_id": vid, "material": "PETG",
+                               "color_hex": "11223380"}).get_json()
+    assert g["color_hex"].lower() == "112233" and db.get_filament(g["id"])["translucent"] == 1
+
+
+def test_filament_patch_tare_and_extra(api, db):
+    vid = api.post("/vendor", {"name": "V"}).get_json()["id"]
+    fid = api.post("/filament", {"name": "Plain", "vendor_id": vid, "material": "PLA"}).get_json()["id"]
+    sid = api.post("/spool", {"filament_id": fid, "initial_weight": 1000}).get_json()["id"]
+    r = api.patch(f"/filament/{fid}", {"spool_weight": 196, "extra": {"drying": '"55 C, 8 h"'}})
+    assert r.status_code == 200 and r.get_json()["extra"] == {"drying": '"55 C, 8 h"'}
+    assert api.get(f"/spool/{sid}").get_json()["spool_weight"] == 196
+    assert api.patch(f"/filament/{fid}", {"extra": {"drying": '""'}}).get_json()["extra"] == {}
+    assert api.patch(f"/filament/{fid}", {"spool_weight": None}).status_code == 200
+    assert "spool_weight" not in api.get(f"/spool/{sid}").get_json()
+    assert api.patch("/filament/9999", {}).status_code == 404
+
+
+def test_spool_create_defaults_and_validation(api, db):
+    vid = api.post("/vendor", {"name": "V"}).get_json()["id"]
+    fid = api.post("/filament", {"name": "W", "vendor_id": vid, "material": "PLA", "weight": 750,
+                                 "spool_weight": 120}).get_json()["id"]
+    s = api.post("/spool", {"filament_id": fid, "location": "Shelf B"}).get_json()
+    assert s["initial_weight"] == 750 and s["spool_weight"] == 120 and s["location"] == "Shelf B"
+    assert "remaining_weight" not in s
+    big = api.post("/spool", {"filament_id": fid, "remaining_weight": 900}).get_json()
+    assert big["initial_weight"] == 900 and big["remaining_weight"] == 900
+    zero = api.post("/spool", {"filament_id": fid, "remaining_weight": 0}).get_json()
+    assert zero["remaining_weight"] == 0
+    assert api.post("/spool", {}).status_code == 422
+    assert api.post("/spool", {"filament_id": 9999}).status_code == 404
+    assert api.post("/spool", {"filament_id": fid, "initial_weight": -1}).status_code == 422
+    assert api.delete("/spool/9999").status_code == 404
+
+
+# ── API-created rows render in the UI ────────────────────────────────────────
+
+def test_api_created_rows_render_in_the_ui(auth_client, api, db):
+    vid = api.post("/vendor", {"name": "UI Co", "empty_spool_weight": 130}).get_json()["id"]
+    fid = api.post("/filament", {"name": "Render Me", "vendor_id": vid, "material": "PLA",
+                                 "color_hex": "FF8800", "density": 1.24, "weight": 1000}).get_json()["id"]
+    sid = api.post("/spool", {"filament_id": fid, "remaining_weight": 700}).get_json()["id"]
+    bare = api.post("/filament", {"name": "Bare", "vendor_id": vid}).get_json()["id"]
+    bare_spool = api.post("/spool", {"filament_id": bare}).get_json()["id"]
+    for path in ("/filaments", f"/filaments/{fid}", f"/filaments/{fid}/edit", f"/filaments/{bare}",
+                 "/spools", f"/spools/{sid}", f"/spools/{sid}/edit", f"/spools/{sid}/weigh",
+                 f"/spools/{bare_spool}", "/reports/inventory", "/admin/brands"):
+        r = auth_client.get(path)
+        assert r.status_code == 200, (path, r.status_code)
+    assert b"Render Me" in auth_client.get("/filaments").data
+    assert b"UI Co" in auth_client.get(f"/spools/{sid}").data
