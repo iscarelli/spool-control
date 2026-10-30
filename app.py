@@ -385,6 +385,7 @@ def bootstrap():
     db.ensure_api_key("scale", scope="write", label="Balança / estação de pesagem",
                       key=os.environ.get("SPOOL_API_KEY", "").strip() or None)
     db.ensure_api_key("homeassistant", scope="read", label="Home Assistant")
+    db.ensure_api_key("spoolmanscale", scope="write", label="SpoolmanScale (API Spoolman)")
 
 
 bootstrap()
@@ -1185,7 +1186,7 @@ def err_unhandled(e):
 # é o que "liga" as rotas ao app. Importar aqui (e não no topo) evita import circular.
 from routes import (  # noqa: E402
     main, filaments, spool_models, spools, label_queue, reports, admin, api, account,  # noqa: F401
-    integrations, passkey, notifications,  # noqa: F401
+    integrations, passkey, notifications, spoolman_api,  # noqa: F401
 )
 
 

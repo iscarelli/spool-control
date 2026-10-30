@@ -229,6 +229,39 @@ def init_db():
                 last_used_at TEXT NOT NULL DEFAULT ''
             );
 
+            -- Spoolman-compatible API (routes/spoolman_api.py). `uid` is stored
+            -- normalised (hex digits only, uppercase); a tag belongs to ONE spool.
+            CREATE TABLE IF NOT EXISTS spool_tags (
+                uid        TEXT PRIMARY KEY,
+                spool_id   INTEGER NOT NULL REFERENCES spools(id),
+                format     TEXT NOT NULL DEFAULT '',
+                created_at TEXT NOT NULL
+            );
+
+            -- Extra fields: `value` is a JSON-encoded string (Spoolman convention).
+            CREATE TABLE IF NOT EXISTS spool_extra (
+                spool_id INTEGER NOT NULL REFERENCES spools(id),
+                key      TEXT NOT NULL,
+                value    TEXT NOT NULL DEFAULT '',
+                PRIMARY KEY (spool_id, key)
+            );
+
+            CREATE TABLE IF NOT EXISTS filament_extra (
+                filament_id INTEGER NOT NULL REFERENCES filaments(id),
+                key         TEXT NOT NULL,
+                value       TEXT NOT NULL DEFAULT '',
+                PRIMARY KEY (filament_id, key)
+            );
+
+            CREATE TABLE IF NOT EXISTS extra_fields (
+                entity        TEXT NOT NULL,     -- 'spool' | 'filament'
+                key           TEXT NOT NULL,
+                name          TEXT NOT NULL DEFAULT '',
+                field_type    TEXT NOT NULL DEFAULT 'text',
+                default_value TEXT NOT NULL DEFAULT '',
+                PRIMARY KEY (entity, key)
+            );
+
             INSERT OR IGNORE INTO brands (name)
             SELECT DISTINCT brand FROM filaments WHERE brand != '';
 
@@ -285,6 +318,9 @@ def init_db():
             "ALTER TABLE filaments ADD COLUMN color_hex2 TEXT NOT NULL DEFAULT ''",
             # Aviso "acabou o filamento" (último rolo finalizado). Desligado p/ quem já tem prefs.
             "ALTER TABLE notification_prefs ADD COLUMN out_of_stock_on INTEGER NOT NULL DEFAULT 0",
+            # Last use reported by an external client (Spoolman API `last_used`). '' = never
+            # set; the API reports max(this, latest weighing).
+            "ALTER TABLE spools ADD COLUMN last_used_at TEXT NOT NULL DEFAULT ''",
         ]:
             try:
                 db.execute(sql)
@@ -1009,6 +1045,7 @@ def delete_filament(filament_id):
         ).fetchone()[0]
         if count > 0:
             raise ValueError("Filamento possui spools associados")
+        db.execute("DELETE FROM filament_extra WHERE filament_id=?", (filament_id,))
         db.execute("DELETE FROM filaments WHERE id=?", (filament_id,))
         db.commit()
 
@@ -1020,6 +1057,7 @@ def _spool_query_base():
         SELECT s.*,
                f.brand, f.material, f.family, f.color_hex, f.color_hex2, f.color_name, f.translucent, f.diameter_mm,
                b.logo_path AS brand_logo,
+               b.rowid AS brand_id,
                sm.name AS model_name,
                COALESCE(s.custom_tare_g, sm.tare_weight_g, 0) AS effective_tare_g,
                wr.net_weight_g AS current_net_g,
@@ -1103,6 +1141,16 @@ def update_spool(spool_id, filament_id, spool_model_id, custom_tare_g, nominal_w
         db.commit()
 
 
+def reactivate_spool(spool_id):
+    """Inverse of `deactivate_spool`: the spool is in use again, so it has no finish date."""
+    with closing(get_db()) as db:
+        db.execute(
+            "UPDATE spools SET active=1, finished_at='', finished_at_estimated=0 WHERE id=?",
+            (spool_id,),
+        )
+        db.commit()
+
+
 def deactivate_spool(spool_id):
     """Finaliza o rolo CARIMBANDO a data. `finished_at_estimated=0` porque daqui em
     diante a data é medida no ato — só o backfill de rolos antigos usa estimativa."""
@@ -1126,7 +1174,168 @@ def delete_spool(spool_id):
         db.execute("DELETE FROM label_queue WHERE spool_id=?", (spool_id,))
         db.execute("DELETE FROM weight_readings WHERE spool_id=?", (spool_id,))
         db.execute("DELETE FROM low_stock_notified WHERE spool_id=?", (spool_id,))
+        db.execute("DELETE FROM spool_tags WHERE spool_id=?", (spool_id,))
+        db.execute("DELETE FROM spool_extra WHERE spool_id=?", (spool_id,))
         db.execute("DELETE FROM spools WHERE id=?", (spool_id,))
+        db.commit()
+
+
+# ── Spoolman-compatible API helpers (routes/spoolman_api.py) ───────────────
+
+def normalise_tag_uid(text):
+    """Spoolman/SpoolmanScale rule: drop every non-hex character, uppercase."""
+    return re.sub(r"[^0-9A-Fa-f]", "", str(text or "")).upper()
+
+
+def _like_escape(text):
+    return text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
+def api_list_spools(allow_archived=False, tag=None, extra_filters=None,
+                    sort="id:asc", limit=None, offset=0):
+    """(rows, total). `total` ignores limit/offset. `extra_filters` = {key: raw value};
+    a spool matches when its stored extra value contains the text (case-insensitive)."""
+    where, params = [], []
+    if not allow_archived:
+        where.append("s.active=1")
+    if tag is not None:
+        where.append("s.id IN (SELECT spool_id FROM spool_tags WHERE uid=?)")
+        params.append(normalise_tag_uid(tag))
+    for key, raw in (extra_filters or {}).items():
+        where.append("s.id IN (SELECT spool_id FROM spool_extra WHERE key=? "
+                     "AND LOWER(value) LIKE ? ESCAPE '\\')")
+        params += [key, "%" + _like_escape(str(raw).lower()) + "%"]
+    clause = ("WHERE " + " AND ".join(where)) if where else ""
+    direction = "DESC" if str(sort).endswith(":desc") else "ASC"
+    sql = f"{_spool_query_base()} {clause} ORDER BY s.id {direction}"
+    args = list(params)
+    if limit is not None:
+        sql += " LIMIT ? OFFSET ?"
+        args += [int(limit), int(offset or 0)]
+    elif offset:
+        sql += " LIMIT -1 OFFSET ?"
+        args.append(int(offset))
+    with closing(get_db()) as db:
+        rows = db.execute(sql, args).fetchall()
+        total = db.execute(
+            f"SELECT COUNT(*) FROM spools s {clause}", params).fetchone()[0]
+    return rows, total
+
+
+def _owned_map(table, col, ids, cols):
+    ids = list(ids)
+    out = {i: [] for i in ids}
+    if not ids:
+        return out
+    with closing(get_db()) as db:
+        for r in db.execute(
+            f"SELECT {col}, {cols} FROM {table} WHERE {col} IN ({','.join('?' * len(ids))})",
+            ids,
+        ):
+            out[r[0]].append(r)
+    return out
+
+
+def spool_tags_map(spool_ids):
+    """{spool_id: [{"uid", "format"}, ...]} for the given ids."""
+    rows = _owned_map("spool_tags", "spool_id", spool_ids, "uid, format, created_at")
+    return {i: [{"uid": r["uid"], "format": r["format"]}
+                for r in sorted(rs, key=lambda r: (r["created_at"], r["uid"]))]
+            for i, rs in rows.items()}
+
+
+def spool_extra_map(spool_ids):
+    """{spool_id: {key: json-encoded string}} for the given ids."""
+    rows = _owned_map("spool_extra", "spool_id", spool_ids, "key, value")
+    return {i: {r["key"]: r["value"] for r in rs} for i, rs in rows.items()}
+
+
+def filament_extra_map(filament_ids):
+    rows = _owned_map("filament_extra", "filament_id", filament_ids, "key, value")
+    return {i: {r["key"]: r["value"] for r in rs} for i, rs in rows.items()}
+
+
+def merge_extra(table, owner_id, values):
+    """Merge per key into spool_extra / filament_extra. A value of '""' (the JSON
+    empty string, how the scale clears a field) removes the key."""
+    col = {"spool_extra": "spool_id", "filament_extra": "filament_id"}[table]
+    with closing(get_db()) as db:
+        for key, value in values.items():
+            if value == '""':
+                db.execute(f"DELETE FROM {table} WHERE {col}=? AND key=?", (owner_id, key))
+            else:
+                db.execute(
+                    f"INSERT INTO {table} ({col}, key, value) VALUES (?,?,?) "
+                    f"ON CONFLICT({col}, key) DO UPDATE SET value=excluded.value",
+                    (owner_id, key, value))
+        db.commit()
+
+
+def list_extra_fields(entity):
+    """Registered fields plus any key an entity already holds (accept-any-key model)."""
+    table = {"spool": "spool_extra", "filament": "filament_extra"}[entity]
+    with closing(get_db()) as db:
+        fields = {r["key"]: dict(r) for r in db.execute(
+            "SELECT key, name, field_type, default_value FROM extra_fields WHERE entity=?",
+            (entity,))}
+        for r in db.execute(f"SELECT DISTINCT key FROM {table}"):
+            fields.setdefault(r["key"], {"key": r["key"], "name": r["key"],
+                                         "field_type": "text", "default_value": ""})
+    return sorted(fields.values(), key=lambda f: f["key"])
+
+
+def upsert_extra_field(entity, key, name, field_type, default_value):
+    with closing(get_db()) as db:
+        db.execute(
+            """INSERT INTO extra_fields (entity, key, name, field_type, default_value)
+               VALUES (?,?,?,?,?)
+               ON CONFLICT(entity, key) DO UPDATE SET name=excluded.name,
+                   field_type=excluded.field_type, default_value=excluded.default_value""",
+            (entity, key, name, field_type, default_value))
+        db.commit()
+
+
+def get_tag_owner(uid):
+    """spool_id of the spool holding the (normalised) uid, or None."""
+    with closing(get_db()) as db:
+        r = db.execute("SELECT spool_id FROM spool_tags WHERE uid=?",
+                       (normalise_tag_uid(uid),)).fetchone()
+    return r["spool_id"] if r else None
+
+
+def link_tag(spool_id, uid, fmt=""):
+    with closing(get_db()) as db:
+        db.execute(
+            "INSERT OR IGNORE INTO spool_tags (uid, spool_id, format, created_at) VALUES (?,?,?,?)",
+            (normalise_tag_uid(uid), spool_id, str(fmt or ""), now_iso()))
+        db.commit()
+
+
+def unlink_tag(spool_id, uid):
+    """True if the tag was on this spool (and is now gone)."""
+    with closing(get_db()) as db:
+        cur = db.execute("DELETE FROM spool_tags WHERE uid=? AND spool_id=?",
+                         (normalise_tag_uid(uid), spool_id))
+        db.commit()
+        return cur.rowcount > 0
+
+
+def list_locations():
+    with closing(get_db()) as db:
+        return [r[0] for r in db.execute(
+            "SELECT DISTINCT location FROM spools WHERE location != '' ORDER BY location")]
+
+
+def update_spool_api_fields(spool_id, **fields):
+    """Narrow UPDATE for the columns the Spoolman API writes: nominal_weight_g,
+    custom_tare_g, location, last_used_at."""
+    allowed = {"nominal_weight_g", "custom_tare_g", "location", "last_used_at"}
+    cols = [k for k in fields if k in allowed]
+    if not cols:
+        return
+    with closing(get_db()) as db:
+        db.execute(f"UPDATE spools SET {', '.join(c + '=?' for c in cols)} WHERE id=?",
+                   [fields[c] for c in cols] + [spool_id])
         db.commit()
 
 
