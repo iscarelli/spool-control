@@ -160,12 +160,16 @@ mordeu.
   `tests/test_ui_v138.py` — mantenha-o ao adicionar novo teste que renderize
   `/admin/update`.
 
-- 🔥 **Sem service worker, o iOS trata o app da tela de início como favorito do Safari e a
-  permissão de câmera não persiste.** `static/sw.js` (registrado em `static/spool.js`, caminho
-  fixo `/static/sw.js` — nunca `url_for`, o `?v=` mudaria a URL do worker a cada deploy) dá ao
-  app entrada própria em Ajustes. Custo: o dono reautorizou a câmera a cada leitura no iPhone.
-  O worker **tem de pular o que não é GET**: o WebKit perde o corpo de um POST multipart
-  reemitido por worker (o restore de `/admin/backup` sobe um zip).
+- **O service worker NÃO faz a permissão de câmera persistir no iOS** (a 1.39.25 dizia que
+  sim; está errado). `static/sw.js` (registrado em `static/spool.js`, caminho fixo
+  `/static/sw.js` — nunca `url_for`, o `?v=` mudaria a URL do worker a cada deploy) fica porque
+  o push precisa dele. O worker **tem de pular o que não é GET**: o WebKit perde o corpo de um
+  POST multipart reemitido por worker (o restore de `/admin/backup` sobe um zip).
+- 🔥 **No iPhone a permissão de câmera vale só para o carregamento da página: o scanner nunca
+  pode navegar entre leituras.** `static/qr-scan.js` mostra o rolo dentro do modal e mantém o
+  stream (um `getUserMedia` por abertura); só "Abrir rolo" navega e aí o iOS pode pedir de novo
+  (WebKit 215884). Custo: o dono reautorizou a câmera a cada leitura; o service worker da
+  1.39.25 não resolveu.
 - **Asset referenciado de dentro do CSS não recebe o `?v=<hash>` automático.** O
   carimbo de cache do `app.py` só vale para `url_for('static', ...)`; o
   `url('/static/icon-scale.svg?v=2')` em `static/spool.css:537-538` é fixo, e com o

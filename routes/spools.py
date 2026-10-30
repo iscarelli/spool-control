@@ -230,6 +230,70 @@ def spools_weigh(spool_id):
     return render_template("spools/weigh.html", spool=spool)
 
 
+def _spool_summary(spool):
+    """Resumo do rolo p/ o scanner (JSON). Mesmos números da página do rolo:
+    `current_net_g` vem de `db.get_spool` (última pesagem)."""
+    from app import hexcolor, localdate
+    net = spool["current_net_g"]
+    nominal = float(spool["nominal_weight_g"] or 0)
+    pct = min(100, round(net / nominal * 100)) if (net is not None and nominal > 0) else None
+    return {
+        "id": spool["id"],
+        "code": f"SP-{spool['id']:04d}",
+        "material": spool["material"] or "",
+        "brand": spool["brand"] or "",
+        "family": spool["family"] or "",
+        "color_name": spool["color_name"] or "",
+        "color_hex": hexcolor(spool["color_hex"]),
+        "color_hex2": hexcolor(spool["color_hex2"]),
+        "translucent": bool(spool["translucent"]),
+        "remaining_g": round(net) if net is not None else None,
+        "nominal_g": round(nominal),
+        "pct": pct,
+        "last_weighed": localdate(spool["last_weighed_at"]) if spool["last_weighed_at"] else "",
+        "detail_url": url_for("spools_detail", spool_id=spool["id"]),
+        "text": {
+            "never": t("Nunca pesado"),
+            "remaining": t("restante"),
+        },
+    }
+
+
+@app.route("/spools/<int:spool_id>/summary.json")
+@login_required
+def spools_summary_json(spool_id):
+    spool = db.get_spool(spool_id)
+    if not spool:
+        return jsonify(error="not_found"), 404
+    return jsonify(_spool_summary(spool))
+
+
+@app.route("/spools/<int:spool_id>/weigh.json", methods=["POST"])
+@write_required
+def spools_weigh_json(spool_id):
+    """Variante JSON de `spools_weigh` p/ o scanner: mesma validação (gross >= tara) e
+    mesmo `db.add_weight_reading`; devolve o resumo atualizado."""
+    spool = db.get_spool(spool_id)
+    if not spool:
+        return jsonify(error="not_found"), 404
+    data = request.get_json(silent=True) or {}
+    try:
+        gross = float(data.get("gross_weight_g"))
+        if gross != gross or gross in (float("inf"), float("-inf")):
+            raise ValueError
+    except (TypeError, ValueError):
+        return jsonify(ok=False, error=t("Valor inválido")), 400
+    tare = float(spool["effective_tare_g"])
+    if gross < tare:
+        return jsonify(ok=False, error=t(
+            "Peso bruto ({g:.0f}g) menor que tara ({t:.0f}g). Verifique.").format(g=gross, t=tare)), 400
+    db.add_weight_reading(
+        spool_id=spool_id, gross_weight_g=gross, tare_weight_g=tare,
+        recorded_by=session.get("username", ""), notes="",
+    )
+    return jsonify(ok=True, summary=_spool_summary(db.get_spool(spool_id)))
+
+
 @app.route("/spools/<int:spool_id>/deactivate", methods=["POST"])
 @write_required
 def spools_deactivate(spool_id):

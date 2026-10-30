@@ -10,6 +10,10 @@
      data-msg-camera-error="{{ _('Não foi possível iniciar a câmera.') }}"
      data-msg-no-decoder="{{ _('Não foi possível carregar o leitor de QR.') }}"
      data-msg-starting="{{ _('Iniciando a câmera…') }}"
+     data-msg-load-failed="{{ _('Não foi possível carregar o rolo.') }}"
+     data-msg-save-failed="{{ _('Não foi possível salvar a pesagem.') }}"
+     data-msg-saved="{{ _('Pesagem salva') }}"
+     data-msg-invalid="{{ _('Valor inválido') }}"
      data-msg-hint="{{ _('Aponte a câmera para o QR da etiqueta do rolo.') }}">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -22,6 +26,33 @@
           <video id="qrScanVideo" playsinline muted autoplay style="object-fit:cover"></video>
         </div>
         <canvas id="qrScanCanvas" class="d-none"></canvas>
+        <div id="qrScanResult" class="d-none mt-3" aria-live="polite">
+          <div class="d-flex align-items-center gap-3">
+            <span id="qrResSwatch" class="flex-shrink-0 rounded-circle border" style="width:2.5rem;height:2.5rem"></span>
+            <div class="min-w-0">
+              <div class="fw-bold" id="qrResTitle"></div>
+              <div class="text-body-secondary small" id="qrResSub"></div>
+              <div class="small"><span class="font-monospace" id="qrResCode"></span></div>
+            </div>
+          </div>
+          <div class="mt-2">
+            <span class="fs-4 fw-bold" id="qrResGrams"></span>
+            <span class="text-body-secondary small" id="qrResPct"></span>
+            <div class="text-body-secondary small">{{ _('Última pesagem') }}: <span id="qrResLast"></span></div>
+          </div>
+          <form id="qrWeighForm" class="d-none mt-2" novalidate>
+            <label class="form-label small mb-1" for="qrWeighInput">{{ _('Peso bruto (g)') }}</label>
+            <div class="input-group">
+              <input type="text" inputmode="numeric" pattern="[0-9]*" class="form-control" id="qrWeighInput" autocomplete="off">
+              <button type="submit" class="btn btn-primary" id="qrWeighSave">{{ _('Salvar pesagem') }}</button>
+            </div>
+          </form>
+          <div id="qrResMsg" class="small mt-2" role="status"></div>
+          <div class="d-flex gap-2 mt-3">
+            <button type="button" class="btn btn-primary flex-fill" id="qrNextBtn"><i class="bi bi-qr-code-scan me-1"></i>{{ _('Ler próximo') }}</button>
+            <a class="btn btn-outline-secondary flex-fill" id="qrOpenBtn" href="#"><i class="bi bi-box-arrow-up-right me-1"></i>{{ _('Abrir rolo') }}</a>
+          </div>
+        </div>
         <div id="qrScanStatus" class="small text-body-secondary mt-2" role="status" aria-live="polite"></div>
         <div class="mt-3">
           <div class="small fw-semibold mb-1">{{ _('Ao escanear, abrir:') }}</div>
