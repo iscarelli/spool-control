@@ -10,6 +10,13 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.40.0] — 2026-10-29
+
+- New: SpoolmanScale integration. Spool Control now answers the Spoolman-compatible `/api/v1` API that the SpoolmanScale scale uses, so the scale can read your spools, send weighings and register new spools (including picking a filament from the built-in filament database). On the scale choose the Spoolman backend, set this server's URL as the base URL and paste the key from Admin > Integrations > SpoolmanScale. Details in `docs/spoolmanscale.md`.
+- Weighings from the scale are stored like any other (recorded by "SpoolmanScale"). A spool that was never weighed is never reported with an invented remaining weight.
+- Empty-spool weight can now also be set per maker and per filament. The tare used everywhere is: this spool's own, then its spool model, then the filament's, then the maker's, else 0. Existing spools are unaffected unless one of the new values is filled in.
+- Filaments gain optional article number, external id, density, spool weight, and nozzle and bed temperature fields; spools remember when they were last used. Nothing to do on update: the database upgrades itself.
+
 ## [1.39.28] — 2026-10-24
 
 - Fixed: on phones, the theme, language, account and log-out buttons in the open menu now sit together in one row under the search box instead of each on its own line. Desktop is unchanged.

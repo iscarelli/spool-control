@@ -137,3 +137,10 @@ def test_integrations_requires_admin(client, db):
                    must_change=False)
     client.post("/login", data={"username": "viewer1", "password": "senha-viewer"})
     assert client.get("/admin/integrations").status_code == 403
+
+
+def test_spoolmanscale_card_shows_with_setup_help(auth_client):
+    r = auth_client.get("/admin/integrations")
+    html = r.get_data(as_text=True)
+    assert "SpoolmanScale" in html and "docs/spoolmanscale.md" in html
+    assert auth_client.get("/admin/integrations/spoolmanscale/key").status_code == 200

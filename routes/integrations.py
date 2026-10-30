@@ -13,8 +13,8 @@ log = log_cfg.get_logger()
 
 # Integrações conhecidas (todas seedadas no bootstrap). VISIBLE controla só o que
 # aparece na UI — a balança fica pronta mas oculta (adicione "scale" p/ exibir).
-KNOWN_INTEGRATIONS = ("homeassistant", "scale")
-VISIBLE_INTEGRATIONS = ("homeassistant",)
+KNOWN_INTEGRATIONS = ("homeassistant", "scale", "spoolmanscale")
+VISIBLE_INTEGRATIONS = ("homeassistant", "spoolmanscale")
 
 
 def _ha_endpoints():
@@ -44,7 +44,8 @@ def admin_integrations():
             "last_used_at": row["last_used_at"],
         })
     return render_template("admin/integrations.html",
-                           items=items, ha_endpoints=_ha_endpoints())
+                           items=items, ha_endpoints=_ha_endpoints(),
+                           base_url=public_base_url().rstrip("/"))
 
 
 @app.route("/admin/integrations/<integration>/key")

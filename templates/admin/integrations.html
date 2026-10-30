@@ -60,6 +60,19 @@
           <code>docs/home-assistant.md</code>.
         </p>
         {% endif %}
+
+        {% if it.slug == 'spoolmanscale' %}
+        <hr class="my-3">
+        <h6 class="text-muted text-uppercase fw-semibold mb-2" style="font-size:.72rem">{{ _('Configuração na balança SpoolmanScale') }}</h6>
+        <ol class="small mb-2 ps-3">
+          <li>{{ _('Backend: Spoolman.') }}</li>
+          <li>{{ _('URL base:') }} <code>{{ base_url }}</code></li>
+          <li>{{ _('Chave de API: cole a chave acima.') }}</li>
+        </ol>
+        <p class="small text-muted mb-0">
+          {{ _('Detalhes do que a API oferece em') }} <code>docs/spoolmanscale.md</code>.
+        </p>
+        {% endif %}
       </div>
     </div>
     {% endfor %}
