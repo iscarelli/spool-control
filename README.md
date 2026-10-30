@@ -45,6 +45,7 @@ print 60×40mm thermal labels with a QR code, and get stock reports.
 - Multi-language UI: **Portuguese, English and Spanish** (see [Languages (i18n)](#languages-i18n))
 - Weighing API for automatic stations (`POST /api/weigh`) — see [Weighing API](#weighing-api)
 - Home Assistant integration (read-only stock API) — see [Home Assistant](#home-assistant)
+- SpoolmanScale integration (Spoolman-compatible `/api/v1`) — see [`docs/spoolmanscale.md`](docs/spoolmanscale.md)
 
 ## Stack
 

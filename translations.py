@@ -1181,6 +1181,11 @@ _EN["Gerar uma nova chave invalida a atual desta integração. Continuar?"] = \
 _EN["Endpoints (somente leitura)"] = "Endpoints (read-only)"
 _EN["Use estes endpoints no Home Assistant (plataforma REST). Passo a passo e exemplos de configuração em"] = \
     "Use these endpoints in Home Assistant (REST platform). Step-by-step and config examples in"
+_EN["Configuração na balança SpoolmanScale"] = "SpoolmanScale scale setup"
+_EN["Backend: Spoolman."] = "Backend: Spoolman."
+_EN["URL base:"] = "Base URL:"
+_EN["Chave de API: cole a chave acima."] = "API key: paste the key above."
+_EN["Detalhes do que a API oferece em"] = "What the API offers, in detail:"
 _EN["Integração desconhecida"] = "Unknown integration"
 _EN["Nova chave gerada. Atualize a configuração da integração."] = \
     "New key generated. Update the integration's configuration."
@@ -1205,6 +1210,11 @@ _ES["Gerar uma nova chave invalida a atual desta integração. Continuar?"] = \
 _ES["Endpoints (somente leitura)"] = "Endpoints (solo lectura)"
 _ES["Use estes endpoints no Home Assistant (plataforma REST). Passo a passo e exemplos de configuração em"] = \
     "Use estos endpoints en Home Assistant (plataforma REST). Paso a paso y ejemplos de configuración en"
+_ES["Configuração na balança SpoolmanScale"] = "Configuración en la balanza SpoolmanScale"
+_ES["Backend: Spoolman."] = "Backend: Spoolman."
+_ES["URL base:"] = "URL base:"
+_ES["Chave de API: cole a chave acima."] = "Clave de API: pegue la clave de arriba."
+_ES["Detalhes do que a API oferece em"] = "Detalles de lo que ofrece la API:"
 _ES["Integração desconhecida"] = "Integración desconocida"
 _ES["Nova chave gerada. Atualize a configuração da integração."] = \
     "Nueva clave generada. Actualice la configuración de la integración."
