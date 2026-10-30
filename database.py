@@ -331,11 +331,29 @@ def init_db():
             "ALTER TABLE filaments ADD COLUMN bed_temp        INTEGER",
             # Empty-spool weight of the maker: last link of the tare chain (EFFECTIVE_TARE_SQL).
             "ALTER TABLE brands ADD COLUMN empty_spool_g REAL",
+            # Stable vendor id exposed by the Spoolman API (brands has a TEXT primary key, so
+            # rowid is not stable across VACUUM / restore).
+            "ALTER TABLE brands ADD COLUMN vendor_id INTEGER",
         ]:
             try:
                 db.execute(sql)
             except sqlite3.OperationalError:
                 pass  # coluna já existe
+        db.commit()
+
+        # vendor_id: one-time backfill from rowid where NULL (idempotent), then every new
+        # brand gets max+1 from a trigger (covers all INSERT paths, seed scripts included).
+        db.execute("UPDATE brands SET vendor_id = rowid WHERE vendor_id IS NULL")
+        db.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_brands_vendor_id ON brands(vendor_id)")
+        db.execute("""
+            CREATE TRIGGER IF NOT EXISTS trg_brands_vendor_id
+            AFTER INSERT ON brands WHEN NEW.vendor_id IS NULL
+            BEGIN
+                UPDATE brands
+                   SET vendor_id = (SELECT COALESCE(MAX(vendor_id), 0) + 1 FROM brands)
+                 WHERE name = NEW.name;
+            END
+        """)
         db.commit()
 
         # Backfill (idempotente pelo `finished_at = ''`): rolos finalizados ANTES de a
@@ -1076,7 +1094,7 @@ def _spool_query_base():
                f.article_number, f.external_id, f.density, f.extruder_temp, f.bed_temp,
                f.weight_g AS filament_weight_g, f.spool_weight_g AS filament_spool_weight_g,
                b.logo_path AS brand_logo,
-               b.rowid AS brand_id,
+               b.vendor_id AS brand_id,
                b.empty_spool_g AS brand_empty_spool_g,
                sm.name AS model_name,
                {EFFECTIVE_TARE_SQL} AS effective_tare_g,
@@ -1362,19 +1380,19 @@ def update_spool_api_fields(spool_id, **fields):
 # -- Vendors and filaments for the Spoolman API (create flow, spec 6.5) -------
 
 def get_brand_by_id(brand_id):
-    """Brand row by the id the API exposes (`brands.rowid`)."""
+    """Brand row by the id the API exposes (`brands.vendor_id`)."""
     with closing(get_db()) as db:
-        return db.execute("SELECT rowid AS id, * FROM brands WHERE rowid=?", (brand_id,)).fetchone()
+        return db.execute("SELECT vendor_id AS id, * FROM brands WHERE vendor_id=?", (brand_id,)).fetchone()
 
 
 def api_list_brands(name=None):
     """Brands with their API id. `name`: exact, case-insensitive match."""
-    sql, args = "SELECT rowid AS id, * FROM brands", []
+    sql, args = "SELECT vendor_id AS id, * FROM brands", []
     if name is not None:
         sql += " WHERE LOWER(name)=LOWER(?)"
         args.append(name)
     with closing(get_db()) as db:
-        return db.execute(sql + " ORDER BY rowid", args).fetchall()
+        return db.execute(sql + " ORDER BY vendor_id", args).fetchall()
 
 
 def set_brand_empty_spool(name, grams):
@@ -1414,7 +1432,7 @@ def api_list_filaments(article_number=None, external_id=None, vendor_name=None,
     clause = ("WHERE " + " AND ".join(where)) if where else ""
     with closing(get_db()) as db:
         return db.execute(
-            f"""SELECT f.*, b.rowid AS brand_id, b.empty_spool_g AS brand_empty_spool_g
+            f"""SELECT f.*, b.vendor_id AS brand_id, b.empty_spool_g AS brand_empty_spool_g
                 FROM filaments f LEFT JOIN brands b ON b.name = f.brand
                 {clause} ORDER BY f.id""", args).fetchall()
 
@@ -1422,7 +1440,7 @@ def api_list_filaments(article_number=None, external_id=None, vendor_name=None,
 def api_get_filament(filament_id):
     with closing(get_db()) as db:
         return db.execute(
-            """SELECT f.*, b.rowid AS brand_id, b.empty_spool_g AS brand_empty_spool_g
+            """SELECT f.*, b.vendor_id AS brand_id, b.empty_spool_g AS brand_empty_spool_g
                FROM filaments f LEFT JOIN brands b ON b.name = f.brand
                WHERE f.id=?""", (filament_id,)).fetchone()
 

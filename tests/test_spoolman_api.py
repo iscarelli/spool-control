@@ -686,3 +686,26 @@ def test_api_created_rows_render_in_the_ui(auth_client, api, db):
         assert r.status_code == 200, (path, r.status_code)
     assert b"Render Me" in auth_client.get("/filaments").data
     assert b"UI Co" in auth_client.get(f"/spools/{sid}").data
+
+
+# ── Stable vendor ids ────────────────────────────────────────────────────────
+
+def test_vendor_ids_survive_vacuum_and_new_brands_get_fresh_ids(api, db):
+    import database
+    a = api.post("/vendor", {"name": "Vid Alpha"}).get_json()["id"]
+    b = api.post("/vendor", {"name": "Vid Beta"}).get_json()["id"]
+    c = api.post("/vendor", {"name": "Vid Gamma"}).get_json()["id"]
+    assert len({a, b, c}) == 3 and a < b < c
+    # A brand created through the UI path also gets an id (trigger), above all others.
+    database.create_brand("Vid Delta")
+    d = api.get('/vendor?name="Vid Delta"').get_json()[0]["id"]
+    assert d > c
+    # Drop a middle brand and VACUUM: rowids may renumber, vendor ids must not.
+    database.delete_brand("Vid Beta")
+    with database.get_db() as conn:
+        conn.isolation_level = None
+        conn.execute("VACUUM")
+    ids = {v["name"]: v["id"] for v in api.get("/vendor").get_json()}
+    assert ids["Vid Alpha"] == a and ids["Vid Gamma"] == c and ids["Vid Delta"] == d
+    assert api.get(f"/vendor/{c}") is not None
+    assert api.patch(f"/vendor/{c}", {"empty_spool_weight": 120}).status_code == 200
