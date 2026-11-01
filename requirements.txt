@@ -7,7 +7,7 @@ qrcode[pil]>=8.2
 Pillow>=12.3.0
 structlog>=26.1.0
 pyotp>=2.10.0
-webauthn>=2.7.1
+webauthn>=3.0.1
 
 # Web Push. Floors only, like the rest: pip resolves the transitives per interpreter
 # (exact pins would break older Pythons, e.g. 3.10 on Ubuntu 22.04).
