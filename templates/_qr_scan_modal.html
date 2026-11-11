@@ -19,6 +19,9 @@
      data-msg-remaining="{{ _('restante') }}"
      data-msg-weighed-on="{{ _('Pesado em') }}"
      data-msg-finished="{{ _('Finalizado') }}"
+     data-msg-finish-done="{{ _('Rolo finalizado') }}"
+     data-msg-finish-failed="{{ _('Não foi possível finalizar o rolo.') }}"
+     data-msg-of="{{ _('de') }}"
      data-msg-hint="{{ _('Aponte a câmera para o QR da etiqueta do rolo.') }}">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -62,7 +65,20 @@
               <button type="submit" class="btn btn-primary" id="qrWeighSave">{{ _('Salvar pesagem') }}</button>
             </div>
           </form>
+          <div id="qrFinishPanel" class="d-none mt-3 border border-danger rounded p-2 small">
+            <div class="fw-semibold mb-1"><i class="bi bi-check2-circle me-1"></i>{{ _('Finalizar rolo') }} <span class="font-monospace" id="qrFinishCode"></span></div>
+            <p class="mb-1 d-none" id="qrFinishRemaining">{{ _('Restante que será baixado:') }} <strong id="qrFinishGrams"></strong></p>
+            <p class="mb-1 text-muted d-none" id="qrFinishUnweighed">{{ _('Rolo nunca pesado: não há peso restante registrado.') }}</p>
+            <p class="mb-2">{{ _('O rolo sai da lista de ativos (só aparece em "Ver finalizados") e não poderá mais ser pesado.') }}</p>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-outline-secondary flex-fill" id="qrFinishCancel">{{ _('Cancelar') }}</button>
+              <button type="button" class="btn btn-danger flex-fill" id="qrFinishConfirm">{{ _('Sim, finalizar') }}</button>
+            </div>
+          </div>
           <div id="qrWeighMsg" class="small mt-2" role="status"></div>
+          {% if can_write %}
+          <button type="button" class="btn btn-outline-danger w-100 mt-3 d-none" id="qrFinishBtn"><i class="bi bi-check2-circle me-1"></i>{{ _('Finalizar rolo') }}</button>
+          {% endif %}
           <div class="d-flex gap-2 mt-3">
             <button type="button" class="btn btn-primary flex-fill" id="qrScanNext"><i class="bi bi-qr-code-scan me-1"></i>{{ _('Ler próximo') }}</button>
             <a class="btn btn-outline-secondary flex-fill" id="qrScanOpen" href="#">{{ _('Abrir rolo') }}</a>

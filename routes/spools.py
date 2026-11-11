@@ -251,14 +251,22 @@ def _last_spool_message(spool):
     return t("Este é o último rolo de {name}.").format(name=notify.filament_name(spool))
 
 
-def _flash_stock_after_finish(spool):
-    """Banner after finishing `spool`: out of stock (0 left) or a single spool left (1 left)."""
+def _stock_after_finish_msg(spool):
+    """Text of the banner after finishing `spool` (out of stock / a single spool left), or ""."""
     left = db.count_active_spools_of_filament(spool["filament_id"])
     name = notify.filament_name(spool)
     if left == 0:
-        flash(t("Esse era o último rolo de {name}. Sem estoque.").format(name=name), "warning")
-    elif left == 1:
-        flash(t("Só resta 1 rolo de {name}.").format(name=name), "warning")
+        return t("Esse era o último rolo de {name}. Sem estoque.").format(name=name)
+    if left == 1:
+        return t("Só resta 1 rolo de {name}.").format(name=name)
+    return ""
+
+
+def _flash_stock_after_finish(spool):
+    """Banner after finishing `spool`: out of stock (0 left) or a single spool left (1 left)."""
+    text = _stock_after_finish_msg(spool)
+    if text:
+        flash(text, "warning")
 
 
 def _spool_scan_payload(spool):
@@ -319,6 +327,23 @@ def spools_weigh_json(spool_id):
     if err:
         return jsonify(ok=False, error=err), 422
     return jsonify(_spool_scan_payload(db.get_spool(spool_id)))
+
+
+@app.route("/spools/<int:spool_id>/finish.json", methods=["POST"])
+@write_required
+def spools_finish_json(spool_id):
+    """Finaliza o rolo pelo scanner (fetch). CSRF global (CSRFProtect); o header
+    X-CSRFToken vem de static/csrf.js, igual a `weigh.json`."""
+    spool = db.get_spool(spool_id)
+    if not spool:
+        return jsonify(ok=False, error="not_found"), 404
+    if not spool["active"]:
+        return jsonify(ok=False, error=t("Rolo já finalizado")), 409
+    db.deactivate_spool(spool_id)
+    finished = db.get_spool(spool_id)
+    payload = _spool_scan_payload(finished)
+    payload["stock_msg"] = _stock_after_finish_msg(finished)
+    return jsonify(payload)
 
 
 @app.route("/spools/<int:spool_id>/deactivate", methods=["POST"])
