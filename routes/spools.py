@@ -324,11 +324,15 @@ def spools_weigh_json(spool_id):
 @app.route("/spools/<int:spool_id>/deactivate", methods=["POST"])
 @write_required
 def spools_deactivate(spool_id):
+    if not db.get_spool(spool_id):
+        abort(404)
     db.deactivate_spool(spool_id)
     flash(t("Rolo marcado como finalizado"), "success")
     finished = db.get_spool(spool_id)
     if finished:
         _flash_stock_after_finish(finished)
+    if request.form.get("return_to") == "detail":
+        return redirect(url_for("spools_detail", spool_id=spool_id))
     return redirect(_safe_next(request.form.get("next"), url_for("spools_list")))
 
 

@@ -10,6 +10,10 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.41.0] — 2026-11-10
+
+- New: finish a spool straight from its page, which is where scanning the spool's QR label takes you. "Finish spool" opens a confirmation that shows what will happen before anything changes: the filament still on record that will be written off (grams and % of nominal, or "never weighed" when there is no weighing), that the spool leaves the active list and can no longer be weighed, and whether it is in the label print queue. After confirming you stay on the spool's page, now marked "Finished". Finishing from the spool list and the edit form works as before.
+
 ## [1.40.0] — 2026-10-29
 
 - New: SpoolmanScale integration. Spool Control now answers the Spoolman-compatible `/api/v1` API that the SpoolmanScale scale uses, so the scale can read your spools, send weighings and register new spools (including picking a filament from the built-in filament database). On the scale choose the Spoolman backend, set this server's URL as the base URL and paste the key from Admin > Integrations > SpoolmanScale. Details in `docs/spoolmanscale.md`.

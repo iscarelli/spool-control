@@ -1382,6 +1382,24 @@ _EN["Copiando dados de {code}"] = "Copying data from {code}"
 _ES["Adicionar mais iguais"] = "Agregar más iguales"
 _ES["Copiando dados de {code}"] = "Copiando datos de {code}"
 
+# ── finalizar pelo detalhe ───────────────────────────────────────────────────
+_EN.setdefault('Finalizar rolo', 'Finish spool')
+_ES.setdefault('Finalizar rolo', 'Finalizar bobina')
+_EN.setdefault('Filamento restante que será baixado:', 'Remaining filament to be written off:')
+_ES.setdefault('Filamento restante que será baixado:', 'Filamento restante que se dará de baja:')
+_EN.setdefault('de', 'of')
+_ES.setdefault('de', 'de')
+_EN.setdefault('Rolo nunca pesado: não há peso restante registrado.', 'Spool never weighed: no remaining weight recorded.')
+_ES.setdefault('Rolo nunca pesado: não há peso restante registrado.', 'Bobina nunca pesada: no hay peso restante registrado.')
+_EN.setdefault('O rolo sai da lista de ativos (só aparece em "Ver finalizados") e não poderá mais ser pesado.', 'The spool leaves the active list (only shown under "Ver finalizados") and can no longer be weighed.')
+_ES.setdefault('O rolo sai da lista de ativos (só aparece em "Ver finalizados") e não poderá mais ser pesado.', 'La bobina sale de la lista de activas (solo aparece en "Ver finalizados") y ya no se podrá pesar.')
+_EN.setdefault('Este rolo está na fila de impressão de etiquetas.', 'This spool is in the label print queue.')
+_ES.setdefault('Este rolo está na fila de impressão de etiquetas.', 'Esta bobina está en la cola de impresión de etiquetas.')
+_EN.setdefault('Cancelar', 'Cancel')
+_ES.setdefault('Cancelar', 'Cancelar')
+_EN.setdefault('Sim, finalizar', 'Yes, finish')
+_ES.setdefault('Sim, finalizar', 'Sí, finalizar')
+
 _TABLES = {"en": _EN, "es": _ES, "pt": _PT}
 
 
