@@ -43,11 +43,9 @@
       <i class="bi bi-copy me-1"></i>{{ _('Adicionar mais iguais') }}
     </a>
     {% if spool.active %}
-    <form method="post" action="{{ url_for('spools_deactivate', spool_id=spool.id) }}"
-          data-sc-confirm="{{ _('Marcar spool como finalizado?') }}">
-      <input type="hidden" name="next" value="{{ url_for('spools_detail', spool_id=spool.id) }}">
-      <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-check2-circle me-1"></i>{{ _('Finalizar') }}</button>
-    </form>
+    <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#finalizeModal">
+      <i class="bi bi-check2-circle me-1"></i>{{ _('Finalizar rolo') }}
+    </button>
     {% endif %}
     {% endif %}
     <a href="{{ url_for('spool_label_pdf', spool_id=spool.id) }}" class="btn btn-outline-dark btn-sm" target="_blank">
@@ -175,6 +173,37 @@
 {% block scripts %}
 <script src="{{ url_for('static', filename='niimbot.js') }}"></script>
 <script src="{{ url_for('static', filename='niimbot-spool.js') }}"></script>
+{% if can_write and spool.active %}
+<div class="modal fade" id="finalizeModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-check2-circle me-2"></i>{{ _('Finalizar rolo') }} SP-{{ '%04d'|format(spool.id) }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-2"><strong>SP-{{ '%04d'|format(spool.id) }}</strong> — {{ spool.brand }} {{ spool.material }}{% if spool.family %} {{ spool.family }}{% endif %}{% if spool.color_hex %} <span class="font-monospace text-uppercase">{{ spool.color_hex }}</span>{% endif %}</p>
+        {% if spool.current_net_g is not none %}
+        <p class="mb-2">{{ _('Filamento restante que será baixado:') }} <strong>{{ spool.current_net_g|int }}g</strong>{% if spool.nominal_weight_g > 0 %} ({{ ([(spool.current_net_g / spool.nominal_weight_g * 100)|int, 100]|min) }}% {{ _('de') }} {{ spool.nominal_weight_g|int }}g){% endif %}</p>
+        {% else %}
+        <p class="mb-2 text-muted">{{ _('Rolo nunca pesado: não há peso restante registrado.') }}</p>
+        {% endif %}
+        <p class="mb-2">{{ _('O rolo sai da lista de ativos (só aparece em "Ver finalizados") e não poderá mais ser pesado.') }}</p>
+        {% if in_queue %}
+        <p class="mb-0 text-muted small"><i class="bi bi-printer me-1"></i>{{ _('Este rolo está na fila de impressão de etiquetas.') }}</p>
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ _('Cancelar') }}</button>
+        <form method="post" action="{{ url_for('spools_deactivate', spool_id=spool.id) }}">
+          <input type="hidden" name="return_to" value="detail">
+          <button type="submit" class="btn btn-danger">{{ _('Sim, finalizar') }}</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
 {% if queue_prompt %}
 <script nonce="{{ nonce }}">
 window.addEventListener('DOMContentLoaded', function() {
