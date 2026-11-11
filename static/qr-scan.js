@@ -253,6 +253,19 @@
     }
   }
 
+  var finishBtn = $('qrFinishBtn');   // absent for read-only users
+  var finishPanel = $('qrFinishPanel');
+
+  function hideFinish() {
+    finishPanel.classList.add('d-none');
+    if (finishBtn) finishBtn.classList.add('d-none');
+  }
+  // Button only for write users on an active spool; the panel always starts hidden.
+  function renderFinish() {
+    finishPanel.classList.add('d-none');
+    if (finishBtn) finishBtn.classList.toggle('d-none', !(canWeigh && current && current.active));
+  }
+
   function renderResult(d) {
     current = d;
     var sw = $('qrResSwatch');
@@ -275,6 +288,7 @@
     $('qrScanOpen').setAttribute('href', destination(d.id, 'detail'));
     weighMsg.textContent = '';
     weighMsg.className = 'small mt-2';
+    renderFinish();
   }
 
   function jsonResult(r) {
@@ -312,6 +326,7 @@
   function resumeScanning(keepStatus) {
     ++lookupSeq;
     current = null;
+    hideFinish();
     ignoreUntil = Date.now() + RESUME_IGNORE_MS;
     var text = statusEl.textContent, err = statusEl.classList.contains('text-danger');
     showCameraView();
@@ -352,6 +367,58 @@
     });
   });
 
+  if (finishBtn) {
+    finishBtn.addEventListener('click', function () {
+      if (!current || !current.active) return;
+      $('qrFinishCode').textContent = current.code;
+      var rem = $('qrFinishRemaining'), unw = $('qrFinishUnweighed');
+      rem.classList.toggle('d-none', !current.weighed);
+      unw.classList.toggle('d-none', !!current.weighed);
+      if (current.weighed) {
+        $('qrFinishGrams').textContent = current.remaining_g + 'g' +
+          (current.nominal_g > 0 ? ' (' + current.pct + '% ' + msg('msgOf') + ' ' + current.nominal_g + 'g)' : '');
+      }
+      weighForm.classList.add('d-none');
+      weighMsg.textContent = '';
+      finishBtn.classList.add('d-none');
+      finishPanel.classList.remove('d-none');
+    });
+    $('qrFinishCancel').addEventListener('click', function () {
+      finishPanel.classList.add('d-none');
+      renderFinish();
+      renderWeighForm();
+    });
+    $('qrFinishConfirm').addEventListener('click', function () {
+      if (!current) return;
+      var btn = $('qrFinishConfirm');
+      btn.disabled = true;
+      var seq = lookupSeq;
+      fetch('/spools/' + current.id + '/finish.json', {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: '{}'
+      }).then(jsonResult).then(function (res) {
+        btn.disabled = false;
+        if (seq !== lookupSeq) return;
+        if (res.status === 200 && res.d && res.d.ok) {
+          renderResult(res.d);
+          hideFinish();
+          weighForm.classList.add('d-none');
+          weighMsg.textContent = msg('msgFinishDone') + (res.d.stock_msg ? ' - ' + res.d.stock_msg : '');
+          weighMsg.className = 'small mt-2 text-success';
+        } else {
+          weighMsg.textContent = (res.d && res.d.error && res.status === 409) ? res.d.error : msg('msgFinishFailed');
+          weighMsg.className = 'small mt-2 text-danger';
+        }
+      }, function () {
+        btn.disabled = false;
+        if (seq !== lookupSeq) return;
+        weighMsg.textContent = msg('msgFinishFailed');
+        weighMsg.className = 'small mt-2 text-danger';
+      });
+    });
+  }
+
   $('qrScanNext').addEventListener('click', function () { resumeScanning(false); });
 
   /* ---- typed fallback (no camera / denied) ---- */
@@ -375,6 +442,7 @@
     ++lookupSeq;
     current = null;
     ignoreUntil = 0;
+    hideFinish();
     showCameraView();
     startScanning();
   });

@@ -1400,6 +1400,16 @@ _ES.setdefault('Cancelar', 'Cancelar')
 _EN.setdefault('Sim, finalizar', 'Yes, finish')
 _ES.setdefault('Sim, finalizar', 'Sí, finalizar')
 
+# ── finalizar pelo scanner de QR ─────────────────────────────────────────────
+_EN.setdefault('Restante que será baixado:', 'Remaining to be written off:')
+_ES.setdefault('Restante que será baixado:', 'Restante que se dará de baja:')
+_EN.setdefault('Rolo finalizado', 'Spool finished')
+_ES.setdefault('Rolo finalizado', 'Bobina finalizada')
+_EN.setdefault('Rolo já finalizado', 'Spool already finished')
+_ES.setdefault('Rolo já finalizado', 'Bobina ya finalizada')
+_EN.setdefault('Não foi possível finalizar o rolo.', 'Could not finish the spool.')
+_ES.setdefault('Não foi possível finalizar o rolo.', 'No se pudo finalizar la bobina.')
+
 _TABLES = {"en": _EN, "es": _ES, "pt": _PT}
 
 

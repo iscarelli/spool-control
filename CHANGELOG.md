@@ -10,6 +10,10 @@ Versioning follows [SemVer](https://semver.org/): **MAJOR.MINOR.PATCH**
 
 ---
 
+## [1.41.1] — 2026-11-10
+
+- Fixed: by mistake, in 1.41.0 the "Finish spool" button was left out of the QR scanner (it only appeared on the spool page). It now appears in the scanner result, with the confirmation showing what will be written off (remaining grams and % of nominal, or "never weighed"), without leaving the scanner. The button on the spool page from 1.41.0 stays.
+
 ## [1.41.0] — 2026-11-10
 
 - New: finish a spool straight from its page, which is where scanning the spool's QR label takes you. "Finish spool" opens a confirmation that shows what will happen before anything changes: the filament still on record that will be written off (grams and % of nominal, or "never weighed" when there is no weighing), that the spool leaves the active list and can no longer be weighed, and whether it is in the label print queue. After confirming you stay on the spool's page, now marked "Finished". Finishing from the spool list and the edit form works as before.
